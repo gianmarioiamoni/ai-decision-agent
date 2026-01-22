@@ -297,16 +297,16 @@ def run_graph_parallel_streaming(
 # ==============================================================================
 
 def _format_streaming_output(
-    plan: str,
-    analysis: str,
-    decision: str,
-    confidence: float,
-    messages: str,
-    report_preview: str,
-    report_file_path: None,
-    historical_html: str,
-    rag_evidence_html: str
-) -> Tuple[str, str, str, float, str, str, None, str, str]:
+    plan,
+    analysis,
+    decision,
+    confidence,
+    messages,
+    report_preview,
+    report_file_path,
+    historical_html,
+    rag_evidence_html
+):
     #
     # Format output tuple for streaming updates.
     #
@@ -327,7 +327,7 @@ def _format_streaming_output(
     )
 
 
-def _format_error_output(error_message: str) -> Tuple[str, str, str, float, str, str, None, str, str]:
+def _format_error_output(error_message):
     #
     # Format error output for Gradio UI.
     #
