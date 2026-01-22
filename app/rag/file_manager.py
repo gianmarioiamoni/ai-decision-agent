@@ -25,9 +25,13 @@ from datetime import datetime
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 RAG_STORAGE_DIR = PROJECT_ROOT / "data" / "uploaded_rag"
-RAG_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
-print(f"[FILE_MANAGER] RAG Storage Directory: {RAG_STORAGE_DIR}")
+try:
+    RAG_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"[FILE_MANAGER] RAG Storage Directory: {RAG_STORAGE_DIR}")
+except Exception as e:
+    print(f"[FILE_MANAGER] ⚠️ Warning: Could not create RAG storage directory: {e}")
+    print(f"[FILE_MANAGER] RAG Storage Directory (not writable): {RAG_STORAGE_DIR}")
 
 
 class FileManager:
@@ -51,12 +55,16 @@ class FileManager:
         #     storage_dir: Directory for file storage (defaults to project data/uploaded_rag/)
         #
         self.storage_dir = storage_dir
-        self.storage_dir.mkdir(parents=True, exist_ok=True)
         self._files: List[Dict[str, str]] = []
         
-        # Load existing files immediately
-        self.refresh_state()
-        print(f"[FILE_MANAGER] 🏗️ FileManager initialized with {len(self._files)} file(s)")
+        try:
+            self.storage_dir.mkdir(parents=True, exist_ok=True)
+            # Load existing files immediately
+            self.refresh_state()
+            print(f"[FILE_MANAGER] 🏗️ FileManager initialized with {len(self._files)} file(s)")
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Warning during initialization: {e}")
+            print(f"[FILE_MANAGER] 🏗️ FileManager initialized with 0 file(s) (filesystem access limited)")
     
     def refresh_state(self) -> List[Dict[str, str]]:
         #
@@ -69,22 +77,33 @@ class FileManager:
         
         self._files = []
         
-        for file_path in self.storage_dir.iterdir():
-            if file_path.is_file() and file_path.name != '.gitkeep':
-                stat = file_path.stat()
-                self._files.append({
-                    "name": file_path.name,
-                    "path": str(file_path),
-                    "size": stat.st_size,
-                    "size_kb": round(stat.st_size / 1024, 2),
-                    "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
-                    "timestamp": stat.st_mtime
-                })
+        try:
+            if not self.storage_dir.exists():
+                print(f"[FILE_MANAGER] ⚠️ Storage directory does not exist: {self.storage_dir}")
+                return self._files
+            
+            for file_path in self.storage_dir.iterdir():
+                if file_path.is_file() and file_path.name != '.gitkeep':
+                    try:
+                        stat = file_path.stat()
+                        self._files.append({
+                            "name": file_path.name,
+                            "path": str(file_path),
+                            "size": stat.st_size,
+                            "size_kb": round(stat.st_size / 1024, 2),
+                            "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                            "timestamp": stat.st_mtime
+                        })
+                    except Exception as e:
+                        print(f"[FILE_MANAGER] ⚠️ Error reading file {file_path}: {e}")
+            
+            # Sort by modification time (newest first)
+            self._files.sort(key=lambda x: x["timestamp"], reverse=True)
+            
+            print(f"[FILE_MANAGER] 📊 State refreshed: {len(self._files)} file(s)")
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Error during refresh_state: {e}")
         
-        # Sort by modification time (newest first)
-        self._files.sort(key=lambda x: x["timestamp"], reverse=True)
-        
-        print(f"[FILE_MANAGER] 📊 State refreshed: {len(self._files)} file(s)")
         return self._files
     
     def get_files(self) -> List[Dict[str, str]]:
