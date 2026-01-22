@@ -72,7 +72,7 @@ def launch_real_ui():
         font=["Helvetica", "Arial", "sans-serif"]
     )
 
-    with gr.Blocks() as demo:
+    with gr.Blocks(theme=theme) as demo:
         # Header
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
 
@@ -235,7 +235,7 @@ def launch_real_ui():
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
-        theme=theme
+        show_api=False  # Disable API schema generation (causes issues in Gradio 5.9.1)
     )
 
 
