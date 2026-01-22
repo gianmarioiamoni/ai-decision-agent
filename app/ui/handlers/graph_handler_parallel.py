@@ -218,7 +218,7 @@ def run_graph_parallel_streaming(
                 confidence=0.0,
                 messages="",
                 report_preview="",
-                report_file_path=None,
+                report_file_path="",  # Empty string instead of None for gr.File
                 historical_html="",
                 rag_evidence_html=""
             )
@@ -256,7 +256,7 @@ def run_graph_parallel_streaming(
             confidence=0.0,
             messages="",
             report_preview="",
-            report_file_path=None,
+            report_file_path="",  # Empty string instead of None for gr.File
             historical_html="",
             rag_evidence_html=""
         )
@@ -367,7 +367,7 @@ def _format_error_output(error_message):
         0.0,  # confidence
         error_html,  # messages
         error_html,  # report_preview
-        None,  # report_file_path
+        "",  # report_file_path (empty string instead of None for gr.File)
         error_html,  # historical
         error_html  # rag_evidence
     )
