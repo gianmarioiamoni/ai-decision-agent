@@ -52,7 +52,7 @@ class FilePathExtractor:
         raise ValueError(f"Unknown file object format: {type(file_obj)}")
     
     @staticmethod
-    def extract_paths(file_objects: List[Any]) -> List[str]:
+    def extract_paths(file_objects):
         #
         # Estrae tutti i path da una lista di file objects.
         #
@@ -85,7 +85,7 @@ class UploadResult:
     #     failed_files: Lista di path di file che hanno fallito
     #
     
-    def __init__(self, saved_count: int, failed_files: List[str]):
+    def __init__(self, saved_count, failed_files):
         self.saved_count = saved_count
         self.failed_files = failed_files
     

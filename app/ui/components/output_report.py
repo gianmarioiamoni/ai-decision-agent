@@ -5,7 +5,7 @@ import gradio as gr
 from typing import Tuple
 import tempfile
 
-def create_output_report() -> Tuple[gr.HTML, gr.Radio, gr.File]:
+def create_output_report():
     # Creates a modular Gradio output component for session report.
     #
     # Returns:

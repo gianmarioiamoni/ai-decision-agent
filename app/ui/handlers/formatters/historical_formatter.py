@@ -35,7 +35,7 @@ class HistoricalFormatter(BaseFormatter):
         
         return "".join(cards)
     
-    def _create_decision_card(self, decision: Dict) -> str:
+    def _create_decision_card(self, decision):
         """
         Create HTML card for a single decision.
         

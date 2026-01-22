@@ -16,7 +16,7 @@ class ContextLoader:
     No logging, no formatting, pure I/O.
     """
     
-    def load(self) -> List[str]:
+    def load(self):
         """
         Load all context documents from permanent storage.
         

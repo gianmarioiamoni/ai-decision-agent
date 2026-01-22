@@ -15,7 +15,7 @@ class ContextLogger:
     No I/O operations, pure logging/presentation.
     """
     
-    def log_loading_summary(self, docs: List[str], storage_info: dict) -> None:
+    def log_loading_summary(self, docs, storage_info):
         """
         Log comprehensive summary of loaded documents.
         
@@ -39,7 +39,7 @@ class ContextLogger:
         
         print("="*60 + "\n")
     
-    def _log_documents(self, docs: List[str]) -> None:
+    def _log_documents(self, docs):
         """
         Log information about loaded documents.
         

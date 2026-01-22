@@ -11,7 +11,7 @@ from typing import List, Tuple
 
 
 def format_rag_context_for_ui(
-    context_docs: List[str],
+    context_docs,
     rag_context: str
 ) -> str:
     """
@@ -51,7 +51,7 @@ def format_rag_context_for_ui(
     return rag_evidence_html
 
 
-def _format_uploaded_documents(context_docs: List[str]) -> str:
+def _format_uploaded_documents(context_docs):
     """
     Format uploaded context documents section.
     
