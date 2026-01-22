@@ -5,6 +5,7 @@ colorFrom: purple
 colorTo: indigo
 sdk: gradio
 sdk_version: 5.9.1
+python_version: 3.11
 app_file: gradio_app.py
 pinned: false
 license: mit
