@@ -3,15 +3,14 @@
 # Report Format Handler - Manages report format changes in UI.
 #
 
-from typing import Optional
 from app.ui.components.output_report import save_report_for_download
 
 
 # Store the last generated report HTML (simple in-memory cache)
-_last_report_html: Optional[str] = None
+_last_report_html = None
 
 
-def cache_report_html(report_html: str):
+def cache_report_html(report_html):
     #
     # Cache the report HTML for format conversion.
     #
@@ -23,7 +22,7 @@ def cache_report_html(report_html: str):
     print(f"[REPORT] 📝 Cached report HTML ({len(report_html)} chars)")
 
 
-def handle_format_change(format_type: str) -> Optional[str]:
+def handle_format_change(format_type):
     #
     # Handle format selection change and regenerate download file.
     #
@@ -51,7 +50,7 @@ def handle_format_change(format_type: str) -> Optional[str]:
         return None
 
 
-def get_initial_report_file(report_html: str) -> Optional[str]:
+def get_initial_report_file(report_html):
     #
     # Generate initial report file (HTML format by default) and cache HTML.
     #

@@ -15,7 +15,6 @@
 #                Decision Merger (deterministic)
 #
 
-from typing import Generator, Tuple, Dict, Any
 import time
 
 # Import streaming nodes
@@ -39,9 +38,9 @@ from langchain_core.runnables import RunnableParallel, RunnableLambda
 
 
 def run_graph_parallel_streaming(
-    question: str,
+    question,
     rag_files=None
-) -> Generator[Tuple[str, str, str, float, str, str, None, str, str], None, None]:
+):
     #
     # Run the decision graph with PARALLEL execution of planner and analyzer.
     #

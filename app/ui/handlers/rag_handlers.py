@@ -17,7 +17,6 @@
 # - OperationLogger for centralized logging
 #
 
-from typing import List, Optional, Tuple
 from app.rag.file_manager import get_file_manager
 from .rag import StatusMessageBuilder, FilePathExtractor, UploadResult, OperationLogger
 
@@ -25,7 +24,7 @@ from .rag import StatusMessageBuilder, FilePathExtractor, UploadResult, Operatio
 file_manager = get_file_manager()
 
 
-def get_files_status_text() -> str:
+def get_files_status_text():
     #
     # Get formatted file list text for display.
     #
@@ -44,7 +43,7 @@ def get_files_status_text() -> str:
     return text
 
 
-def get_storage_summary() -> str:
+def get_storage_summary():
     #
     # Get formatted storage summary for display.
     #
@@ -55,7 +54,7 @@ def get_storage_summary() -> str:
     return file_manager.render_storage_summary()
 
 
-def handle_file_upload(uploaded_files: Optional[List]) -> Tuple[str, str, str]:
+def handle_file_upload(uploaded_files):
     #
     # Handle file upload event.
     #
@@ -96,7 +95,7 @@ def handle_file_upload(uploaded_files: Optional[List]) -> Tuple[str, str, str]:
     return status_msg, get_storage_summary(), get_files_status_text()
 
 
-def _process_upload_batch(uploaded_files: List) -> UploadResult:
+def _process_upload_batch(uploaded_files):
     #
     # Process a batch of uploaded files.
     #
@@ -132,7 +131,7 @@ def _process_upload_batch(uploaded_files: List) -> UploadResult:
     return UploadResult(saved_count, failed_files)
 
 
-def handle_refresh() -> Tuple[str, str]:
+def handle_refresh():
     #
     # Handle refresh button click.
     #
@@ -149,7 +148,7 @@ def handle_refresh() -> Tuple[str, str]:
     return get_storage_summary(), get_files_status_text()
 
 
-def handle_clear_files() -> Tuple[str, str, str]:
+def handle_clear_files():
     #
     # Handle clear all files button click.
     #
@@ -169,7 +168,7 @@ def handle_clear_files() -> Tuple[str, str, str]:
     return status_msg, get_storage_summary(), get_files_status_text()
 
 
-def init_ui_on_load() -> Tuple[str, str]:
+def init_ui_on_load():
     #
     # Initialize UI on page load/reload.
     #
