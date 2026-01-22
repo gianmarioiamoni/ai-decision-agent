@@ -122,14 +122,26 @@ class FileManager:
         # Returns:
         #     Dict with 'file_count', 'total_size_mb', etc.
         #
-        total_size = sum(f["size"] for f in self._files)
-        
-        return {
-            "file_count": len(self._files),
-            "total_size_bytes": total_size,
-            "total_size_mb": round(total_size / (1024 * 1024), 2),
-            "storage_path": str(self.storage_dir.absolute())
-        }
+        try:
+            if not self._files:
+                total_size = 0
+            else:
+                total_size = sum(f.get("size", 0) for f in self._files)
+            
+            return {
+                "file_count": len(self._files) if self._files else 0,
+                "total_size_bytes": total_size,
+                "total_size_mb": round(total_size / (1024 * 1024), 2),
+                "storage_path": str(self.storage_dir.absolute())
+            }
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Error in get_storage_info: {e}")
+            return {
+                "file_count": 0,
+                "total_size_bytes": 0,
+                "total_size_mb": 0.0,
+                "storage_path": str(self.storage_dir.absolute())
+            }
     
     def render_files_text(self) -> str:
         #
@@ -140,15 +152,19 @@ class FileManager:
         # Returns:
         #     Formatted text for Gradio Textbox
         #
-        if not self._files:
-            return "📂 No files uploaded yet"
-        
-        lines = [
-            f"{i+1}. **{f['name']}** ({f['size_kb']} KB) • {f['modified']}"
-            for i, f in enumerate(self._files)
-        ]
-        
-        return "\n".join(lines)
+        try:
+            if not self._files:
+                return "📂 No files uploaded yet"
+            
+            lines = [
+                f"{i+1}. **{f['name']}** ({f.get('size_kb', 0)} KB) • {f.get('modified', 'N/A')}"
+                for i, f in enumerate(self._files)
+            ]
+            
+            return "\n".join(lines)
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Error in render_files_text: {e}")
+            return "⚠️ Error loading file list"
     
     def render_storage_summary(self) -> str:
         #
@@ -157,11 +173,15 @@ class FileManager:
         # Returns:
         #     Formatted storage summary
         #
-        info = self.get_storage_info()
-        return (
-            f"📊 **Storage:** {info['file_count']} file(s) • "
-            f"{info['total_size_mb']} MB"
-        )
+        try:
+            info = self.get_storage_info()
+            return (
+                f"📊 **Storage:** {info['file_count']} file(s) • "
+                f"{info['total_size_mb']} MB"
+            )
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Error in render_storage_summary: {e}")
+            return "📊 **Storage:** 0 file(s) • 0.0 MB"
     
     def save_uploaded_file(self, file_path: str) -> Dict[str, str]:
         #
