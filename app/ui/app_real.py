@@ -245,7 +245,8 @@ def launch_real_ui():
     demo.queue()
     
     # Launch the Gradio interface
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
+    # Note: share=True is not needed on HF Spaces (always public)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
 
 
 if __name__ == "__main__":
