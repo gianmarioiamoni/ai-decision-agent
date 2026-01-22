@@ -1,0 +1,31 @@
+Team & Project Context – Internal Technical Overview
+
+The development team is composed of 8 engineers, with a strong focus on frontend and UI-driven applications. 
+The stack includes React 18, Next.js 14 (App Router), TypeScript, Tailwind CSS, and Shadcn UI. 
+Backend services are primarily built with Node.js and Express, with PostgreSQL as the main database.
+
+Current Project Architecture:
+- Monorepo structure with Nx workspace
+- Frontend: Next.js 14 App Router, React Server Components where possible
+- State Management: Zustand for client state, SWR for server state
+- Styling: Tailwind CSS with custom design system
+- Testing: Jest, React Testing Library, Playwright for E2E
+
+Team Constraints:
+- Limited backend expertise (only 2 engineers comfortable with Node.js)
+- High velocity expected (2-week sprints)
+- Strong preference for TypeScript-first solutions
+- Must maintain compatibility with existing design system
+
+Business Context:
+- B2B SaaS product with 5000+ active users
+- Performance is critical (target: <2s LCP)
+- SEO requirements for marketing pages
+- Multi-tenant architecture with role-based access control
+
+Strategic Priorities:
+- Developer experience and velocity
+- Performance optimization
+- Maintainability and code quality
+- Alignment with existing tech stack
+

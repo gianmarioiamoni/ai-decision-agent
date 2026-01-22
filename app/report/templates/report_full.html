@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Decision Session Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: transparent;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #ffffff;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #2c3e50;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        h3 {
+            font-size: 1.3em;
+            color: #2c3e50;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        h4 {
+            font-size: 1.1em;
+            color: #34495e;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        section {
+            background: rgba(248, 249, 250, 0.95);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        ul {
+            padding-left: 30px;
+            margin: 10px 0;
+            color: #2c3e50;
+            list-style-position: outside;
+            list-style-type: disc;
+        }
+        li {
+            margin-bottom: 8px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+        strong {
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+        p {
+            margin: 10px 0;
+            line-height: 1.8;
+            color: #2c3e50;
+            font-size: 1em;
+        }
+        .meta {
+            font-size: 0.95em;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .confidence-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .attempts-badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>AI Decision Session Report</h1>
+    <p class="meta">Generated on $timestamp</p>
+
+    <section>
+        <h2>Question</h2>
+        <p>$question</p>
+    </section>
+
+    <section>
+        <h2>Plan</h2>
+        <div>$plan</div>
+    </section>
+
+    <section>
+        <h2>Analysis</h2>
+        <div>$analysis</div>
+    </section>
+
+    <section>
+        <h2>Decision</h2>
+        <div>$decision</div>
+        <p><strong>Confidence:</strong> <span class="confidence-badge">$confidence</span></p>
+        <p><strong>Attempts:</strong> <span class="attempts-badge">$attempts</span></p>
+    </section>
+
+    <section>
+        <h2>Conversation Log</h2>
+        <ul>
+            $messages_html
+        </ul>
+    </section>
+
+</body>
+</html>
+

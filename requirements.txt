@@ -1,0 +1,25 @@
+# Hugging Face Spaces Requirements (Production Only)
+# Development dependencies (pytest, black, mypy) excluded
+
+# Core LangGraph & LangChain
+langgraph>=0.3.1
+langchain>=0.3.13
+langchain-community>=0.3.0
+langchain-core>=0.3.20
+langchain-openai>=0.3.0
+langchain-chroma>=0.2.0
+
+# Vector Store & Embeddings
+chromadb>=0.6.0
+
+# UI
+gradio>=5.9.1
+
+# Report Export
+weasyprint>=62.0
+python-docx>=1.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+

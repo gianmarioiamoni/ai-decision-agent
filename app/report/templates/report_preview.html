@@ -1,0 +1,40 @@
+<div style="font-family: Arial, sans-serif; color: #000000; line-height: 1.6; padding: 10px;">
+    <h1 style="color: #ffffff; font-size: 1.8em; font-weight: bold;">AI Decision Session Report</h1>
+    <p style="color: #555555; font-style: italic; font-size: 0.9em;">Generated on $timestamp</p>
+    
+    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #3498db;">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold; margin-top: 0;">Question</h2>
+        <p style="color: #000000;">$question</p>
+    </div>
+    
+    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #3498db;">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold; margin-top: 0;">Plan</h2>
+        <div style="color: #000000;">$plan</div>
+    </div>
+    
+    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #3498db;">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold; margin-top: 0;">Analysis</h2>
+        <div style="color: #000000;">$analysis</div>
+    </div>
+    
+    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #27ae60;">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold; margin-top: 0;">Decision</h2>
+        <div style="color: #000000;">$decision</div>
+        <p style="color: #000000;">
+            <strong style="color: #000000; font-weight: bold;">Confidence:</strong> 
+            <span style="background: #27ae60; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">$confidence</span>
+        </p>
+        <p style="color: #000000;">
+            <strong style="color: #000000; font-weight: bold;">Attempts:</strong> 
+            <span style="background: #3498db; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">$attempts</span>
+        </p>
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 8px;">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold; margin-top: 0;">Conversation Log</h2>
+        <ul style="color: #000000; padding-left: 30px; list-style-position: outside; list-style-type: disc;">
+            $messages_html
+        </ul>
+    </div>
+</div>
+
