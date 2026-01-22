@@ -2,7 +2,7 @@
 title: AI Decision Support Agent
 emoji: 🧠
 colorFrom: purple
-colorTo: violet
+colorTo: indigo
 sdk: gradio
 sdk_version: 5.9.1
 app_file: app.py
