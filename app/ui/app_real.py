@@ -70,7 +70,15 @@ def launch_real_ui():
     # ------------------------
     # Assemble UI Layout
     # ------------------------
-    with gr.Blocks() as demo:
+    # Theme configuration
+    theme = gr.themes.Soft(
+        primary_hue="violet",
+        secondary_hue="purple",
+        neutral_hue="slate",
+        font=["Helvetica", "Arial", "sans-serif"]
+    )
+    
+    with gr.Blocks(theme=theme) as demo:
         # Header
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
         
@@ -236,14 +244,8 @@ def launch_real_ui():
     # This is CRITICAL for generators to work properly
     demo.queue()
     
-    # Launch with elegant violet theme
-    theme = gr.themes.Soft(
-        primary_hue="violet",
-        secondary_hue="purple",
-        neutral_hue="slate",
-        font=["Helvetica", "Arial", "sans-serif"]
-    )
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=True, theme=theme)
+    # Launch the Gradio interface
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
 
 
 if __name__ == "__main__":
