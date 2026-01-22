@@ -32,6 +32,7 @@ def create_rag_file_input():
         file_count="multiple",
         label=None,  # No internal label - using external title
         show_label=False
+        # Note: value not specified for File upload components (Gradio default behavior)
     )
     return rag_input
 

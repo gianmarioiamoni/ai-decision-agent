@@ -16,6 +16,7 @@ def create_output_report():
     # HTML preview component (dynamic)
     report_html_component = gr.HTML(
         label=None,  # No internal label - using external section title with icon
+        value="",  # Explicit empty string instead of None
         show_label=False
     )
 
@@ -28,7 +29,7 @@ def create_output_report():
         show_label=False
     )
 
-    # File download component
+    # File download component  
     report_download_component = gr.File(
         label=None,  # No internal label - using external section title with icon
         file_count="single",
@@ -36,6 +37,7 @@ def create_output_report():
         type="filepath",
         interactive=False,  # Disable upload
         show_label=False
+        # Note: value not specified for File components (Gradio default behavior)
     )
 
     return report_html_component, format_selector, report_download_component
