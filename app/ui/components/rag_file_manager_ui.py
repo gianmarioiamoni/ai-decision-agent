@@ -28,11 +28,11 @@ def create_rag_file_input():
     )
     
     rag_input = gr.File(
+        value=[],  # Empty list for File upload (multiple files)
         file_types=[".txt", ".md", ".csv"],
         file_count="multiple",
         label=None,  # No internal label - using external title
         show_label=False
-        # Note: value not specified for File upload components (Gradio default behavior)
     )
     return rag_input
 

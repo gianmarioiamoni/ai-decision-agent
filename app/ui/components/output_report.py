@@ -31,13 +31,13 @@ def create_output_report():
 
     # File download component  
     report_download_component = gr.File(
+        value=None,  # None for single File download (no file initially)
         label=None,  # No internal label - using external section title with icon
         file_count="single",
         file_types=[".html", ".pdf", ".docx"],
         type="filepath",
         interactive=False,  # Disable upload
         show_label=False
-        # Note: value not specified for File components (Gradio default behavior)
     )
 
     return report_html_component, format_selector, report_download_component
