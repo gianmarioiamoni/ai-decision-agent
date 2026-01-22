@@ -4,7 +4,6 @@
 # Converts message objects to HTML representation.
 #
 
-from typing import List, Any
 from .base_formatter import BaseFormatter
 
 
@@ -28,7 +27,7 @@ class MessageFormatter(BaseFormatter):
         "system": "⚙️"
     }
     
-    def format(self, messages: List[Any]) -> str:
+    def format(self, messages):
         """
         Format conversation messages into HTML.
         
@@ -54,7 +53,7 @@ class MessageFormatter(BaseFormatter):
         
         return "".join(formatted_messages)
     
-    def _extract_message_data(self, msg: Any) -> tuple[str, str]:
+    def _extract_message_data(self, msg):
         """
         Extract role and content from message object.
         

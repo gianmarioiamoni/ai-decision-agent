@@ -4,7 +4,6 @@
 # Converts similar decision data to HTML cards.
 #
 
-from typing import List, Dict
 from .base_formatter import BaseFormatter
 
 
@@ -15,7 +14,7 @@ class HistoricalFormatter(BaseFormatter):
     Responsibility: Convert list of similar decisions to styled HTML representation.
     """
     
-    def format(self, similar_decisions: List[Dict]) -> str:
+    def format(self, similar_decisions):
         """
         Format historical decisions into HTML.
         

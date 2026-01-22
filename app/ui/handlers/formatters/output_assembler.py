@@ -4,8 +4,6 @@
 # Facade pattern for formatting complexity.
 #
 
-from typing import Tuple, Optional, List
-
 from .message_formatter import MessageFormatter
 from .historical_formatter import HistoricalFormatter
 from app.ui.utils.markdown_utils import md_to_plain_text
@@ -27,9 +25,9 @@ class OutputAssembler:
     
     def assemble(
         self,
-        result: dict,
-        context_docs: List[str]
-    ) -> Tuple[str, str, str, float, str, str, Optional[str], str, str]:
+        result,
+        context_docs
+    ):
         # Assemble complete UI output from graph result.
         #
         # Args:
@@ -86,10 +84,10 @@ class OutputAssembler:
     
     def _extract_and_convert(
         self,
-        result: dict,
-        key: str,
-        default: str
-    ) -> str:
+        result,
+        key,
+        default
+    ):
         # Extract markdown field and convert to plain text.
         #
         # Args:
@@ -104,7 +102,7 @@ class OutputAssembler:
         markdown = result.get(key) or default
         return md_to_plain_text(markdown)
     
-    def _extract_confidence(self, result: dict) -> float:
+    def _extract_confidence(self, result):
         # Extract and validate confidence score.
         #
         # Args:
@@ -116,7 +114,7 @@ class OutputAssembler:
         confidence_val = result.get("confidence")
         return float(confidence_val) if confidence_val is not None else 0.0
     
-    def _format_report(self, result: dict) -> Tuple[str, Optional[str]]:
+    def _format_report(self, result):
         # Format report HTML and save to temporary file.
         #
         # Args:
