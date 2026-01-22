@@ -63,9 +63,9 @@ def launch_real_ui():
     messages_output = create_output_messages()
     report_output, format_selector, report_download_output = create_output_report()
     
-    # Additional outputs
-    historical_output = gr.HTML(label="Similar Historical Decisions")
-    rag_evidence_output = gr.HTML(label="RAG Context & Evidence")
+    # Additional outputs (with empty string value to avoid None)
+    historical_output = gr.HTML(value="", label="Similar Historical Decisions")
+    rag_evidence_output = gr.HTML(value="", label="RAG Context & Evidence")
     
     # ------------------------
     # Assemble UI Layout
