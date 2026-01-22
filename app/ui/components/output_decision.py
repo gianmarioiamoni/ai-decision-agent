@@ -18,7 +18,7 @@ def create_output_decision():
     
     # Decision textbox
     decision_output = gr.Textbox(
-        label=None,  # No internal label - using external section title with icon
+        label="decision_output",  # No internal label - using external section title with icon
         value="",  # Explicit empty string instead of None
         placeholder="Final decision will appear here",
         interactive=False,
@@ -31,7 +31,7 @@ def create_output_decision():
 
     # Confidence badge (rendered as a Textbox with color info)
     confidence_output = gr.Textbox(
-        label=None,  # No internal label - using external section title with icon
+        label="confidence_output",  # No internal label - using external section title with icon
         value="",  # Explicit empty string instead of None
         placeholder="Confidence will appear here (0-100)",
         interactive=False,

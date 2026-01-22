@@ -36,52 +36,46 @@ from .handlers.rag_handlers import (
     handle_clear_files
 )
 
+# Debug import removed - was interfering with Gradio API schema generation
+# from scripts.check_component_types import check_component_types
 
 # -----------------------------
 # Main UI Assembly
 # -----------------------------
 def launch_real_ui():
     # Launch the Gradio UI for the AI Decision Support Agent.
-    
-    # SIMPLE PATTERN:
-    # - Event handlers return values
-    # - Gradio automatically updates output components
-    # - No explicit state management needed
-    
+
     # ------------------------
     # Create UI Components
     # ------------------------
-    
-    # Color scheme
     TITLE_COLOR = "#ffffff"
     SUBTITLE_COLOR = "#a0aec0"
-    
+
     # Outputs
     plan_output = create_output_plan()
     analysis_output = create_output_analysis()
     decision_output, confidence_output = create_output_decision()
     messages_output = create_output_messages()
     report_output, format_selector, report_download_output = create_output_report()
-    
+
     # Additional outputs (with empty string value to avoid None)
     historical_output = gr.HTML(value="", label="Similar Historical Decisions")
     rag_evidence_output = gr.HTML(value="", label="RAG Context & Evidence")
-    
+
     # ------------------------
     # Assemble UI Layout
     # ------------------------
-    # Theme configuration
     theme = gr.themes.Soft(
         primary_hue="violet",
         secondary_hue="purple",
         neutral_hue="slate",
         font=["Helvetica", "Arial", "sans-serif"]
     )
-    
-    with gr.Blocks(theme=theme) as demo:
+
+    with gr.Blocks() as demo:
         # Header
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
-        
+
         # Input Section (includes RAG file management)
         (
             question_input,
@@ -94,7 +88,7 @@ def launch_real_ui():
             clear_files_btn,
             clear_status_display
         ) = create_input_section(SUBTITLE_COLOR)
-        
+
         gr.Markdown("---")
 
         # Output Tabs
@@ -131,10 +125,7 @@ def launch_real_ui():
             # Session Report
             with gr.Tab("📄 Report"):
                 with gr.Row():
-                    # Preview section (scrollable, 2/3 width)
                     create_report_preview_section(report_output)
-                    
-                    # Download section (fixed, 1/3 width)
                     create_report_download_section(format_selector, report_download_output)
 
             # Historical Decisions
@@ -162,44 +153,43 @@ def launch_real_ui():
             "🤖 Powered by LangGraph, OpenAI GPT-4, and ChromaDB"
             "</p>"
         )
-        
+
         # ========================================
         # SIMPLE EVENT-DRIVEN PATTERN
         # ========================================
-        
+
         # 1️⃣ Initialize UI on page load/reload
         demo.load(
             fn=init_ui_on_load,
             inputs=None,
             outputs=[storage_summary, files_list_display]
         )
-        
+
         # 2️⃣ File upload → returns updated values
         rag_input.upload(
             fn=handle_file_upload,
             inputs=[rag_input],
             outputs=[upload_status_output, storage_summary, files_list_display]
         )
-        
+
         # 3️⃣ Refresh button → returns updated values
         refresh_files_btn.click(
             fn=handle_refresh,
             inputs=[],
             outputs=[storage_summary, files_list_display]
         )
-        
+
         # 4️⃣ Clear button → returns updated values
         clear_files_btn.click(
             fn=handle_clear_files,
             inputs=[],
             outputs=[clear_status_display, storage_summary, files_list_display]
         )
-        
+
         # ========================================
         # DECISION GRAPH EXECUTION
         # ========================================
-        
-        # Submit button - run decision graph with parallel execution
+
         submit_button.click(
             fn=run_graph_parallel_streaming,
             inputs=[question_input, rag_input],
@@ -215,8 +205,7 @@ def launch_real_ui():
                 rag_evidence_output
             ]
         )
-        
-        # Enter key submit - run decision graph with parallel execution
+
         question_input.submit(
             fn=run_graph_parallel_streaming,
             inputs=[question_input, rag_input],
@@ -232,8 +221,7 @@ def launch_real_ui():
                 rag_evidence_output
             ]
         )
-        
-        # Format selector - regenerate report download in selected format
+
         format_selector.change(
             fn=handle_format_change,
             inputs=[format_selector],
@@ -241,14 +229,16 @@ def launch_real_ui():
         )
 
     # Enable queue for streaming functionality
-    # This is CRITICAL for generators to work properly
     demo.queue()
-    
+
     # Launch the Gradio interface
-    # Note: share=True is not needed on HF Spaces (always public)
-    # show_api=False prevents API docs generation errors on HF Spaces
-    demo.launch(server_name="0.0.0.0", server_port=7860, show_api=False)
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        theme=theme
+    )
 
 
 if __name__ == "__main__":
     launch_real_ui()
+

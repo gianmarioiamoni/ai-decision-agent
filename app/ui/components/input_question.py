@@ -5,7 +5,7 @@ import gradio as gr
 # Responsibility: provide input field for user's question
 def create_input_question():
     question_input = gr.Textbox(
-        label=None,  # No internal label - using external section title with icon
+        label="input_question",  # No internal label - using external section title with icon
         value="",  # Explicit empty string instead of None
         placeholder="E.g. Should our team adopt LangGraph?",
         lines=3,  # More space for input

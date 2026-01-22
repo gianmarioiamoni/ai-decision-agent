@@ -15,7 +15,7 @@ def create_output_report():
     
     # HTML preview component (dynamic)
     report_html_component = gr.HTML(
-        label=None,  # No internal label - using external section title with icon
+        label="report_html_component",  # No internal label - using external section title with icon
         value="",  # Explicit empty string instead of None
         show_label=False
     )
@@ -24,15 +24,15 @@ def create_output_report():
     format_selector = gr.Radio(
         choices=["HTML", "PDF", "DOCX"],
         value="HTML",
-        label=None,
+        label="format_selector",
         info="Select the format for downloading the report",
         show_label=False
     )
 
     # File download component  
     report_download_component = gr.File(
-        value=None,  # None for single File download (no file initially)
-        label=None,  # No internal label - using external section title with icon
+        value=[],  # None for single File download (no file initially)
+        label="report_download_component",  # No internal label - using external section title with icon
         file_count="single",
         file_types=[".html", ".pdf", ".docx"],
         type="filepath",
