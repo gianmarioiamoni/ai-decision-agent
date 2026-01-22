@@ -26,9 +26,11 @@ from datetime import datetime
 try:
     from app.rag.hf_persistence import get_hf_persistence
     HF_PERSISTENCE_AVAILABLE = True
-except ImportError:
+    print("[FILE_MANAGER] ✅ HF persistence module imported successfully")
+except Exception as e:
     HF_PERSISTENCE_AVAILABLE = False
-    print("[FILE_MANAGER] ⚠️ HF persistence not available, using local storage only")
+    print(f"[FILE_MANAGER] ⚠️ HF persistence not available: {e}")
+    print("[FILE_MANAGER] Using local storage only")
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -64,20 +66,32 @@ class FileManager:
         #
         self.storage_dir = storage_dir
         self._files: List[Dict[str, str]] = []
-        self.hf_persistence = get_hf_persistence() if HF_PERSISTENCE_AVAILABLE else None
+        
+        # Try to initialize HF persistence
+        try:
+            self.hf_persistence = get_hf_persistence() if HF_PERSISTENCE_AVAILABLE else None
+            if self.hf_persistence:
+                print("[FILE_MANAGER] ✅ HF persistence instance created")
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Could not create HF persistence: {e}")
+            self.hf_persistence = None
         
         try:
             # On HF Spaces, load from HF Hub instead of local filesystem
             if self.hf_persistence:
+                print("[FILE_MANAGER] 🌐 Using HF Hub for storage")
                 self._load_from_hf_hub()
             else:
                 # Fallback to local filesystem (development mode)
+                print("[FILE_MANAGER] 💾 Using local filesystem for storage")
                 self.storage_dir.mkdir(parents=True, exist_ok=True)
                 self.refresh_state()
             
             print(f"[FILE_MANAGER] 🏗️ FileManager initialized with {len(self._files)} file(s)")
         except Exception as e:
             print(f"[FILE_MANAGER] ⚠️ Warning during initialization: {e}")
+            import traceback
+            traceback.print_exc()
             print(f"[FILE_MANAGER] 🏗️ FileManager initialized with 0 file(s) (filesystem access limited)")
     
     def _load_from_hf_hub(self):
@@ -87,12 +101,17 @@ class FileManager:
         print(f"\n[FILE_MANAGER] 📥 Loading file registry from HF Hub...")
         
         try:
+            if not self.hf_persistence:
+                print(f"[FILE_MANAGER] ⚠️ HF persistence not available")
+                self._files = []
+                return
+            
             registry = self.hf_persistence.load_registry()
             
             # Convert registry format to internal _files format
             self._files = [
                 {
-                    "name": doc["filename"],
+                    "name": doc.get("filename", "unknown"),
                     "path": doc.get("source", ""),
                     "size": 0,  # Size not tracked in registry
                     "size_kb": 0.0,
@@ -100,11 +119,14 @@ class FileManager:
                     "timestamp": 0  # Timestamp not tracked
                 }
                 for doc in registry
+                if doc and isinstance(doc, dict) and "filename" in doc
             ]
             
             print(f"[FILE_MANAGER] ✅ Loaded {len(self._files)} file(s) from HF Hub")
         except Exception as e:
             print(f"[FILE_MANAGER] ⚠️ Error loading from HF Hub: {e}")
+            import traceback
+            traceback.print_exc()
             self._files = []
     
     def refresh_state(self) -> List[Dict[str, str]]:

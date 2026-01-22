@@ -35,8 +35,13 @@ class HFPersistence:
     CHROMA_DIR = PROJECT_ROOT / "chroma_memory"
     
     def __init__(self):
-        self.api = HfApi()
-        print(f"[HF_PERSISTENCE] Initialized for {self.HF_USERNAME}/{self.HF_REPO}")
+        try:
+            self.api = HfApi()
+            print(f"[HF_PERSISTENCE] ✅ Initialized for {self.HF_USERNAME}/{self.HF_REPO}")
+            print(f"[HF_PERSISTENCE] Token available: {bool(self.HF_TOKEN)}")
+        except Exception as e:
+            print(f"[HF_PERSISTENCE] ⚠️ Error initializing HfApi: {e}")
+            self.api = None
     
     # ============ RAG DOCUMENT REGISTRY ============
     
@@ -48,6 +53,12 @@ class HFPersistence:
         
         print(f"\n{'='*60}")
         print(f"📥 Loading RAG document registry from HF Hub...")
+        
+        # Check if HfApi is available
+        if not self.api:
+            print("⚠️ HfApi not initialized, returning empty registry")
+            print(f"{'='*60}\n")
+            return []
         
         try:
             # Force download from server, not cache
