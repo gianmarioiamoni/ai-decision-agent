@@ -6,6 +6,7 @@ import gradio as gr
 def create_output_messages():
     messages_output = gr.Textbox(
         label=None,  # No internal label - using external section title with icon
+        value="",  # Explicit empty string instead of None
         placeholder="Messages from the agent will appear here",
         interactive=False,
         lines=20,  # Increased lines for better readability
