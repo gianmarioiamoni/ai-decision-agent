@@ -12,8 +12,9 @@ langchain-chroma>=0.2.0
 # Vector Store & Embeddings
 chromadb>=0.6.0
 
-# UI
-gradio>=5.9.1
+# UI (pinned for stability on HF Spaces)
+gradio==5.9.1
+gradio-client==1.5.0
 
 # HF Hub (for persistent storage on HF Spaces)
 huggingface-hub>=0.20.0
