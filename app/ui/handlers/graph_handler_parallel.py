@@ -280,11 +280,31 @@ def run_graph_parallel_streaming(
         # FINAL: Assemble and return complete output
         # ==================================================================
         
-        # Assemble final formatted output
-        final_output = assembler.assemble(state, context_docs)
+        # Assemble final formatted output (guarantees all primitives)
+        (
+            plan,
+            analysis,
+            decision,
+            confidence,
+            messages,
+            report_preview,
+            report_file_path,
+            historical_html,
+            rag_evidence_html
+        ) = assembler.assemble(state, context_docs)
         
-        # Yield final output
-        yield final_output
+        # Yield final output through formatter (ensures primitive types for Gradio)
+        yield _format_streaming_output(
+            plan=plan,
+            analysis=analysis,
+            decision=decision,
+            confidence=confidence,
+            messages=messages,
+            report_preview=report_preview,
+            report_file_path=report_file_path,
+            historical_html=historical_html,
+            rag_evidence_html=rag_evidence_html
+        )
     
     except Exception as e:
         import traceback
