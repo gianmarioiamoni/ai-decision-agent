@@ -228,3 +228,13 @@ def get_vectorstore_manager() -> VectorstoreManager:
         _vectorstore_instance = VectorstoreManager()
     return _vectorstore_instance
 
+
+def reset_vectorstore_singleton():
+    # Reset the singleton instance (used after clear operations).
+    # This ensures a fresh start when reinitializing the vectorstore.
+    
+    global _vectorstore_instance
+    if _vectorstore_instance is not None:
+        print("[VECTORSTORE] 🔄 Resetting singleton instance")
+        _vectorstore_instance = None
+

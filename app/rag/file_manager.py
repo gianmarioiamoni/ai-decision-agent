@@ -25,7 +25,7 @@ from datetime import datetime
 # Import HF persistence for cloud storage
 try:
     from app.rag.hf_persistence import get_hf_persistence
-    from app.rag.vectorstore_manager import get_vectorstore_manager
+    from app.rag.vectorstore_manager import get_vectorstore_manager, reset_vectorstore_singleton
     HF_PERSISTENCE_AVAILABLE = True
     print("[FILE_MANAGER] ✅ HF persistence module imported successfully")
 except Exception as e:
@@ -405,6 +405,10 @@ class FileManager:
             vectorstore_manager = get_vectorstore_manager()
             vectorstore_manager.clear()
             print(f"✅ [FILE_MANAGER] Vectorstore cleared")
+            
+            # Reset singleton to ensure fresh initialization on next use
+            reset_vectorstore_singleton()
+            print(f"✅ [FILE_MANAGER] Vectorstore singleton reset")
         except Exception as e:
             print(f"⚠️ [FILE_MANAGER] Failed to clear vectorstore: {e}")
         
