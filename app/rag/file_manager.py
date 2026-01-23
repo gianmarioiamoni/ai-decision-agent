@@ -380,9 +380,9 @@ class FileManager:
         
         # Add document to vectorstore for RAG (DEFERRED)
         # Note: We defer vectorstore embedding to avoid blocking Gradio's event loop
-        # The embedding will happen on-demand when the vectorstore is accessed
-        print(f"[FILE_MANAGER] 📝 File saved successfully, vectorstore embedding will be done on-demand")
-        print(f"[FILE_MANAGER] 💡 To trigger immediate embedding, click 'Refresh List' button")
+        # and prevent app restart loops caused by asyncio conflicts
+        print(f"[FILE_MANAGER] 📝 File saved successfully")
+        print(f"[FILE_MANAGER] 💡 IMPORTANT: Click '🔄 Refresh List' to enable RAG for this file")
         
         # Refresh state to include new file
         self.refresh_state()

@@ -185,9 +185,10 @@ def init_ui_on_load():
     # Refresh from disk (in case files were added externally)
     file_manager.refresh_state()
     
-    # Sync files to vectorstore (deferred embedding on app startup)
-    print(f"[RAG_HANDLERS] 🔄 Syncing files to vectorstore on app load...")
-    file_manager.sync_files_to_vectorstore()
+    # DO NOT sync to vectorstore on app load to avoid asyncio conflicts
+    # Embedding will happen on-demand during first query or manual refresh
+    print(f"[RAG_HANDLERS] ℹ️ Skipping vectorstore sync on app load (prevents restart loop)")
+    print(f"[RAG_HANDLERS] 💡 Embedding will happen automatically on first query")
     
     summary = get_storage_summary()
     files_text = get_files_status_text()
