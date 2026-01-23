@@ -11,5 +11,5 @@ def create_input_question():
         lines=3,  # More space for input
         show_label=False
     )
-    submit_button = gr.Button("🚀 Analyse", variant="primary", size="lg", min_width=120, scale=0)
+    submit_button = gr.Button("🚀 Analyse", variant="primary", min_width=120, scale=0)
     return question_input, submit_button

@@ -25,7 +25,6 @@ def create_output_report():
         choices=["HTML", "PDF", "DOCX"],
         value="HTML",
         label="format_selector",
-        info="Select the format for downloading the report",
         show_label=False
     )
 

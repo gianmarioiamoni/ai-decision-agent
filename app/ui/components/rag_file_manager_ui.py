@@ -83,8 +83,8 @@ def create_rag_file_manager() -> Tuple:
     
     # Management buttons
     with gr.Row():
-        refresh_files_btn = gr.Button("🔄 Refresh List", size="sm", scale=1)
-        clear_files_btn = gr.Button("🗑️ Clear All Files", size="sm", variant="stop", scale=1)
+        refresh_files_btn = gr.Button("🔄 Refresh List", scale=1)
+        clear_files_btn = gr.Button("🗑️ Clear All Files", variant="stop", scale=1)
     
     # Status displays
     clear_status_display = gr.Markdown("", visible=False)
