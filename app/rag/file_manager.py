@@ -140,15 +140,32 @@ class FileManager:
     
     def sync_files_to_vectorstore(self):
         #
-        # Sync all files from registry to vectorstore (if not already embedded).
+        # Sync all files: registry to HF Hub, files to HF Hub, then embed to vectorstore.
         # This is called separately from upload to avoid blocking Gradio's event loop.
         #
-        print(f"[FILE_MANAGER] 🔄 Syncing files to vectorstore...")
+        print(f"[FILE_MANAGER] 🔄 Starting full sync...")
         
         if not self._files:
             print(f"[FILE_MANAGER] ℹ️ No files to sync")
             return
         
+        # Step 1: Sync local files to HF Hub registry
+        if self.hf_persistence:
+            print(f"[FILE_MANAGER] 📤 Syncing registry to HF Hub...")
+            registry = self.hf_persistence.load_registry()
+            registry_filenames = {doc.get("filename") for doc in registry}
+            
+            # Add any local files not yet in registry
+            for file_info in self._files:
+                if file_info['name'] not in registry_filenames:
+                    print(f"[FILE_MANAGER] ➕ Adding {file_info['name']} to registry...")
+                    self.hf_persistence.add_document_to_registry_only(
+                        filename=file_info['name'],
+                        source=file_info['path']
+                    )
+        
+        # Step 2: Embed files to vectorstore
+        print(f"[FILE_MANAGER] 🔄 Embedding files to vectorstore...")
         try:
             vectorstore_manager = get_vectorstore_manager()
             
@@ -376,23 +393,18 @@ class FileManager:
         
         print(f"✅ [FILE_MANAGER] Saved: {original_name} → {stored_name}")
         
-        # Sync to HF Hub if persistence is enabled
-        if self.hf_persistence:
-            print(f"[FILE_MANAGER] 📤 Syncing to HF Hub...")
-            # Add document to registry
-            self.hf_persistence.add_document(
-                filename=stored_name,
-                source=str(stored_path)  # Fixed: parameter is 'source' not 'source_path'
-            )
+        # Add to local state immediately (no HF Hub sync to avoid restart)
+        self._files.append({
+            "name": stored_name,
+            "path": str(stored_path),
+            "size": os.path.getsize(stored_path),
+            "size_kb": round(os.path.getsize(stored_path) / 1024, 2),
+            "modified": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": datetime.now().timestamp()
+        })
         
-        # Add document to vectorstore for RAG (DEFERRED)
-        # Note: We defer vectorstore embedding to avoid blocking Gradio's event loop
-        # and prevent app restart loops caused by asyncio conflicts
-        print(f"[FILE_MANAGER] 📝 File saved successfully")
-        print(f"[FILE_MANAGER] 💡 IMPORTANT: Click '🔄 Refresh List' to enable RAG for this file")
-        
-        # Refresh state to include new file
-        self.refresh_state()
+        print(f"[FILE_MANAGER] 📝 File added to local state")
+        print(f"[FILE_MANAGER] 💡 IMPORTANT: Click '🔄 Refresh List' to sync and enable RAG")
         
         return {
             "original_name": original_name,

@@ -129,6 +129,34 @@ class HFPersistence:
             print(f"{'='*60}\n")
             return False
     
+    def add_document_to_registry_only(self, filename: str, source: str) -> bool:
+        # Add a document to the registry WITHOUT uploading file
+        # Used during refresh to sync local state with HF Hub
+        #
+        # Args:
+        #     filename: Name of the document file
+        #     source: Source path of the document on disk
+        #
+        # Returns:
+        #     True if successful, False otherwise
+        
+        registry = self.load_registry()
+        
+        # Check if already exists
+        if any(doc["filename"] == filename for doc in registry):
+            print(f"ℹ️ Document {filename} already in registry")
+            return True
+        
+        # Add to registry
+        registry.append({
+            "filename": filename,
+            "uploaded_at": datetime.now().isoformat(),
+            "source": source
+        })
+        
+        # Save registry
+        return self.save_registry(registry)
+    
     def add_document(self, filename: str, source: str) -> bool:
         # Add a document to the registry AND upload file to HF Hub
         #
