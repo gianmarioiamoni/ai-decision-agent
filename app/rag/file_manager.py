@@ -287,6 +287,17 @@ class FileManager:
         
         print(f"✅ [FILE_MANAGER] Saved: {original_name} → {stored_name}")
         
+        # Sync to HF Hub if persistence is enabled
+        if self.hf_persistence:
+            print(f"[FILE_MANAGER] 📤 Syncing to HF Hub...")
+            # Add document to registry
+            self.hf_persistence.add_document(
+                filename=stored_name,
+                source_path=str(stored_path)
+            )
+            # Upload vectorstore (will be updated by vectorstore ingestion)
+            # Note: vectorstore upload happens after embedding in rag_service
+        
         # Refresh state to include new file
         self.refresh_state()
         
