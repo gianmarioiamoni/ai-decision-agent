@@ -244,7 +244,7 @@ def launch_real_ui():
     #     server_port=7860,
     #     show_api=False  # Disable API schema generation (causes issues in Gradio 5.9.1)
     # )
-    demo.launch()
+    demo.launch(theme=theme, ssr_mode=False)
 
 
 if __name__ == "__main__":
