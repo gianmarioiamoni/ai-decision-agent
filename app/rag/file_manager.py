@@ -293,7 +293,7 @@ class FileManager:
             # Add document to registry
             self.hf_persistence.add_document(
                 filename=stored_name,
-                source_path=str(stored_path)
+                source=str(stored_path)  # Fixed: parameter is 'source' not 'source_path'
             )
             # Upload vectorstore (will be updated by vectorstore ingestion)
             # Note: vectorstore upload happens after embedding in rag_service
