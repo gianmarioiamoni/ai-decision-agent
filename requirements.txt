@@ -14,7 +14,7 @@ chromadb>=0.6.0
 
 # UI (pinned for stability on HF Spaces)
 # gradio-client will be installed automatically as a dependency
-gradio==5.9.1
+gradio>=6.3.0
 
 # HF Hub (for persistent storage on HF Spaces)
 huggingface-hub>=0.20.0
