@@ -38,7 +38,7 @@ def handle_format_change(format_type):
     
     if _last_report_html is None:
         print(f"[REPORT] ⚠️ No report available yet")
-        return ""  # Return empty string instead of None for gr.File
+        return None  # Return None for gr.File when no file available
     
     try:
         file_path = save_report_for_download(_last_report_html, format_type)
@@ -47,7 +47,7 @@ def handle_format_change(format_type):
     
     except Exception as e:
         print(f"[REPORT] ❌ Failed to generate {format_type} report: {e}")
-        return ""  # Return empty string instead of None for gr.File
+        return None  # Return None for gr.File when generation fails
 
 
 def get_initial_report_file(report_html):
@@ -68,5 +68,5 @@ def get_initial_report_file(report_html):
         return save_report_for_download(report_html, "HTML")
     
     # Don't generate file for invalid/warning reports
-    return ""  # Return empty string instead of None for gr.File
+    return None  # Return None for gr.File for invalid reports
 
