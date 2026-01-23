@@ -73,7 +73,7 @@ def launch_real_ui():
         font=["Helvetica", "Arial", "sans-serif"]
     )
 
-    with gr.Blocks(theme=theme) as demo:
+    with gr.Blocks() as demo:
         # ------------------------
         # HF-SAFE SETTINGS
         # ------------------------
