@@ -239,11 +239,12 @@ def launch_real_ui():
         demo.queue()
 
     # Launch the Gradio interface
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        show_api=False  # Disable API schema generation (causes issues in Gradio 5.9.1)
-    )
+    # demo.launch(
+    #     server_name="0.0.0.0",
+    #     server_port=7860,
+    #     show_api=False  # Disable API schema generation (causes issues in Gradio 5.9.1)
+    # )
+    demo.launch(api_mode=False, share=False)
 
 
 if __name__ == "__main__":
