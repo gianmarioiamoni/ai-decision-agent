@@ -27,15 +27,15 @@ file_manager = get_file_manager()
 def get_files_status_text():
     #
     # Get formatted file list text for display.
+    # Note: Does NOT refresh state - just renders current in-memory state.
+    # This prevents overwriting _files after upload.
     #
     # Returns:
     #     Formatted text for gr.Textbox display
     #
     OperationLogger.status_text_requested()
     
-    # Refresh from disk
-    file_manager.refresh_state()
-    
+    # Just render current state (no refresh to preserve recently uploaded files)
     text = file_manager.render_files_text()
     
     OperationLogger.status_text_returned(len(text))
