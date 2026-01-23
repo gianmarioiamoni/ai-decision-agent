@@ -96,6 +96,9 @@ class HFPersistence:
         
         print(f"\n{'='*60}")
         print(f"☁️ Saving RAG document registry to HF Hub...")
+        print(f"📊 Registry to save: {len(registry)} documents")
+        for i, doc in enumerate(registry):
+            print(f"   {i+1}. {doc.get('filename', 'NO FILENAME')}")
         
         try:
             # Save to temp file first

@@ -109,6 +109,11 @@ class FileManager:
             
             registry = self.hf_persistence.load_registry()
             
+            print(f"[FILE_MANAGER] 📊 Registry contains {len(registry)} entries")
+            if registry:
+                for i, doc in enumerate(registry):
+                    print(f"[FILE_MANAGER]   Entry {i+1}: {doc.get('filename', 'NO FILENAME')} uploaded at {doc.get('uploaded_at', 'N/A')}")
+            
             # Convert registry format to internal _files format
             self._files = [
                 {
@@ -124,6 +129,9 @@ class FileManager:
             ]
             
             print(f"[FILE_MANAGER] ✅ Loaded {len(self._files)} file(s) from HF Hub")
+            if self._files:
+                for i, f in enumerate(self._files):
+                    print(f"[FILE_MANAGER]   File {i+1}: {f.get('name', 'unknown')}")
         except Exception as e:
             print(f"[FILE_MANAGER] ⚠️ Error loading from HF Hub: {e}")
             import traceback
@@ -284,7 +292,15 @@ class FileManager:
         #     Formatted text for Gradio Textbox
         #
         try:
+            print(f"\n[FILE_MANAGER] 📋 render_files_text() called")
+            print(f"[FILE_MANAGER] 📊 Current _files count: {len(self._files)}")
+            
+            if self._files:
+                for i, f in enumerate(self._files):
+                    print(f"[FILE_MANAGER]   {i+1}. {f.get('name', 'unknown')}")
+            
             if not self._files:
+                print(f"[FILE_MANAGER] ⚠️ No files in state, returning empty message")
                 return "📂 No files uploaded yet"
             
             lines = [
@@ -292,9 +308,13 @@ class FileManager:
                 for i, f in enumerate(self._files)
             ]
             
-            return "\n".join(lines)
+            result = "\n".join(lines)
+            print(f"[FILE_MANAGER] ✅ Rendered {len(lines)} file(s) for UI")
+            return result
         except Exception as e:
             print(f"[FILE_MANAGER] ⚠️ Error in render_files_text: {e}")
+            import traceback
+            traceback.print_exc()
             return "⚠️ Error loading file list"
     
     def render_storage_summary(self) -> str:
