@@ -31,7 +31,7 @@ def create_rag_file_input():
         value=[],  # Empty list for File upload (multiple files)
         file_types=[".txt", ".md", ".csv"],
         file_count="multiple",
-        label="rag_input",  # No internal label - using external title
+        label=None,  # No internal label - using external title
             
     )
     return rag_input
@@ -73,7 +73,7 @@ def create_rag_file_manager() -> Tuple:
     
     # File list display (always visible)
     files_list_display = gr.Textbox(
-        label="files_list_display",  # No internal label - using external title
+        label=None,  # No internal label - using external title
         value=initial_files_text,
         interactive=False,
         lines=6,

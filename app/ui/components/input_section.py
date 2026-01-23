@@ -43,7 +43,7 @@ def create_input_section(
     with gr.Row():
         with gr.Column(scale=1):
             # Input section title with icon
-            gr.Markdown("### ❓ Your Query")
+            gr.Markdown("### ❓ Your Question")
             question_input, submit_button = create_input_question()
         
         with gr.Column(scale=1):
