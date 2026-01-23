@@ -1,76 +1,51 @@
 # /app/graph/nodes/rag_node.py
 # Node to integrate Hybrid RAG support: contextual documents retrieval
 
-from typing import Dict, List
-from langchain_openai import OpenAIEmbeddings  # ✅ Correct import
-from langchain_chroma import Chroma
+from typing import Dict
 from app.graph.state import DecisionState
-
-def chunk_text(text: str, chunk_size: int = 300, overlap: int = 100) -> List[str]:
-    # Split text into overlapping chunks for better retrieval granularity.
-    #
-    # Args:
-    #     text: Text to chunk
-    #     chunk_size: Size of each chunk in characters (300 for better granularity)
-    #     overlap: Overlap between chunks (100 to preserve context)
-    #
-    # Returns:
-    #     List of text chunks
-    
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start = end - overlap
-    return chunks
+from app.rag.vectorstore_manager import get_vectorstore_manager
 
 def rag_node(state: DecisionState) -> Dict:
-    # Retrieve relevant information from uploaded context documents for Hybrid RAG.
+    # Retrieve relevant information from persistent vectorstore for Hybrid RAG.
     #
     # Args:
-    #     state: DecisionState containing context_docs (list of user-uploaded text)
+    #     state: DecisionState containing the question
     #
     # Returns:
     #     Dict containing 'rag_context': str (textual summary of retrieved chunks)
     #     and a message for traceability
     #
-    context_docs = state.get("context_docs", [])
+    # Get persistent vectorstore
+    vectorstore_manager = get_vectorstore_manager()
+    vectorstore = vectorstore_manager.get_vectorstore()
     
-    if not context_docs:
-        # No context provided, return empty string
+    # Check if vectorstore has any documents
+    try:
+        # Try a test query to check if vectorstore is populated
+        test_results = vectorstore.similarity_search("test", k=1)
+        if not test_results:
+            # Vectorstore is empty
+            return {
+                "rag_context": "",
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": "No context documents uploaded. Using general knowledge only."
+                    }
+                ]
+            }
+    except Exception as e:
+        # Vectorstore not initialized or empty
+        print(f"[RAG_NODE] ⚠️ Vectorstore check failed: {e}")
         return {
             "rag_context": "",
             "messages": [
                 {
                     "role": "assistant",
-                    "content": "No context documents uploaded. Using general knowledge only."
+                    "content": "No context documents available. Using general knowledge only."
                 }
             ]
         }
-    
-    # 🆕 Create fresh vectorstore for this invocation (not global)
-    embeddings = OpenAIEmbeddings()
-    context_vectordb = Chroma(embedding_function=embeddings)
-    
-    # 🆕 Chunk all documents before adding to vectorstore
-    all_chunks = []
-    all_metadata = []
-    
-    for doc_idx, doc in enumerate(context_docs, start=1):
-        doc_chunks = chunk_text(doc)
-        all_chunks.extend(doc_chunks)
-        
-        # Add metadata for each chunk (source tracking)
-        for chunk_idx in range(len(doc_chunks)):
-            all_metadata.append({
-                'source': f'ContextDoc_{doc_idx}',
-                'chunk_id': chunk_idx + 1,
-                'total_chunks': len(doc_chunks)
-            })
-    
-    # Add chunked documents to vectorstore with metadata
-    context_vectordb.add_texts(texts=all_chunks, metadatas=all_metadata)
     
     # Query embedding for the question
     question = state.get("question", "")
@@ -80,11 +55,10 @@ def rag_node(state: DecisionState) -> Dict:
     print("🔍 RAG DEBUG - RETRIEVAL PHASE")
     print("="*60)
     print(f"📝 Question: {question}")
-    print(f"📚 Total chunks in vectorstore: {len(all_chunks)}")
-    print(f"🎯 Retrieving top-5 most relevant chunks...")
+    print(f"🎯 Retrieving top-5 most relevant chunks from persistent vectorstore...")
     
-    # Retrieve top 5 relevant chunks (increased for better coverage)
-    retrieved = context_vectordb.similarity_search_with_score(question, k=5)
+    # Retrieve top 5 relevant chunks from persistent vectorstore
+    retrieved = vectorstore.similarity_search_with_score(question, k=5)
     
     # 🔍 RAG DEBUG - After retrieval
     print(f"✅ Retrieved {len(retrieved)} chunks")

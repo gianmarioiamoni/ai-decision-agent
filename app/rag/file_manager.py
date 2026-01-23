@@ -25,6 +25,7 @@ from datetime import datetime
 # Import HF persistence for cloud storage
 try:
     from app.rag.hf_persistence import get_hf_persistence
+    from app.rag.vectorstore_manager import get_vectorstore_manager
     HF_PERSISTENCE_AVAILABLE = True
     print("[FILE_MANAGER] ✅ HF persistence module imported successfully")
 except Exception as e:
@@ -295,8 +296,26 @@ class FileManager:
                 filename=stored_name,
                 source=str(stored_path)  # Fixed: parameter is 'source' not 'source_path'
             )
-            # Upload vectorstore (will be updated by vectorstore ingestion)
-            # Note: vectorstore upload happens after embedding in rag_service
+        
+        # Add document to vectorstore for RAG
+        try:
+            # Read document content
+            with open(stored_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Add to vectorstore with metadata
+            vectorstore_manager = get_vectorstore_manager()
+            vectorstore_manager.add_documents(
+                documents=[content],
+                metadatas=[{
+                    'filename': stored_name,
+                    'original_name': original_name,
+                    'timestamp': timestamp
+                }]
+            )
+            print(f"✅ [FILE_MANAGER] Document added to vectorstore: {stored_name}")
+        except Exception as e:
+            print(f"⚠️ [FILE_MANAGER] Failed to add document to vectorstore: {e}")
         
         # Refresh state to include new file
         self.refresh_state()
@@ -367,6 +386,7 @@ class FileManager:
     def clear_all_files(self) -> int:
         #
         # Delete all files (except .gitkeep) and update state.
+        # Also clears vectorstore and HF Hub registry.
         #
         # Returns:
         #     Number of files deleted
@@ -379,6 +399,23 @@ class FileManager:
                 count += 1
         
         print(f"🗑️ [FILE_MANAGER] Cleared {count} file(s)")
+        
+        # Clear vectorstore
+        try:
+            vectorstore_manager = get_vectorstore_manager()
+            vectorstore_manager.clear()
+            print(f"✅ [FILE_MANAGER] Vectorstore cleared")
+        except Exception as e:
+            print(f"⚠️ [FILE_MANAGER] Failed to clear vectorstore: {e}")
+        
+        # Clear HF Hub registry
+        if self.hf_persistence:
+            try:
+                self.hf_persistence.clear_registry()
+                print(f"✅ [FILE_MANAGER] HF Hub registry cleared")
+            except Exception as e:
+                print(f"⚠️ [FILE_MANAGER] Failed to clear HF Hub registry: {e}")
+        
         self.refresh_state()
         
         return count
