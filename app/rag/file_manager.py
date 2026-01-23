@@ -299,13 +299,19 @@ class FileManager:
         
         # Add document to vectorstore for RAG
         try:
+            print(f"[FILE_MANAGER] 📖 Reading document content from: {stored_path}")
             # Read document content
             with open(stored_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
+            print(f"[FILE_MANAGER] 📊 Document content length: {len(content)} chars")
+            
             # Add to vectorstore with metadata
+            print(f"[FILE_MANAGER] 🔧 Getting vectorstore manager...")
             vectorstore_manager = get_vectorstore_manager()
-            vectorstore_manager.add_documents(
+            
+            print(f"[FILE_MANAGER] ➕ Adding document to vectorstore...")
+            chunks_added = vectorstore_manager.add_documents(
                 documents=[content],
                 metadatas=[{
                     'filename': stored_name,
@@ -313,9 +319,11 @@ class FileManager:
                     'timestamp': timestamp
                 }]
             )
-            print(f"✅ [FILE_MANAGER] Document added to vectorstore: {stored_name}")
+            print(f"✅ [FILE_MANAGER] Document added to vectorstore: {stored_name} ({chunks_added} chunks)")
         except Exception as e:
             print(f"⚠️ [FILE_MANAGER] Failed to add document to vectorstore: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Refresh state to include new file
         self.refresh_state()

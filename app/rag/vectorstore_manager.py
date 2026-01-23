@@ -117,9 +117,19 @@ class VectorstoreManager:
                 all_metadatas.append(chunk_metadata)
         
         # Add to vectorstore
+        print(f"[VECTORSTORE] 💾 Adding {len(all_chunks)} chunks to Chroma...")
         vectorstore.add_texts(texts=all_chunks, metadatas=all_metadatas)
         
         print(f"[VECTORSTORE] ✅ Added {len(all_chunks)} chunks from {len(documents)} documents")
+        
+        # Force persist to disk before syncing to HF Hub
+        print(f"[VECTORSTORE] 💾 Persisting to disk...")
+        try:
+            # ChromaDB in newer versions doesn't have explicit persist()
+            # The data is automatically persisted when using persist_directory
+            pass
+        except Exception as e:
+            print(f"[VECTORSTORE] ⚠️ Persist warning: {e}")
         
         # Sync to HF Hub
         self._sync_to_hub()
@@ -190,12 +200,25 @@ class VectorstoreManager:
     def _sync_to_hub(self):
         # Sync vectorstore to HF Hub.
         
-        if self.hf_persistence and self.hf_persistence.api:
-            print(f"[VECTORSTORE] ☁️ Syncing to HF Hub...")
-            if self.hf_persistence.upload_vectorstore():
-                print(f"[VECTORSTORE] ✅ Synced to HF Hub")
+        if not self.hf_persistence:
+            print(f"[VECTORSTORE] ⚠️ HF persistence not available")
+            return
+        
+        if not self.hf_persistence.api:
+            print(f"[VECTORSTORE] ⚠️ HF API not initialized")
+            return
+        
+        try:
+            print(f"[VECTORSTORE] ☁️ Starting sync to HF Hub...")
+            success = self.hf_persistence.upload_vectorstore()
+            if success:
+                print(f"[VECTORSTORE] ✅ Successfully synced to HF Hub")
             else:
-                print(f"[VECTORSTORE] ⚠️ Failed to sync to HF Hub")
+                print(f"[VECTORSTORE] ⚠️ Sync to HF Hub returned False")
+        except Exception as e:
+            print(f"[VECTORSTORE] ❌ Exception during HF Hub sync: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _chunk_text(self, text: str, chunk_size: int = 300, overlap: int = 100) -> List[str]:
         # Split text into overlapping chunks.
