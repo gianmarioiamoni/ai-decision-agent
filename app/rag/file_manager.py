@@ -393,7 +393,7 @@ class FileManager:
         
         print(f"✅ [FILE_MANAGER] Saved: {original_name} → {stored_name}")
         
-        # Add to local state immediately (no HF Hub sync to avoid restart)
+        # Add to local state immediately
         self._files.append({
             "name": stored_name,
             "path": str(stored_path),
@@ -404,7 +404,17 @@ class FileManager:
         })
         
         print(f"[FILE_MANAGER] 📝 File added to local state")
-        print(f"[FILE_MANAGER] 💡 IMPORTANT: Click '🔄 Refresh List' to sync and enable RAG")
+        
+        # Embed file in vectorstore immediately (local only, no HF Hub sync)
+        try:
+            from app.rag.vectorstore_manager import get_vectorstore_manager
+            vectorstore_manager = get_vectorstore_manager()
+            print(f"[FILE_MANAGER] 🔄 Embedding file in local vectorstore...")
+            vectorstore_manager.add_documents_from_paths([str(stored_path)])
+            print(f"[FILE_MANAGER] ✅ File embedded and ready for RAG!")
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Failed to embed file: {e}")
+            print(f"[FILE_MANAGER] 💡 File saved but not yet available for RAG")
         
         return {
             "original_name": original_name,

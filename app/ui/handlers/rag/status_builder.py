@@ -29,7 +29,7 @@ class StatusMessageBuilder:
         #     Messaggio di status formattato
         #
         if saved_count > 0:
-            msg = f"✅ Saved {saved_count} file(s)"
+            msg = f"✅ Saved {saved_count} file(s) - Ready for RAG!"
             if failed_count > 0:
                 msg += f"\n⚠️ Failed: {failed_count} file(s)"
             return msg

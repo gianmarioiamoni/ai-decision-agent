@@ -134,18 +134,20 @@ def _process_upload_batch(uploaded_files):
 def handle_refresh():
     #
     # Handle refresh button click.
+    # Note: On HF Spaces (ephemeral storage), we DON'T reload from disk
+    # because files are already in memory and disk might be cleared.
+    # We just re-render the current in-memory state.
     #
     # Returns:
     #     Tuple of (storage_summary, files_list_text)
     #
     OperationLogger.refresh_started()
     
-    # Force refresh from disk
-    file_manager.refresh_state()
+    # DON'T call refresh_state() - it would clear _files on HF Spaces!
+    # Files are already in memory from upload and already embedded.
+    # Just re-render the current state.
     
-    # Sync files to vectorstore (deferred embedding)
-    print(f"[RAG_HANDLERS] 🔄 Triggering vectorstore sync...")
-    file_manager.sync_files_to_vectorstore()
+    print(f"[RAG_HANDLERS] 🔄 Re-rendering current state (no disk reload)")
     
     OperationLogger.refresh_complete()
     
