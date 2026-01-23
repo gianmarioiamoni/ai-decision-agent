@@ -154,38 +154,50 @@ class HFPersistence:
             "source": source
         })
         
-        # Save registry IMMEDIATELY
-        print(f"☁️ Saving registry FIRST (defensive persistence)...")
+        # Save registry IMMEDIATELY (this is FAST, single small JSON file)
+        print(f"☁️ Saving registry (file upload deferred to avoid restart)...")
         registry_saved = self.save_registry(registry)
         
         if not registry_saved:
-            print(f"⚠️ Failed to save registry, aborting upload")
+            print(f"⚠️ Failed to save registry")
             return False
         
-        # Upload the actual file to HF Hub (in "documents/" folder)
-        # This happens AFTER registry is saved, so even if this fails,
-        # we won't lose track of the file
-        if os.path.exists(source):
-            try:
-                print(f"☁️ Uploading file {filename} to HF Hub...")
-                upload_file(
-                    path_or_fileobj=source,
-                    path_in_repo=f"documents/{filename}",
-                    repo_id=f"{self.HF_USERNAME}/{self.HF_REPO}",
-                    repo_type="space",
-                    token=self.HF_TOKEN,
-                    commit_message=f"Add document: {filename}"
-                )
-                print(f"✅ File {filename} uploaded to HF Hub")
-                return True
-            except Exception as e:
-                print(f"⚠️ Failed to upload file {filename} to HF Hub: {e}")
-                # Registry is already saved, so we can recover later
-                return True  # Still return True since registry was saved
-        else:
+        # NOTE: File upload to HF Hub is DEFERRED to avoid asyncio conflicts
+        # The file will be uploaded during refresh/sync operations
+        # This makes upload instant and prevents app crashes
+        print(f"💡 File will be synced to HF Hub on next refresh")
+        
+        return True
+    
+    def upload_document_file(self, filename: str, source: str) -> bool:
+        # Upload a document file to HF Hub (deferred from add_document)
+        #
+        # Args:
+        #     filename: Name of the document file
+        #     source: Source path of the document on disk
+        #
+        # Returns:
+        #     True if successful, False otherwise
+        
+        if not os.path.exists(source):
             print(f"⚠️ Source file not found: {source}")
-            # Registry is already saved, so we can recover later
-            return True  # Still return True since registry was saved
+            return False
+        
+        try:
+            print(f"☁️ Uploading file {filename} to HF Hub...")
+            upload_file(
+                path_or_fileobj=source,
+                path_in_repo=f"documents/{filename}",
+                repo_id=f"{self.HF_USERNAME}/{self.HF_REPO}",
+                repo_type="space",
+                token=self.HF_TOKEN,
+                commit_message=f"Add document: {filename}"
+            )
+            print(f"✅ File {filename} uploaded to HF Hub")
+            return True
+        except Exception as e:
+            print(f"⚠️ Failed to upload file {filename} to HF Hub: {e}")
+            return False
     
     def download_document(self, filename: str, local_path: str) -> bool:
         # Download a document file from HF Hub

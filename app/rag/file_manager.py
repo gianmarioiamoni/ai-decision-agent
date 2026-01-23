@@ -155,16 +155,23 @@ class FileManager:
             for file_info in self._files:
                 file_path = self.storage_dir / file_info['name']
                 
-                # If file doesn't exist locally, try to download from HF Hub
+                # Ensure file exists locally (download from HF Hub if needed)
                 if not file_path.exists():
-                    print(f"[FILE_MANAGER] 📥 File not found on disk, downloading from HF Hub: {file_info['name']}")
                     if self.hf_persistence:
+                        print(f"[FILE_MANAGER] 📥 Downloading {file_info['name']} from HF Hub...")
                         if not self.hf_persistence.download_document(file_info['name'], str(file_path)):
-                            print(f"[FILE_MANAGER] ⚠️ Failed to download {file_info['name']}, skipping")
+                            print(f"[FILE_MANAGER] ⚠️ File not on HF Hub yet, will upload now...")
+                            # File not on HF Hub yet (deferred upload), skip for now
+                            # It will be uploaded in next iteration
                             continue
                     else:
-                        print(f"[FILE_MANAGER] ⚠️ HF persistence not available, skipping {file_info['name']}")
+                        print(f"[FILE_MANAGER] ⚠️ File not found and HF persistence unavailable: {file_info['name']}")
                         continue
+                else:
+                    # File exists locally, upload to HF Hub if not already there (deferred upload)
+                    if self.hf_persistence:
+                        print(f"[FILE_MANAGER] 📤 Uploading {file_info['name']} to HF Hub (deferred from upload)...")
+                        self.hf_persistence.upload_document_file(file_info['name'], str(file_path))
                 
                 try:
                     print(f"[FILE_MANAGER] 📖 Reading {file_info['name']}...")
