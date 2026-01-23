@@ -233,15 +233,15 @@ class HFPersistence:
             print(f"⚠️ Chroma directory not found: {self.CHROMA_DIR}")
             return False
         
-            try:
-                with tarfile.open(output_path, "w:gz") as tar:
-                    tar.add(str(self.CHROMA_DIR), arcname="chroma_db")
-                
-                size_mb = os.path.getsize(output_path) / (1024 * 1024)
-                print(f"✅ Compressed chroma_db to {output_path} ({size_mb:.2f} MB)")
-                return True
-            except Exception as e:
-                print(f"❌ Failed to compress chroma_db: {e}")
+        try:
+            with tarfile.open(output_path, "w:gz") as tar:
+                tar.add(str(self.CHROMA_DIR), arcname="chroma_db")
+            
+            size_mb = os.path.getsize(output_path) / (1024 * 1024)
+            print(f"✅ Compressed chroma_db to {output_path} ({size_mb:.2f} MB)")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to compress chroma_db: {e}")
             return False
     
     def _extract_chroma_archive(self, archive_path: str) -> bool:

@@ -70,10 +70,15 @@ def rag_node(state: DecisionState) -> Dict:
     
     # 🆕 Aggregate retrieved chunks with structured cognitive framing
     rag_context = "Use the following chunks in priority order (most relevant first):\n\n"
+    unique_sources = set()
+    
     for i, (doc, score) in enumerate(retrieved, start=1):
         # Metadata
-        doc_source = doc.metadata.get('source', f'Document_{i}')
+        doc_source = doc.metadata.get('filename', doc.metadata.get('source', f'Document_{i}'))
         chunk_id = doc.metadata.get('chunk_id', i)
+        
+        # Track unique document sources
+        unique_sources.add(doc_source)
         
         # Converting L2 distance to similarity score (0-1)
         # Lower distance = higher similarity
@@ -82,12 +87,15 @@ def rag_node(state: DecisionState) -> Dict:
         rag_context += f"[CHUNK {i}] Source: {doc_source} | Chunk ID: {chunk_id} | Similarity: {similarity:.2f}\n"
         rag_context += f"ORGANIZATIONAL FACT:\n{doc.page_content}\n\n"
     
+    # Count unique documents
+    num_documents = len(unique_sources)
+    
     return {
         "rag_context": rag_context.strip(),
         "messages": [
             {
                 "role": "assistant",
-                "content": f"📄 RAG Context: Retrieved {len(retrieved)} authoritative chunks from {len(context_docs)} uploaded document(s)"
+                "content": f"📄 RAG Context: Retrieved {len(retrieved)} authoritative chunks from {num_documents} uploaded document(s)"
             }
         ]
     }
