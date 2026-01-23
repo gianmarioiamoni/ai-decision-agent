@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Dict
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 from app.rag.hf_persistence import get_hf_persistence
 
