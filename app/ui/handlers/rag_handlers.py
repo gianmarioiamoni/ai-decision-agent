@@ -143,6 +143,10 @@ def handle_refresh():
     # Force refresh from disk
     file_manager.refresh_state()
     
+    # Sync files to vectorstore (deferred embedding)
+    print(f"[RAG_HANDLERS] 🔄 Triggering vectorstore sync...")
+    file_manager.sync_files_to_vectorstore()
+    
     OperationLogger.refresh_complete()
     
     return get_storage_summary(), get_files_status_text()
@@ -180,6 +184,10 @@ def init_ui_on_load():
     
     # Refresh from disk (in case files were added externally)
     file_manager.refresh_state()
+    
+    # Sync files to vectorstore (deferred embedding on app startup)
+    print(f"[RAG_HANDLERS] 🔄 Syncing files to vectorstore on app load...")
+    file_manager.sync_files_to_vectorstore()
     
     summary = get_storage_summary()
     files_text = get_files_status_text()

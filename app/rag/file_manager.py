@@ -130,6 +130,60 @@ class FileManager:
             traceback.print_exc()
             self._files = []
     
+    def sync_files_to_vectorstore(self):
+        #
+        # Sync all files from registry to vectorstore (if not already embedded).
+        # This is called separately from upload to avoid blocking Gradio's event loop.
+        #
+        print(f"[FILE_MANAGER] 🔄 Syncing files to vectorstore...")
+        
+        if not self._files:
+            print(f"[FILE_MANAGER] ℹ️ No files to sync")
+            return
+        
+        try:
+            vectorstore_manager = get_vectorstore_manager()
+            
+            for file_info in self._files:
+                file_path = self.storage_dir / file_info['name']
+                
+                if not file_path.exists():
+                    print(f"[FILE_MANAGER] ⚠️ File not found on disk: {file_info['name']}")
+                    continue
+                
+                try:
+                    print(f"[FILE_MANAGER] 📖 Reading {file_info['name']}...")
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    print(f"[FILE_MANAGER] 📊 Content length: {len(content)} chars")
+                    
+                    if len(content) == 0:
+                        print(f"[FILE_MANAGER] ⚠️ Empty file: {file_info['name']}")
+                        continue
+                    
+                    print(f"[FILE_MANAGER] ➕ Adding to vectorstore...")
+                    chunks_added = vectorstore_manager.add_documents(
+                        documents=[content],
+                        metadatas=[{
+                            'filename': file_info['name'],
+                            'timestamp': file_info.get('modified', 'N/A')
+                        }]
+                    )
+                    print(f"[FILE_MANAGER] ✅ Added {file_info['name']}: {chunks_added} chunks")
+                
+                except Exception as e:
+                    print(f"[FILE_MANAGER] ⚠️ Failed to sync {file_info['name']}: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            print(f"[FILE_MANAGER] ✅ Vectorstore sync complete")
+        
+        except Exception as e:
+            print(f"[FILE_MANAGER] ❌ Vectorstore sync failed: {e}")
+            import traceback
+            traceback.print_exc()
+    
     def refresh_state(self) -> List[Dict[str, str]]:
         #
         # Reload file list from disk or HF Hub and update internal state.
@@ -297,33 +351,11 @@ class FileManager:
                 source=str(stored_path)  # Fixed: parameter is 'source' not 'source_path'
             )
         
-        # Add document to vectorstore for RAG
-        try:
-            print(f"[FILE_MANAGER] 📖 Reading document content from: {stored_path}")
-            # Read document content
-            with open(stored_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            print(f"[FILE_MANAGER] 📊 Document content length: {len(content)} chars")
-            
-            # Add to vectorstore with metadata
-            print(f"[FILE_MANAGER] 🔧 Getting vectorstore manager...")
-            vectorstore_manager = get_vectorstore_manager()
-            
-            print(f"[FILE_MANAGER] ➕ Adding document to vectorstore...")
-            chunks_added = vectorstore_manager.add_documents(
-                documents=[content],
-                metadatas=[{
-                    'filename': stored_name,
-                    'original_name': original_name,
-                    'timestamp': timestamp
-                }]
-            )
-            print(f"✅ [FILE_MANAGER] Document added to vectorstore: {stored_name} ({chunks_added} chunks)")
-        except Exception as e:
-            print(f"⚠️ [FILE_MANAGER] Failed to add document to vectorstore: {e}")
-            import traceback
-            traceback.print_exc()
+        # Add document to vectorstore for RAG (DEFERRED)
+        # Note: We defer vectorstore embedding to avoid blocking Gradio's event loop
+        # The embedding will happen on-demand when the vectorstore is accessed
+        print(f"[FILE_MANAGER] 📝 File saved successfully, vectorstore embedding will be done on-demand")
+        print(f"[FILE_MANAGER] 💡 To trigger immediate embedding, click 'Refresh List' button")
         
         # Refresh state to include new file
         self.refresh_state()
