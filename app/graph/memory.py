@@ -94,7 +94,15 @@ def add_decision_to_chroma(question: str, decision_id: int, vectordb: Chroma):
 def retrieve_similar_decisions(question: str, vectordb: Chroma, top_k: int = 3) -> List[Dict]:
     # Retrieve top-k similar decisions for a new question using Chroma semantic search.
     # Returns list of dicts with decision_id and similarity score.
-    results = vectordb.similarity_search_with_score(question, k=top_k)
+    # Returns empty list if collection doesn't exist yet (first run).
+    
+    try:
+        results = vectordb.similarity_search_with_score(question, k=top_k)
+    except Exception as e:
+        # Collection doesn't exist yet (first run) or other error
+        print(f"[MEMORY] ⚠️ No historical decisions available yet: {e}")
+        return []
+    
     similar_decisions = []
     for doc, score in results:
         similar_decisions.append({

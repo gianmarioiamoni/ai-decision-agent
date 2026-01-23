@@ -1,29 +1,38 @@
 # app/ui/handlers/loaders/context_loader.py
 #
-# Loader for context documents from permanent storage.
-# Pure I/O operation without logging concerns.
+# Loader for context documents metadata.
+# Note: Actual documents are in persistent vectorstore, not loaded as text.
 #
 
 from typing import List
-from app.rag.file_manager import read_all_contents, get_storage_info
+from app.rag.file_manager import get_file_manager, get_storage_info
 
 
 class ContextLoader:
     """
-    Load context documents from permanent storage.
+    Provide context document metadata for prompt builders.
     
-    Responsibility: Single purpose - load documents from filesystem.
-    No logging, no formatting, pure I/O.
+    Responsibility: Signal whether documents exist (for prompt mode selection).
+    Actual document content is in vectorstore, not loaded here.
     """
     
     def load(self):
         """
-        Load all context documents from permanent storage.
+        Get placeholder list indicating if documents exist.
+        
+        This is used by prompt builders to decide between:
+        - "grounded" mode (documents exist)
+        - "generic" mode (no documents)
         
         Returns:
-            List of document content strings
+            List of empty strings (one per document) to signal document count
         """
-        return read_all_contents()
+        file_manager = get_file_manager()
+        file_count = len(file_manager._files)
+        
+        # Return empty strings as placeholders (one per file)
+        # Prompt builders only check if list is empty or not
+        return ["" for _ in range(file_count)]
     
     def get_storage_info(self) -> dict:
         """
