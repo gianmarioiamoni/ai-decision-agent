@@ -32,7 +32,7 @@ class HFPersistence:
     
     # Local paths
     PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-    CHROMA_DIR = PROJECT_ROOT / "chroma_memory"
+    CHROMA_DIR = PROJECT_ROOT / "chroma_db"  # RAG vectorstore (not chroma_memory)
     
     def __init__(self):
         try:
@@ -163,7 +163,7 @@ class HFPersistence:
     # ============ CHROMADB VECTORSTORE ============
     
     def _compress_chroma_dir(self, output_path: str) -> bool:
-        # Compress chroma_memory/ directory to .tar.gz
+        # Compress chroma_db/ directory to .tar.gz
         #
         # Args:
         #     output_path: Path where to save the .tar.gz archive
@@ -175,15 +175,15 @@ class HFPersistence:
             print(f"⚠️ Chroma directory not found: {self.CHROMA_DIR}")
             return False
         
-        try:
-            with tarfile.open(output_path, "w:gz") as tar:
-                tar.add(str(self.CHROMA_DIR), arcname="chroma_memory")
-            
-            size_mb = os.path.getsize(output_path) / (1024 * 1024)
-            print(f"✅ Compressed chroma_memory to {output_path} ({size_mb:.2f} MB)")
-            return True
-        except Exception as e:
-            print(f"❌ Failed to compress chroma_memory: {e}")
+            try:
+                with tarfile.open(output_path, "w:gz") as tar:
+                    tar.add(str(self.CHROMA_DIR), arcname="chroma_db")
+                
+                size_mb = os.path.getsize(output_path) / (1024 * 1024)
+                print(f"✅ Compressed chroma_db to {output_path} ({size_mb:.2f} MB)")
+                return True
+            except Exception as e:
+                print(f"❌ Failed to compress chroma_db: {e}")
             return False
     
     def _extract_chroma_archive(self, archive_path: str) -> bool:
@@ -199,14 +199,14 @@ class HFPersistence:
             with tarfile.open(archive_path, "r:gz") as tar:
                 tar.extractall(path=str(self.PROJECT_ROOT))
             
-            print(f"✅ Extracted chroma_memory from {archive_path}")
+            print(f"✅ Extracted chroma_db from {archive_path}")
             return True
         except Exception as e:
-            print(f"❌ Failed to extract chroma_memory: {e}")
+            print(f"❌ Failed to extract chroma_db: {e}")
             return False
     
     def upload_vectorstore(self) -> bool:
-        # Upload local chroma_memory/ to HF Hub
+        # Upload local chroma_db/ to HF Hub
         #
         # Returns:
         #     True if successful, False otherwise
@@ -214,9 +214,9 @@ class HFPersistence:
         print(f"\n{'='*60}")
         print(f"☁️ Uploading vectorstore to HF Hub...")
         
-        # Check if chroma_memory exists locally
+        # Check if chroma_db exists locally
         if not self.CHROMA_DIR.exists():
-            print(f"⚠️ No local chroma_memory to upload")
+            print(f"⚠️ No local chroma_db to upload")
             print(f"{'='*60}\n")
             return False
         
@@ -258,7 +258,7 @@ class HFPersistence:
             return False
     
     def download_vectorstore(self) -> bool:
-        # Download chroma_memory/ from HF Hub
+        # Download chroma_db/ from HF Hub
         #
         # Returns:
         #     True if successful, False otherwise
