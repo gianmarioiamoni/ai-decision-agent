@@ -146,7 +146,25 @@ class HFPersistence:
             print(f"⚠️ Document {filename} already in registry")
             return True
         
+        # CRITICAL: Add to registry FIRST (before file upload)
+        # This ensures registry is saved even if file upload fails
+        registry.append({
+            "filename": filename,
+            "uploaded_at": datetime.now().isoformat(),
+            "source": source
+        })
+        
+        # Save registry IMMEDIATELY
+        print(f"☁️ Saving registry FIRST (defensive persistence)...")
+        registry_saved = self.save_registry(registry)
+        
+        if not registry_saved:
+            print(f"⚠️ Failed to save registry, aborting upload")
+            return False
+        
         # Upload the actual file to HF Hub (in "documents/" folder)
+        # This happens AFTER registry is saved, so even if this fails,
+        # we won't lose track of the file
         if os.path.exists(source):
             try:
                 print(f"☁️ Uploading file {filename} to HF Hub...")
@@ -159,20 +177,15 @@ class HFPersistence:
                     commit_message=f"Add document: {filename}"
                 )
                 print(f"✅ File {filename} uploaded to HF Hub")
+                return True
             except Exception as e:
                 print(f"⚠️ Failed to upload file {filename} to HF Hub: {e}")
-                # Continue anyway, we'll at least have the registry
+                # Registry is already saved, so we can recover later
+                return True  # Still return True since registry was saved
         else:
             print(f"⚠️ Source file not found: {source}")
-        
-        # Add to registry
-        registry.append({
-            "filename": filename,
-            "uploaded_at": datetime.now().isoformat(),
-            "source": source
-        })
-        
-        return self.save_registry(registry)
+            # Registry is already saved, so we can recover later
+            return True  # Still return True since registry was saved
     
     def download_document(self, filename: str, local_path: str) -> bool:
         # Download a document file from HF Hub
