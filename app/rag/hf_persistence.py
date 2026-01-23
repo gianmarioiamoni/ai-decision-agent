@@ -127,11 +127,11 @@ class HFPersistence:
             return False
     
     def add_document(self, filename: str, source: str) -> bool:
-        # Add a document to the registry
+        # Add a document to the registry AND upload file to HF Hub
         #
         # Args:
         #     filename: Name of the document file
-        #     source: Source path of the document
+        #     source: Source path of the document on disk
         #
         # Returns:
         #     True if successful, False otherwise
@@ -143,7 +143,26 @@ class HFPersistence:
             print(f"⚠️ Document {filename} already in registry")
             return True
         
-        # Add new document
+        # Upload the actual file to HF Hub (in "documents/" folder)
+        if os.path.exists(source):
+            try:
+                print(f"☁️ Uploading file {filename} to HF Hub...")
+                upload_file(
+                    path_or_fileobj=source,
+                    path_in_repo=f"documents/{filename}",
+                    repo_id=f"{self.HF_USERNAME}/{self.HF_REPO}",
+                    repo_type="space",
+                    token=self.HF_TOKEN,
+                    commit_message=f"Add document: {filename}"
+                )
+                print(f"✅ File {filename} uploaded to HF Hub")
+            except Exception as e:
+                print(f"⚠️ Failed to upload file {filename} to HF Hub: {e}")
+                # Continue anyway, we'll at least have the registry
+        else:
+            print(f"⚠️ Source file not found: {source}")
+        
+        # Add to registry
         registry.append({
             "filename": filename,
             "uploaded_at": datetime.now().isoformat(),
@@ -151,6 +170,45 @@ class HFPersistence:
         })
         
         return self.save_registry(registry)
+    
+    def download_document(self, filename: str, local_path: str) -> bool:
+        # Download a document file from HF Hub
+        #
+        # Args:
+        #     filename: Name of the document file
+        #     local_path: Local path where to save the downloaded file
+        #
+        # Returns:
+        #     True if successful, False otherwise
+        
+        if not self.api:
+            print(f"⚠️ HF Hub API not initialized")
+            return False
+        
+        try:
+            print(f"☁️ Downloading {filename} from HF Hub...")
+            file_path = hf_hub_download(
+                repo_id=f"{self.HF_USERNAME}/{self.HF_REPO}",
+                filename=f"documents/{filename}",
+                repo_type="space",
+                token=self.HF_TOKEN,
+                local_dir_use_symlinks=False
+            )
+            
+            # Copy to desired location
+            import shutil
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            shutil.copy2(file_path, local_path)
+            
+            print(f"✅ Downloaded {filename} to {local_path}")
+            return True
+            
+        except Exception as e:
+            if "404" in str(e) or "Entry Not Found" in str(e):
+                print(f"📭 File {filename} not found on HF Hub")
+            else:
+                print(f"⚠️ Error downloading {filename}: {e}")
+            return False
     
     def clear_registry(self) -> bool:
         # Clear all documents from the registry

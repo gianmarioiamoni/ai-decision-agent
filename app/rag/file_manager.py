@@ -147,9 +147,16 @@ class FileManager:
             for file_info in self._files:
                 file_path = self.storage_dir / file_info['name']
                 
+                # If file doesn't exist locally, try to download from HF Hub
                 if not file_path.exists():
-                    print(f"[FILE_MANAGER] ⚠️ File not found on disk: {file_info['name']}")
-                    continue
+                    print(f"[FILE_MANAGER] 📥 File not found on disk, downloading from HF Hub: {file_info['name']}")
+                    if self.hf_persistence:
+                        if not self.hf_persistence.download_document(file_info['name'], str(file_path)):
+                            print(f"[FILE_MANAGER] ⚠️ Failed to download {file_info['name']}, skipping")
+                            continue
+                    else:
+                        print(f"[FILE_MANAGER] ⚠️ HF persistence not available, skipping {file_info['name']}")
+                        continue
                 
                 try:
                     print(f"[FILE_MANAGER] 📖 Reading {file_info['name']}...")
