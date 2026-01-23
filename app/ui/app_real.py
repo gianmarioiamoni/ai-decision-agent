@@ -13,6 +13,7 @@
 # - Handlers: Return new values for components
 # - FileManager: Backend state singleton
 #
+import os
 import gradio as gr
 
 # Import UI components
@@ -73,6 +74,11 @@ def launch_real_ui():
     )
 
     with gr.Blocks(theme=theme) as demo:
+        # ------------------------
+        # HF-SAFE SETTINGS
+        # ------------------------
+        demo.api_mode = False  # Disable automatic generation of /api_info
+
         # Header
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
 
@@ -228,8 +234,9 @@ def launch_real_ui():
             outputs=[report_download_output]
         )
 
-    # Enable queue for streaming functionality
-    demo.queue()
+    # Enable queue for streaming functionality only if NOT on HF Spaces
+    if not os.getenv("HF_SPACE_ID"):
+        demo.queue()
 
     # Launch the Gradio interface
     demo.launch(
@@ -241,4 +248,3 @@ def launch_real_ui():
 
 if __name__ == "__main__":
     launch_real_ui()
-
