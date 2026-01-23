@@ -131,6 +131,27 @@ class VectorstoreManager:
         
         print(f"[VECTORSTORE] 🗑️ Clearing vectorstore...")
         
+        # Close existing vectorstore connection
+        if self._vectorstore is not None:
+            try:
+                # ChromaDB doesn't have explicit close, just reset reference
+                self._vectorstore = None
+            except Exception as e:
+                print(f"[VECTORSTORE] ⚠️ Error closing vectorstore: {e}")
+        
+        # Remove chroma_db directory completely
+        import shutil
+        if self.chroma_dir.exists():
+            try:
+                shutil.rmtree(self.chroma_dir)
+                print(f"[VECTORSTORE] 🗑️ Removed directory: {self.chroma_dir}")
+            except Exception as e:
+                print(f"[VECTORSTORE] ⚠️ Error removing directory: {e}")
+        
+        # Recreate empty directory
+        self.chroma_dir.mkdir(parents=True, exist_ok=True)
+        print(f"[VECTORSTORE] 📁 Recreated empty directory: {self.chroma_dir}")
+        
         # Reinitialize empty vectorstore
         self._vectorstore = Chroma(
             persist_directory=str(self.chroma_dir),
@@ -141,7 +162,11 @@ class VectorstoreManager:
         
         # Clear on HF Hub
         if self.hf_persistence and self.hf_persistence.api:
-            self.hf_persistence.clear_remote_vectorstore()
+            try:
+                self.hf_persistence.clear_remote_vectorstore()
+                print(f"[VECTORSTORE] ☁️ Cleared from HF Hub")
+            except Exception as e:
+                print(f"[VECTORSTORE] ⚠️ Error clearing HF Hub: {e}")
         
         print(f"[VECTORSTORE] ✅ Cleared")
     
