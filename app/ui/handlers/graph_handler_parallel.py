@@ -33,9 +33,6 @@ from .loaders import ContextLoader, ContextLogger
 # Import markdown conversion for streaming display
 from app.ui.utils.markdown_utils import md_to_plain_text
 
-# LangChain parallel execution
-from langchain_core.runnables import RunnableParallel, RunnableLambda
-
 
 def run_graph_parallel_streaming(
     question,
@@ -128,76 +125,36 @@ def run_graph_parallel_streaming(
         print("🚀 PARALLEL STREAMING EXECUTION: Planner + Analyzer")
         print("="*60 + "\n")
         
-        # Use threading to stream both generators in parallel
-        import threading
-        from queue import Queue
+        # HF-SAFE: Use generator-based streaming (no threading, no asyncio.run)
+        # Collect iterators first
+        planner_gen = planner_node_stream(question, context_docs)
+        analyzer_gen = analyzer_independent_stream(
+            question,
+            state["rag_context"],
+            state["retrieved_docs"]
+        )
         
-        # Queues to collect chunks from both streams
-        planner_queue = Queue()
-        analyzer_queue = Queue()
-        
-        # Thread functions
-        def stream_planner():
-            try:
-                for chunk in planner_node_stream(question, context_docs):
-                    planner_queue.put(("chunk", chunk))
-                planner_queue.put(("done", None))
-            except Exception as e:
-                planner_queue.put(("error", str(e)))
-        
-        def stream_analyzer():
-            try:
-                for chunk in analyzer_independent_stream(
-                    question,
-                    state["rag_context"],
-                    state["retrieved_docs"]
-                ):
-                    analyzer_queue.put(("chunk", chunk))
-                analyzer_queue.put(("done", None))
-            except Exception as e:
-                analyzer_queue.put(("error", str(e)))
-        
-        # Start both threads
-        planner_thread = threading.Thread(target=stream_planner)
-        analyzer_thread = threading.Thread(target=stream_analyzer)
-        
-        planner_thread.start()
-        analyzer_thread.start()
-        
-        # Collect chunks from both streams in parallel
+        # Accumulate results from both streams
         plan_accumulated = ""
         analysis_accumulated = ""
         planner_done = False
         analyzer_done = False
         
-        import time
-        
+        # Interleave iteration (pseudo-parallel for UI updates)
         while not (planner_done and analyzer_done):
-            # Check planner queue
+            # Get next chunk from planner
             if not planner_done:
                 try:
-                    msg_type, data = planner_queue.get(timeout=0.1)
-                    if msg_type == "chunk":
-                        plan_accumulated = data
-                    elif msg_type == "done":
-                        planner_done = True
-                    elif msg_type == "error":
-                        raise Exception(f"Planner error: {data}")
-                except:
-                    pass  # Queue empty, continue
+                    plan_accumulated = next(planner_gen)
+                except StopIteration:
+                    planner_done = True
             
-            # Check analyzer queue
+            # Get next chunk from analyzer
             if not analyzer_done:
                 try:
-                    msg_type, data = analyzer_queue.get(timeout=0.1)
-                    if msg_type == "chunk":
-                        analysis_accumulated = data
-                    elif msg_type == "done":
-                        analyzer_done = True
-                    elif msg_type == "error":
-                        raise Exception(f"Analyzer error: {data}")
-                except:
-                    pass  # Queue empty, continue
+                    analysis_accumulated = next(analyzer_gen)
+                except StopIteration:
+                    analyzer_done = True
             
             # Convert markdown to plain text for consistent UI display
             # (State will keep original markdown for HTML report generation)
@@ -224,10 +181,6 @@ def run_graph_parallel_streaming(
             )
             
             time.sleep(0.05)  # Small delay to avoid excessive updates
-        
-        # Wait for threads to complete
-        planner_thread.join()
-        analyzer_thread.join()
         
         print("\n" + "="*60)
         print("✅ PARALLEL STREAMING COMPLETE")

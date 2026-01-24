@@ -234,16 +234,17 @@ def launch_real_ui():
             outputs=[report_download_output]
         )
 
-    # Enable queue for streaming functionality only if NOT on HF Spaces
-    if not os.getenv("HF_SPACE_ID"):
-        demo.queue()
+    # ========================================
+    # ALWAYS ENABLE QUEUE (HF-SAFE)
+    # ========================================
+    # Required for streaming/async/generator functions
+    # HF Spaces REQUIRES queue() when using LangGraph/streaming
+    demo.queue(
+        default_concurrency_limit=1,  # Process one request at a time (safer for HF)
+        max_size=32  # Max queued requests
+    )
 
     # Launch the Gradio interface
-    # demo.launch(
-    #     server_name="0.0.0.0",
-    #     server_port=7860,
-    #     show_api=False  # Disable API schema generation (causes issues in Gradio 5.9.1)
-    # )
     demo.launch(theme=theme, ssr_mode=False)
 
 
