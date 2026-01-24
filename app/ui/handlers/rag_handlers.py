@@ -177,8 +177,9 @@ def handle_clear_files():
 def init_ui_on_load():
     #
     # Initialize UI on page load/reload.
-    # Note: On HF Spaces (ephemeral storage), we DON'T reload from disk
-    # to preserve files uploaded during the session.
+    # 
+    # On first app startup: load files from persistent storage (disk or HF Hub)
+    # On page reload: preserve in-memory state to avoid clearing uploaded files
     #
     # Returns:
     #     Tuple of (storage_summary, files_list_text)
@@ -186,11 +187,19 @@ def init_ui_on_load():
 
     OperationLogger.init_started()
     
-    # DON'T call refresh_state() on reload - it would clear in-memory files!
-    # Files are preserved in memory during the session.
-    # On first app startup, _files is empty anyway.
+    # Check if this is first app startup or page reload
+    # If FileManager has no files in memory, try to load from storage
+    from app.rag.file_manager import get_file_manager
+    file_manager = get_file_manager()
     
-    print(f"[RAG_HANDLERS] ℹ️ Init UI - preserving in-memory file state")
+    if not file_manager._files:
+        # First startup or after clear: load from storage
+        print(f"[RAG_HANDLERS] 🔄 First startup: loading files from storage...")
+        file_manager.refresh_state()
+        print(f"[RAG_HANDLERS] ✅ Loaded {len(file_manager._files)} file(s) from storage")
+    else:
+        # Page reload: preserve in-memory state
+        print(f"[RAG_HANDLERS] ℹ️ Page reload: preserving {len(file_manager._files)} in-memory file(s)")
     
     summary = get_storage_summary()
     files_text = get_files_status_text()

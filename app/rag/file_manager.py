@@ -516,36 +516,47 @@ class FileManager:
         # Returns:
         #     Number of files deleted
         #
+        print(f"\n[FILE_MANAGER] 🗑️ Starting clear_all_files...")
         count = 0
         
-        for file_path in self.storage_dir.iterdir():
-            if file_path.is_file() and file_path.name != '.gitkeep':
-                file_path.unlink()
-                count += 1
+        # First: Clear in-memory state
+        print(f"[FILE_MANAGER] 📝 Clearing in-memory state ({len(self._files)} files)")
+        self._files = []
         
-        print(f"🗑️ [FILE_MANAGER] Cleared {count} file(s)")
+        # Second: Delete physical files
+        try:
+            for file_path in self.storage_dir.iterdir():
+                if file_path.is_file() and file_path.name != '.gitkeep':
+                    try:
+                        file_path.unlink()
+                        count += 1
+                        print(f"[FILE_MANAGER]   ✅ Deleted: {file_path.name}")
+                    except Exception as e:
+                        print(f"[FILE_MANAGER]   ⚠️ Failed to delete {file_path.name}: {e}")
+            
+            print(f"[FILE_MANAGER] ✅ Deleted {count} file(s) from disk")
+        except Exception as e:
+            print(f"[FILE_MANAGER] ⚠️ Error during file deletion: {e}")
         
-        # Clear vectorstore
+        # Third: Clear vectorstore
         try:
             vectorstore_manager = get_vectorstore_manager()
             vectorstore_manager.clear()
-            print(f"✅ [FILE_MANAGER] Vectorstore cleared")
-            
-            # Reset singleton to ensure fresh initialization on next use
-            reset_vectorstore_singleton()
-            print(f"✅ [FILE_MANAGER] Vectorstore singleton reset")
+            print(f"[FILE_MANAGER] ✅ Vectorstore cleared")
         except Exception as e:
-            print(f"⚠️ [FILE_MANAGER] Failed to clear vectorstore: {e}")
+            print(f"[FILE_MANAGER] ⚠️ Failed to clear vectorstore: {e}")
+            import traceback
+            traceback.print_exc()
         
-        # Clear HF Hub registry
+        # Fourth: Clear HF Hub registry (if available)
         if self.hf_persistence:
             try:
                 self.hf_persistence.clear_registry()
-                print(f"✅ [FILE_MANAGER] HF Hub registry cleared")
+                print(f"[FILE_MANAGER] ✅ HF Hub registry cleared")
             except Exception as e:
-                print(f"⚠️ [FILE_MANAGER] Failed to clear HF Hub registry: {e}")
+                print(f"[FILE_MANAGER] ⚠️ Failed to clear HF Hub registry: {e}")
         
-        self.refresh_state()
+        print(f"[FILE_MANAGER] 🎉 Clear complete! Removed {count} file(s)\n")
         
         return count
 
