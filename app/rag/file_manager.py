@@ -399,6 +399,19 @@ class FileManager:
         })
         
         print(f"[FILE_MANAGER] 📝 File added to local state")
+
+        # Persist registry entry to HF Hub (SAFE)
+        if self.hf_persistence:
+            try:
+                print(f"[FILE_MANAGER] 📝 Registering {stored_name} in HF Hub registry")
+                self.hf_persistence.add_document_to_registry_only(
+                    filename=stored_name,
+                    source=str(stored_path)
+                )
+                print(f"[FILE_MANAGER] ✅ Registered {stored_name} in HF Hub registry")
+            except Exception as e:
+                print(f"[FILE_MANAGER] ⚠️ Failed to update HF registry: {e}")
+
         
         # Embed file in vectorstore immediately (local only, no HF Hub sync)
         try:
