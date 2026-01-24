@@ -8,23 +8,27 @@ from .base_formatter import BaseFormatter
 
 
 class HistoricalFormatter(BaseFormatter):
-    """
-    Format historical decisions into HTML cards.
-    
-    Responsibility: Convert list of similar decisions to styled HTML representation.
-    """
+    # Format historical decisions into HTML cards.
+    #
+    # Args:
+    #     similar_decisions: List of similar decision dictionaries
+    #         Expected keys: decision_id, similarity, content
+    #
+    # Returns:
+    #     HTML-formatted historical decisions string
+    #
+    # Responsibility: Convert list of similar decisions to styled HTML representation.
     
     def format(self, similar_decisions):
-        """
-        Format historical decisions into HTML.
-        
-        Args:
-            similar_decisions: List of similar decision dictionaries
-                Expected keys: decision_id, similarity, content
-        
-        Returns:
-            HTML-formatted historical decisions string
-        """
+        # Format historical decisions into HTML.
+        #
+        # Args:
+        #     similar_decisions: List of similar decision dictionaries
+        #         Expected keys: decision_id, similarity, content
+        #
+        # Returns:
+        #     HTML-formatted historical decisions string
+        #
         if not similar_decisions:
             return "<p style='color: gray;'>No similar historical decisions found.</p>"
         
@@ -36,15 +40,14 @@ class HistoricalFormatter(BaseFormatter):
         return "".join(cards)
     
     def _create_decision_card(self, decision):
-        """
-        Create HTML card for a single decision.
-        
-        Args:
-            decision: Decision dictionary with id, similarity, content
-        
-        Returns:
-            HTML string for decision card
-        """
+        # Create HTML card for a single decision.
+        #
+        # Args:
+        #     decision: Decision dictionary with id, similarity, content
+        #
+        # Returns:
+        #     HTML string for decision card
+        #
         decision_id = decision.get('decision_id', 'Unknown')
         similarity = decision.get('similarity', 0.0)
         content = decision.get('content', '')

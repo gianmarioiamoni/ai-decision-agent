@@ -105,11 +105,21 @@ def retrieve_similar_decisions(question: str, vectordb: Chroma, top_k: int = 3) 
     
     similar_decisions = []
     for doc, score in results:
+        decision_id = doc.metadata.get("decision_id")
+        # Filter out invalid decision_ids (0 or None) - legacy data issue
+        if decision_id is None or decision_id == 0:
+            print(f"[MEMORY] ⚠️ Skipping decision with invalid ID: {decision_id}")
+            continue
+        
         similar_decisions.append({
-            "decision_id": doc.metadata.get("decision_id"),
+            "decision_id": decision_id,
             "similarity": score,
             "content": doc.page_content
         })
+    
+    if similar_decisions:
+        print(f"[MEMORY] 📚 Retrieved {len(similar_decisions)} similar past decisions")
+    
     return similar_decisions
 
 # -----------------------------

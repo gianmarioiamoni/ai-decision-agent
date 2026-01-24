@@ -271,7 +271,6 @@ def run_graph_parallel_streaming(
         decision_messages = decision_result.pop("messages", [])
         state.update(decision_result)
         state["messages"].extend(decision_messages)
-        state["messages"].extend(decision_result.get("messages", []))
         
         # ==================================================================
         # PHASE 6: SUMMARIZE - Generate session report
