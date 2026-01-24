@@ -38,6 +38,7 @@ conda-env/
 *.swo
 *~
 .DS_Store
+.cursorignore
 
 # Jupyter Notebook
 .ipynb_checkpoints
