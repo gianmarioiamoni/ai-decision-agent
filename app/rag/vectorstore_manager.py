@@ -81,16 +81,21 @@ class VectorstoreManager:
     def add_documents(
         self,
         documents: List[str],
-        metadatas: List[Dict] = None
+        metadatas: List[Dict] = None,
+        sync_to_hub: bool = False
     ) -> int:
         # Add documents to vectorstore with chunking.
         # 
         # Args:
         #     documents: List of document texts
         #     metadatas: Optional list of metadata dicts
+        #     sync_to_hub: Whether to sync to HF Hub immediately (default: False)
         # 
         # Returns:
         #     Number of chunks added
+        # 
+        # Note: By default, sync_to_hub=False to prevent restart loops on HF Spaces.
+        #       The vectorstore is persisted locally and can be synced manually later.
         
         if not documents:
             return 0
@@ -131,8 +136,13 @@ class VectorstoreManager:
         except Exception as e:
             print(f"[VECTORSTORE] ⚠️ Persist warning: {e}")
         
-        # Sync to HF Hub
-        self._sync_to_hub()
+        # Sync to HF Hub only if requested (to prevent restart loops)
+        if sync_to_hub:
+            print(f"[VECTORSTORE] ☁️ Syncing to HF Hub...")
+            self._sync_to_hub()
+        else:
+            print(f"[VECTORSTORE] ℹ️ Skipping HF Hub sync (sync_to_hub=False)")
+            print(f"[VECTORSTORE] 💡 Vectorstore saved locally, will sync on next app restart")
         
         return len(all_chunks)
     

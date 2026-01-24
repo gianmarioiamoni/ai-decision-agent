@@ -428,10 +428,16 @@ class FileManager:
                 "uploaded_at": timestamp
             }
             
-            chunk_count = vectorstore_manager.add_documents([content], [metadata])
+            # Add to local vectorstore WITHOUT syncing to HF Hub (prevents restart)
+            chunk_count = vectorstore_manager.add_documents(
+                [content], 
+                [metadata],
+                sync_to_hub=False  # ← Critical: prevents restart loop!
+            )
             
             print(f"[FILE_MANAGER] ✅ File embedded! {chunk_count} chunks added to vectorstore")
             print(f"[FILE_MANAGER] 🎉 File ready for RAG!")
+            print(f"[FILE_MANAGER] 💡 Vectorstore saved locally, will sync to HF Hub on next app restart")
         except Exception as e:
             import traceback
             print(f"[FILE_MANAGER] ❌ Failed to embed file!")
