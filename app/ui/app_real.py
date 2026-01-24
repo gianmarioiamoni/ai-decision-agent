@@ -245,8 +245,13 @@ def launch_real_ui():
     )
 
     # Launch the Gradio interface
-    demo.launch(theme=theme, ssr_mode=False)
-
+    demo.launch(
+        theme=theme, 
+        server_name="0.0.0.0",
+        server_port=7860,
+        show_api=False,
+        ssr_mode=False
+    )
 
 if __name__ == "__main__":
     launch_real_ui()
