@@ -9,6 +9,7 @@ from typing import List, Dict
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.rag.hf_persistence import get_hf_persistence
 
@@ -241,12 +242,13 @@ class VectorstoreManager:
         # Returns:
         #     List of text chunks
         
-        chunks = []
-        start = 0
-        while start < len(text):
-            end = start + chunk_size
-            chunks.append(text[start:end])
-            start = end - overlap
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, 
+            overlap=overlap,
+            separators=["\n\n", "\n", " ", "", ".", "?", "!", ":", ";", ","]
+        )
+        chunks = text_splitter.split_text(text)
+        print(f"[VECTORSTORE] ✂️ Split text into {len(chunks)} chunks")
         return chunks
 
 

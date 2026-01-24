@@ -19,8 +19,15 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from datetime import datetime
+from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+from app.rag.loaders import load_and_chunk
+
+CHROMA_COLLECTION_NAME = "decision_agent_docs"
+CHROMA_PERSIST_DIR = "chroma_db"
+
 
 # Import HF persistence for cloud storage
 try:
@@ -132,6 +139,24 @@ class FileManager:
             import traceback
             traceback.print_exc()
             self._files = []
+
+    def _rebuild_vectorstore(self):
+        #
+        # Rebuild the vectorstore with the current files.
+        #
+        embeddings = OpenAIEmbeddings()
+
+        self.vectorstore = Chroma(
+            collection_name=CHROMA_COLLECTION_NAME,
+            embedding_function=embeddings,
+        )
+
+        for file in self._files:
+            docs = load_and_chunk(file)
+            self.vectorstore.add_documents(docs)
+
+        print(f"[FILE_MANAGER] ✅ Vectorstore rebuilt with documents")
+
     
     def sync_files_to_vectorstore(self):
         #
@@ -232,6 +257,12 @@ class FileManager:
         # On HF Spaces, load from HF Hub
         if self.hf_persistence:
             self._load_from_hf_hub()
+            
+            if self._files:
+                self._rebuild_vectorstore()
+            else:
+                print(f"[FILE_MANAGER] ⚠️ No files to rebuild vectorstore")
+            
             return self._files
         
         # Fallback to local filesystem (development mode)

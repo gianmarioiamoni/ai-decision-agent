@@ -1,8 +1,8 @@
 # app/graph/nodes/retriever.py
 from typing import Dict, List
-from langchain_openai import OpenAIEmbeddings
-from langchain_chroma import Chroma
+
 from app.graph.state import DecisionState
+from app.rag.file_manager import get_file_manager
 
 # Configuration constants
 CHROMA_COLLECTION_NAME = "decision_agent_docs"
@@ -12,13 +12,22 @@ CHROMA_PERSIST_DIR = "chroma_db"
 # This node retrieves relevant documents from ChromaDB
 # based on the question and the generated plan
 def retriever_node(state: DecisionState) -> Dict:
-    # Initialize embeddings and vector store (lazy initialization)
-    embeddings = OpenAIEmbeddings()
-    vectorstore = Chroma(
-        collection_name=CHROMA_COLLECTION_NAME,
-        embedding_function=embeddings,
-        persist_directory=CHROMA_PERSIST_DIR,
-    )
+    # Get file manager
+    file_manager = get_file_manager()
+    vectorstore = file_manager.get_vectorstore()
+
+    if not vectorstore:
+        print(f"[RETRIEVER_NODE] ⚠️ No vectorstore found")
+        return {
+            "retrieved_docs": [],
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "No vectorstore found"
+                }
+            ]
+        }
+    
     question = state.get("question")
     plan = state.get("plan")
 
