@@ -78,17 +78,12 @@ class FileManager:
             self.hf_persistence = None
         
         try:
-            # On HF Spaces, load from HF Hub instead of local filesystem
-            if self.hf_persistence:
-                print("[FILE_MANAGER] 🌐 Using HF Hub for storage")
-                self._load_from_hf_hub()
-            else:
-                # Fallback to local filesystem (development mode)
-                print("[FILE_MANAGER] 💾 Using local filesystem for storage")
-                self.storage_dir.mkdir(parents=True, exist_ok=True)
-                self.refresh_state()
+            # Always use local filesystem (no auto-load to prevent restart loops)
+            print("[FILE_MANAGER] 💾 Using local filesystem for storage")
+            self.storage_dir.mkdir(parents=True, exist_ok=True)
+            # Don't auto-load on init - will be loaded by init_ui_on_load if needed
             
-            print(f"[FILE_MANAGER] 🏗️ FileManager initialized with {len(self._files)} file(s)")
+            print(f"[FILE_MANAGER] 🏗️ FileManager initialized (ready for lazy loading)")
         except Exception as e:
             print(f"[FILE_MANAGER] ⚠️ Warning during initialization: {e}")
             import traceback
