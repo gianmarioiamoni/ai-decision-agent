@@ -409,14 +409,29 @@ class FileManager:
         try:
             from app.rag.vectorstore_manager import get_vectorstore_manager
             vectorstore_manager = get_vectorstore_manager()
+            
             print(f"[FILE_MANAGER] 🔄 Embedding file in local vectorstore...")
             print(f"[FILE_MANAGER] 📍 File path: {stored_path}")
             print(f"[FILE_MANAGER] 📊 File exists: {stored_path.exists()}")
             print(f"[FILE_MANAGER] 📏 File size: {stored_path.stat().st_size} bytes")
             
-            vectorstore_manager.add_documents_from_paths([str(stored_path)])
+            # Read file content
+            with open(stored_path, 'r', encoding='utf-8') as f:
+                content = f.read()
             
-            print(f"[FILE_MANAGER] ✅ File embedded and ready for RAG!")
+            print(f"[FILE_MANAGER] 📖 Read {len(content)} chars from file")
+            
+            # Add to vectorstore with metadata
+            metadata = {
+                "filename": stored_name,
+                "original_name": original_name,
+                "uploaded_at": timestamp
+            }
+            
+            chunk_count = vectorstore_manager.add_documents([content], [metadata])
+            
+            print(f"[FILE_MANAGER] ✅ File embedded! {chunk_count} chunks added to vectorstore")
+            print(f"[FILE_MANAGER] 🎉 File ready for RAG!")
         except Exception as e:
             import traceback
             print(f"[FILE_MANAGER] ❌ Failed to embed file!")
