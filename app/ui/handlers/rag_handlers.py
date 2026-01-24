@@ -192,14 +192,9 @@ def init_ui_on_load():
     from app.rag.file_manager import get_file_manager
     file_manager = get_file_manager()
     
-    if not file_manager._files:
-        # First startup or after clear: load from storage
-        print(f"[RAG_HANDLERS] 🔄 First startup: loading files from storage...")
-        file_manager.refresh_state()
-        print(f"[RAG_HANDLERS] ✅ Loaded {len(file_manager._files)} file(s) from storage")
-    else:
-        # Page reload: preserve in-memory state
-        print(f"[RAG_HANDLERS] ℹ️ Page reload: preserving {len(file_manager._files)} in-memory file(s)")
+    print(f"[RAG_HANDLERS] 🔄 Rehydrating FileManager state from persistent storage...")
+    file_manager.refresh_state()
+    print(f"[RAG_HANDLERS] ✅ Loaded {len(file_manager.get_files())} file(s) from storage")
     
     summary = get_storage_summary()
     files_text = get_files_status_text()
