@@ -410,11 +410,19 @@ class FileManager:
             from app.rag.vectorstore_manager import get_vectorstore_manager
             vectorstore_manager = get_vectorstore_manager()
             print(f"[FILE_MANAGER] 🔄 Embedding file in local vectorstore...")
+            print(f"[FILE_MANAGER] 📍 File path: {stored_path}")
+            print(f"[FILE_MANAGER] 📊 File exists: {stored_path.exists()}")
+            print(f"[FILE_MANAGER] 📏 File size: {stored_path.stat().st_size} bytes")
+            
             vectorstore_manager.add_documents_from_paths([str(stored_path)])
+            
             print(f"[FILE_MANAGER] ✅ File embedded and ready for RAG!")
         except Exception as e:
-            print(f"[FILE_MANAGER] ⚠️ Failed to embed file: {e}")
-            print(f"[FILE_MANAGER] 💡 File saved but not yet available for RAG")
+            import traceback
+            print(f"[FILE_MANAGER] ❌ Failed to embed file!")
+            print(f"[FILE_MANAGER] Error: {e}")
+            print(f"[FILE_MANAGER] Traceback:\n{traceback.format_exc()}")
+            print(f"[FILE_MANAGER] 💡 File saved but NOT available for RAG")
         
         return {
             "original_name": original_name,

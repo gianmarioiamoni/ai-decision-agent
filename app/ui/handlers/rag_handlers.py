@@ -177,6 +177,8 @@ def handle_clear_files():
 def init_ui_on_load():
     #
     # Initialize UI on page load/reload.
+    # Note: On HF Spaces (ephemeral storage), we DON'T reload from disk
+    # to preserve files uploaded during the session.
     #
     # Returns:
     #     Tuple of (storage_summary, files_list_text)
@@ -184,13 +186,11 @@ def init_ui_on_load():
 
     OperationLogger.init_started()
     
-    # Refresh from disk (in case files were added externally)
-    file_manager.refresh_state()
+    # DON'T call refresh_state() on reload - it would clear in-memory files!
+    # Files are preserved in memory during the session.
+    # On first app startup, _files is empty anyway.
     
-    # DO NOT sync to vectorstore on app load to avoid asyncio conflicts
-    # Embedding will happen on-demand during first query or manual refresh
-    print(f"[RAG_HANDLERS] ℹ️ Skipping vectorstore sync on app load (prevents restart loop)")
-    print(f"[RAG_HANDLERS] 💡 Embedding will happen automatically on first query")
+    print(f"[RAG_HANDLERS] ℹ️ Init UI - preserving in-memory file state")
     
     summary = get_storage_summary()
     files_text = get_files_status_text()
