@@ -249,7 +249,6 @@ def launch_real_ui():
         theme=theme, 
         server_name="0.0.0.0",
         server_port=7860,
-        show_api=False,
         ssr_mode=False
     )
 
