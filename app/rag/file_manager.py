@@ -175,6 +175,25 @@ class FileManager:
             "storage_path": str(self.storage_dir),
         }
 
+    def render_storage_summary(self) -> str:
+        #
+        # Render a human-readable storage summary for UI display.
+        #
+        # Returns:
+        #     str: Human-readable storage summary
+        #
+        info = self.get_storage_info()
+
+        if info["file_count"] == 0:
+            return "📂 No documents in RAG storage"
+
+        return (
+            f"📄 Documents: {info['file_count']}\n"
+            f"💾 Total size: {info['total_size_mb']} MB\n"
+            f"📁 Storage path: {info['storage_path']}"
+        )
+    
+
     # ------------------------------------------------------------------
     # DELETE / CLEAR
     # ------------------------------------------------------------------
