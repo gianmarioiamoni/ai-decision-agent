@@ -40,8 +40,10 @@ from .handlers.rag_handlers import (
     handle_clear_files
 )
 
-# Debug import removed - was interfering with Gradio API schema generation
-# from scripts.check_component_types import check_component_types
+# ========================================
+# GLOBAL VARIABLES
+# ========================================
+# RAG_BOOTSTRAPPED = False  # Flag to check if RAG has been bootstrapped
 
 # -----------------------------
 # Main UI Assembly
@@ -76,12 +78,8 @@ def launch_real_ui():
         font=["Helvetica", "Arial", "sans-serif"]
     )
 
-    # ========================================
-    # RAG BOOTSTRAP
-    # ========================================
-    _RAG_BOOTSTRAPPED = False  # Flag to check if RAG has been bootstrapped
     def bootstrap_rag():
-        
+
         global _RAG_BOOTSTRAPPED
         if _RAG_BOOTSTRAPPED:
             print(f"[RAG BOOTSTRAP] ⚠️ RAG already bootstrapped")
