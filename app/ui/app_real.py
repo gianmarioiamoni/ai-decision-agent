@@ -27,6 +27,9 @@ from .components.output_report import create_output_report
 from .components.report_preview_section import create_report_preview_section
 from .components.report_download_section import create_report_download_section
 
+from app.rag.file_manager import get_file_manager
+from app.rag.vectorstore_manager import get_vectorstore_manager
+
 # Import handlers
 from .handlers.graph_handler_parallel import run_graph_parallel_streaming
 from .handlers.report_format_handler import handle_format_change
@@ -72,6 +75,38 @@ def launch_real_ui():
         neutral_hue="slate",
         font=["Helvetica", "Arial", "sans-serif"]
     )
+
+    # ========================================
+    # RAG BOOTSTRAP
+    # ========================================
+    _RAG_BOOTSTRAPPED = False  # Flag to check if RAG has been bootstrapped
+    def bootstrap_rag():
+        
+        global _RAG_BOOTSTRAPPED
+        if _RAG_BOOTSTRAPPED:
+            print(f"[RAG BOOTSTRAP] ⚠️ RAG already bootstrapped")
+            return
+
+        print(f"[RAG BOOTSTRAP] 🚀 RAG BOOTSTRAP START")
+        
+        file_manager = get_file_manager()
+        vectorstore_manager = get_vectorstore_manager()
+
+        files = file_manager.refresh_state()
+        def read_file(path: str) -> str:
+            with open(path, "r", encoding="utf-8", errors="ignore") as file:
+                return file.read()
+
+        vectorstore_manager.ensure_indexed_files(
+            files=files, 
+            read_file_fn=read_file
+        )
+
+        print(f"[RAG BOOTSTRAP] ✅ RAG bootstrap completed")
+        _RAG_BOOTSTRAPPED = True
+
+    # 🔑 ONE-TIME RAG BOOTSTRAP
+    bootstrap_rag()
 
     with gr.Blocks() as demo:
         # ------------------------

@@ -74,6 +74,19 @@ class VectorstoreManager:
             persist_directory=str(self.chroma_dir),
             embedding_function=self._embeddings,
         )
+        
+        # Restore indexed files from metadata
+        try:
+            collection = self._vectorstore._collection
+            metadatas = collection.get(include=["metadatas"]).get("metadatas", [])
+
+            for meta in metadatas:
+                if meta and "filename" in meta:
+                    self._indexed_files.add(meta["filename"])
+
+            print(f"[VECTORSTORE] 🔁 Restored {len(self._indexed_files)} indexed files")
+        except Exception as e:
+            print(f"[VECTORSTORE] ⚠️ Could not restore indexed files: {e}")
 
         self._warmup()
         print("[VECTORSTORE] ✅ Vectorstore ready")
@@ -194,6 +207,45 @@ def get_vectorstore_manager() -> VectorstoreManager:
     if _vectorstore_instance is None:
         _vectorstore_instance = VectorstoreManager()
     return _vectorstore_instance
+
+def ensure_indexed_files(self, files, read_file_fn):
+    vectorstore = self.get_vectorstore()
+
+    newly_indexed = 0
+
+    for file in files:
+        filename = file.get("name")
+        path = file.get("path")
+
+        if not filename or not path:
+            continue
+
+        # 🔒 Already indexed → skip
+        if filename in self._indexed_files:
+            continue
+
+        print(f"[VECTORSTORE] 📄 Indexing missing file: {filename}")
+
+        try:
+            content = read_file_fn(path)
+        except Exception as e:
+            print(f"[VECTORSTORE] ⚠️ Failed reading {filename}: {e}")
+            continue
+
+        self.add_documents(
+            documents=[content],
+            metadatas=[{
+                "filename": filename,
+                "source": path,
+            }],
+            sync_to_hub=False,
+        )
+
+        self._indexed_files.add(filename)
+        newly_indexed += 1
+
+    print(f"[VECTORSTORE] ✅ Bootstrap complete: {newly_indexed} file(s) indexed")
+ 
 
 
 def reset_vectorstore_singleton():

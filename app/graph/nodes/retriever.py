@@ -2,32 +2,40 @@
 from typing import Dict, List
 
 from app.graph.state import DecisionState
-from app.rag.file_manager import get_file_manager
+from app.rag.vectorstore_manager import get_vectorstore_manager
 
-# Configuration constants
-CHROMA_COLLECTION_NAME = "decision_agent_docs"
-CHROMA_PERSIST_DIR = "chroma_db"
 
 # Retriever node
 # This node retrieves relevant documents from ChromaDB
 # based on the question and the generated plan
 def retriever_node(state: DecisionState) -> Dict:
-    # Get file manager
-    file_manager = get_file_manager()
-    vectorstore = file_manager.get_vectorstore()
+    #
+    # Retrieves relevant documents from the vectorstore based on the question and the generated plan.
+    #
+    # Args:
+    #     state: DecisionState containing the question and the generated plan
+    #
+    # Returns:
+    #     Dict containing the retrieved documents and the messages
+    #
 
-    if not vectorstore:
-        print(f"[RETRIEVER_NODE] ⚠️ No vectorstore found")
+    try:
+        # Get vectorstore from vectorstore_manager
+        vectorstore_manager = get_vectorstore_manager()
+        vectorstore = vectorstore_manager.get_vectorstore()
+    except Exception as e:
+        print(f"[RETRIEVER_NODE] ❌ Vectorstore init failed: {e}")
         return {
             "retrieved_docs": [],
             "messages": [
                 {
                     "role": "assistant",
-                    "content": "No vectorstore found"
+                    "content": f"Vectorsotre not available: {e}"
                 }
             ]
         }
     
+    # Get question and plan from state
     question = state.get("question")
     plan = state.get("plan")
 
@@ -37,7 +45,7 @@ def retriever_node(state: DecisionState) -> Dict:
     # Build the retrieval query
     # The plan is used to enrich the semantic search when available
     if plan:
-        query = f"Question: {question}\nPlan: {plan}"
+        query = f"Question: {question}\n\nRelevant reasoning plan:\n{plan}"
     else:
         query = question
 
