@@ -1,11 +1,16 @@
 # app/rag/vectorstore_manager.py
 #
 # Manages persistent ChromaDB vectorstore with HF Hub synchronization.
-# Ensures RAG context is preserved across HF Space restarts.
+# Responsible ONLY for:
+# - chunking
+# - embeddings
+# - vectorstore persistence
+#
+# File ownership and registry are handled by FileManager.
 
-import os
 from pathlib import Path
 from typing import List, Dict
+
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
@@ -14,250 +19,177 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.rag.hf_persistence import get_hf_persistence
 
 
-# Singleton instance
+# ------------------------------------------------------------------
+# SINGLETON
+# ------------------------------------------------------------------
+
 _vectorstore_instance = None
 
 
 class VectorstoreManager:
-    # Manages persistent ChromaDB vectorstore with HF Hub sync.
-    # 
-    # Features:
-    # - Persistent local storage in chroma_db/
-    # - Automatic sync with HF Hub
-    # - Lazy loading (creates on first use)
-    # - Incremental updates when new files are added
-    
+    """
+    VectorstoreManager
+
+    Responsibilities:
+    - Persistent ChromaDB storage
+    - Text chunking
+    - Embedding generation
+    - Optional HF Hub sync
+
+    Does NOT:
+    - Know about files
+    - Manage registry
+    - Access filesystem documents
+    """
+
     def __init__(self):
-        # Initialize VectorstoreManager.
-        
-        # Paths
         self.project_root = Path(__file__).resolve().parent.parent.parent
         self.chroma_dir = self.project_root / "chroma_db"
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
-        
-        # HF persistence
+
         self.hf_persistence = get_hf_persistence()
-        
-        # Vectorstore (lazy init)
-        self._vectorstore = None
         self._embeddings = OpenAIEmbeddings()
-        
-        # Track indexed files
-        self._indexed_files = set()
-        
-        print(f"[VECTORSTORE] 📦 Initialized")
-        print(f"[VECTORSTORE] 📁 Local dir: {self.chroma_dir}")
-    
+        self._vectorstore: Chroma | None = None
+
+        print("[VECTORSTORE] 📦 Initialized")
+        print(f"[VECTORSTORE] 📁 Chroma dir: {self.chroma_dir}")
+
+    # ------------------------------------------------------------------
+    # INIT / LOAD
+    # ------------------------------------------------------------------
+
     def get_vectorstore(self) -> Chroma:
-        # Get or create the persistent vectorstore.
-        # 
-        # Returns:
-        #     Chroma vectorstore instance
-        
         if self._vectorstore is None:
             self._initialize_vectorstore()
         return self._vectorstore
-    
+
     def _initialize_vectorstore(self):
-        # Initialize vectorstore with HF Hub sync.
-        
-        print(f"\n[VECTORSTORE] 🔧 Initializing...")
-        
-        # Try to download from HF Hub if available
+        print("\n[VECTORSTORE] 🔧 Initializing vectorstore")
+
         if self.hf_persistence and self.hf_persistence.api:
-            print(f"[VECTORSTORE] 📥 Attempting to download from HF Hub...")
-            if self.hf_persistence.download_vectorstore():
-                print(f"[VECTORSTORE] ✅ Loaded from HF Hub")
-            else:
-                print(f"[VECTORSTORE] 📭 No existing vectorstore on HF Hub, starting fresh")
-        
-        # Create/load persistent vectorstore
+            print("[VECTORSTORE] ☁️ Attempting HF Hub download...")
+            self.hf_persistence.download_vectorstore()
+
         self._vectorstore = Chroma(
             persist_directory=str(self.chroma_dir),
-            embedding_function=self._embeddings
+            embedding_function=self._embeddings,
         )
-        
-        print(f"[VECTORSTORE] ✅ Vectorstore ready")
-    
+
+        self._warmup()
+        print("[VECTORSTORE] ✅ Vectorstore ready")
+
+    def _warmup(self):
+        try:
+            self._vectorstore.similarity_search(" ", k=1)
+            print("[VECTORSTORE] 🔥 Warmup completed")
+        except Exception as e:
+            print(f"[VECTORSTORE] ⚠️ Warmup skipped: {e}")
+
+    # ------------------------------------------------------------------
+    # ADD DOCUMENTS
+    # ------------------------------------------------------------------
+
     def add_documents(
         self,
         documents: List[str],
-        metadatas: List[Dict] = None,
-        sync_to_hub: bool = False
+        metadatas: List[Dict] | None = None,
+        sync_to_hub: bool = False,
     ) -> int:
-        # Add documents to vectorstore with chunking.
-        # 
-        # Args:
-        #     documents: List of document texts
-        #     metadatas: Optional list of metadata dicts
-        #     sync_to_hub: Whether to sync to HF Hub immediately (default: False)
-        # 
-        # Returns:
-        #     Number of chunks added
-        # 
-        # Note: By default, sync_to_hub=False to prevent restart loops on HF Spaces.
-        #       The vectorstore is persisted locally and can be synced manually later.
-        
         if not documents:
             return 0
-        
+
         vectorstore = self.get_vectorstore()
-        
-        # Chunk documents
-        all_chunks = []
-        all_metadatas = []
-        
-        for doc_idx, doc in enumerate(documents):
-            chunks = self._chunk_text(doc)
-            all_chunks.extend(chunks)
-            
-            # Create metadata for each chunk
-            base_metadata = metadatas[doc_idx] if metadatas else {}
-            for chunk_idx in range(len(chunks)):
-                chunk_metadata = {
-                    **base_metadata,
-                    'chunk_id': chunk_idx + 1,
-                    'total_chunks': len(chunks),
-                    'doc_index': doc_idx
-                }
-                all_metadatas.append(chunk_metadata)
-        
-        # Add to vectorstore
-        print(f"[VECTORSTORE] 💾 Adding {len(all_chunks)} chunks to Chroma...")
-        vectorstore.add_texts(texts=all_chunks, metadatas=all_metadatas)
-        
-        print(f"[VECTORSTORE] ✅ Added {len(all_chunks)} chunks from {len(documents)} documents")
-        
-        # Force persist to disk before syncing to HF Hub
-        print(f"[VECTORSTORE] 💾 Persisting to disk...")
-        try:
-            # ChromaDB in newer versions doesn't have explicit persist()
-            # The data is automatically persisted when using persist_directory
-            pass
-        except Exception as e:
-            print(f"[VECTORSTORE] ⚠️ Persist warning: {e}")
-        
-        # Sync to HF Hub only if requested (to prevent restart loops)
+
+        chunks: List[str] = []
+        chunk_metadatas: List[Dict] = []
+
+        for i, doc in enumerate(documents):
+            doc_chunks = self._chunk_text(doc)
+            chunks.extend(doc_chunks)
+
+            base_meta = metadatas[i] if metadatas else {}
+            for idx in range(len(doc_chunks)):
+                chunk_metadatas.append({
+                    **base_meta,
+                    "chunk_id": idx + 1,
+                    "total_chunks": len(doc_chunks),
+                    "doc_index": i,
+                })
+
+        print(f"[VECTORSTORE] 💾 Adding {len(chunks)} chunks")
+        vectorstore.add_texts(chunks, metadatas=chunk_metadatas)
+
         if sync_to_hub:
-            print(f"[VECTORSTORE] ☁️ Syncing to HF Hub...")
             self._sync_to_hub()
         else:
-            print(f"[VECTORSTORE] ℹ️ Skipping HF Hub sync (sync_to_hub=False)")
-            print(f"[VECTORSTORE] 💡 Vectorstore saved locally, will sync on next app restart")
-        
-        return len(all_chunks)
-    
+            print("[VECTORSTORE] ℹ️ HF sync skipped")
+
+        return len(chunks)
+
+    # ------------------------------------------------------------------
+    # SEARCH
+    # ------------------------------------------------------------------
+
+    def similarity_search(self, query: str, k: int = 5) -> List[Document]:
+        return self.get_vectorstore().similarity_search(query, k=k)
+
+    # ------------------------------------------------------------------
+    # CLEAR
+    # ------------------------------------------------------------------
+
     def clear(self):
-        # Clear all documents from vectorstore.
-        
-        print(f"[VECTORSTORE] 🗑️ Clearing vectorstore...")
-        
-        # Close existing vectorstore connection
-        if self._vectorstore is not None:
-            try:
-                # ChromaDB doesn't have explicit close, just reset reference
-                self._vectorstore = None
-            except Exception as e:
-                print(f"[VECTORSTORE] ⚠️ Error closing vectorstore: {e}")
-        
-        # Remove chroma_db directory completely
+        print("[VECTORSTORE] 🗑️ Clearing vectorstore")
+
         import shutil
+
+        self._vectorstore = None
+
         if self.chroma_dir.exists():
-            try:
-                shutil.rmtree(self.chroma_dir)
-                print(f"[VECTORSTORE] 🗑️ Removed directory: {self.chroma_dir}")
-            except Exception as e:
-                print(f"[VECTORSTORE] ⚠️ Error removing directory: {e}")
-        
-        # Recreate empty directory
+            shutil.rmtree(self.chroma_dir)
+
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
-        print(f"[VECTORSTORE] 📁 Recreated empty directory: {self.chroma_dir}")
-        
-        # Reinitialize empty vectorstore
-        self._vectorstore = Chroma(
-            persist_directory=str(self.chroma_dir),
-            embedding_function=self._embeddings
-        )
-        
-        self._indexed_files.clear()
-        
-        # Clear on HF Hub
+
         if self.hf_persistence and self.hf_persistence.api:
-            try:
-                self.hf_persistence.clear_remote_vectorstore()
-                print(f"[VECTORSTORE] ☁️ Cleared from HF Hub")
-            except Exception as e:
-                print(f"[VECTORSTORE] ⚠️ Error clearing HF Hub: {e}")
-        
-        print(f"[VECTORSTORE] ✅ Cleared")
-    
-    def similarity_search(
-        self,
-        query: str,
-        k: int = 5
-    ) -> List[Document]:
-        # Search for similar documents.
-        # 
-        # Args:
-        #     query: Search query
-        #     k: Number of results to return
-        # 
-        # Returns:
-        #     List of similar documents
-        
-        vectorstore = self.get_vectorstore()
-        return vectorstore.similarity_search(query, k=k)
-    
+            self.hf_persistence.clear_remote_vectorstore()
+
+        print("[VECTORSTORE] ✅ Cleared")
+
+    # ------------------------------------------------------------------
+    # HF SYNC
+    # ------------------------------------------------------------------
+
     def _sync_to_hub(self):
-        # Sync vectorstore to HF Hub.
-        
-        if not self.hf_persistence:
-            print(f"[VECTORSTORE] ⚠️ HF persistence not available")
+        if not self.hf_persistence or not self.hf_persistence.api:
             return
-        
-        if not self.hf_persistence.api:
-            print(f"[VECTORSTORE] ⚠️ HF API not initialized")
-            return
-        
-        try:
-            print(f"[VECTORSTORE] ☁️ Starting sync to HF Hub...")
-            success = self.hf_persistence.upload_vectorstore()
-            if success:
-                print(f"[VECTORSTORE] ✅ Successfully synced to HF Hub")
-            else:
-                print(f"[VECTORSTORE] ⚠️ Sync to HF Hub returned False")
-        except Exception as e:
-            print(f"[VECTORSTORE] ❌ Exception during HF Hub sync: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    def _chunk_text(self, text: str, chunk_size: int = 300, overlap: int = 100) -> List[str]:
-        # Split text into overlapping chunks.
-        # 
-        # Args:
-        #     text: Text to chunk
-        #     chunk_size: Size of each chunk
-        #     overlap: Overlap between chunks
-        # 
-        # Returns:
-        #     List of text chunks
-        
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, 
+
+        print("[VECTORSTORE] ☁️ Syncing to HF Hub")
+        self.hf_persistence.upload_vectorstore()
+
+    # ------------------------------------------------------------------
+    # CHUNKING
+    # ------------------------------------------------------------------
+
+    def _chunk_text(
+        self,
+        text: str,
+        chunk_size: int = 300,
+        overlap: int = 100,
+    ) -> List[str]:
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
             overlap=overlap,
-            separators=["\n\n", "\n", " ", "", ".", "?", "!", ":", ";", ","]
+            separators=["\n\n", "\n", " ", "", ".", "?", "!", ":", ";", ","],
         )
-        chunks = text_splitter.split_text(text)
-        print(f"[VECTORSTORE] ✂️ Split text into {len(chunks)} chunks")
+        chunks = splitter.split_text(text)
+        print(f"[VECTORSTORE] ✂️ {len(chunks)} chunks created")
         return chunks
 
 
+# ------------------------------------------------------------------
+# SINGLETON ACCESS
+# ------------------------------------------------------------------
+
 def get_vectorstore_manager() -> VectorstoreManager:
-    # Get singleton VectorstoreManager instance.
-    # 
-    # Returns:
-    #     VectorstoreManager instance
-    
     global _vectorstore_instance
     if _vectorstore_instance is None:
         _vectorstore_instance = VectorstoreManager()
@@ -265,11 +197,6 @@ def get_vectorstore_manager() -> VectorstoreManager:
 
 
 def reset_vectorstore_singleton():
-    # Reset the singleton instance (used after clear operations).
-    # This ensures a fresh start when reinitializing the vectorstore.
-    
     global _vectorstore_instance
-    if _vectorstore_instance is not None:
-        print("[VECTORSTORE] 🔄 Resetting singleton instance")
-        _vectorstore_instance = None
-
+    _vectorstore_instance = None
+    print("[VECTORSTORE] 🔄 Singleton reset")
