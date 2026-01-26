@@ -22,15 +22,14 @@ RAG_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class FileManager:
-    """
-    Stateful file manager for RAG context documents.
+    
+    # Stateful file manager for RAG context documents.
 
-    Responsibilities:
-    - Maintain authoritative file state
-    - Persist files locally
-    - Sync registry to HF Hub
-    - Trigger vectorstore updates (delegated)
-    """
+    # Responsibilities:
+    # - Maintain authoritative file state
+    # - Persist files locally
+    # - Sync registry to HF Hub
+    # - Trigger vectorstore updates (delegated)
 
     def __init__(self, storage_dir: Path = RAG_STORAGE_DIR):
         self.storage_dir = storage_dir

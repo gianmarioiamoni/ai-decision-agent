@@ -25,6 +25,7 @@ from app.graph.nodes.rag_node import rag_node
 from app.graph.nodes.analyzer_independent_streaming import analyzer_independent_stream
 from app.graph.nodes.decision import decision_node
 from app.graph.nodes.summarize import summarize_node
+from app.rag.file_manager import get_file_manager
 
 # Import modular components
 from .formatters import OutputAssembler
@@ -71,7 +72,8 @@ def run_graph_parallel_streaming(
         
         # Load context documents
         context_docs = loader.load()
-        storage_info = loader.get_storage_info()
+        file_manager = get_file_manager()
+        storage_info = file_manager.get_storage_info()
         
         # Log loading summary
         logger.log_loading_summary(context_docs, storage_info)
