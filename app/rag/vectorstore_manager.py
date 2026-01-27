@@ -152,17 +152,22 @@ class VectorstoreManager:
 
         import shutil
 
+        # Drop in-memory reference to avoid data loss
         self._vectorstore = None
 
+        # Remove local Chroma DB directory
         if self.chroma_dir.exists():
             shutil.rmtree(self.chroma_dir)
+            print(f"[VECTORSTORE] 🗑️ Removed local dir: {self.chroma_dir}")
 
+        # Recreate empty directory
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
 
-        if self.hf_persistence and self.hf_persistence.api:
-            self.hf_persistence.clear_remote_vectorstore()
+        # reset indexed files tracking
+        self._indexed_files.clear()
 
-        print("[VECTORSTORE] ✅ Cleared")
+        print("[VECTORSTORE] ✅ Local vectorstore cleared")
+        print("[VECTORSTORE] ℹ️ Remote HF Hub snapshot untouched")
 
     # ------------------------------------------------------------------
     # HF SYNC
