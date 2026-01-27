@@ -73,19 +73,22 @@ def launch_real_ui():
     )
 
     # -------------------------------------------------
-    # 🔑 RAG BOOTSTRAP (FIXED & FINAL)
+    # 🔑 RAG BOOTSTRAP (FINAL, CORRECT)
     # -------------------------------------------------
     def bootstrap_rag():
         #
         # One-time RAG bootstrap.
         #
         # Responsibilities:
-        # - Initialize FileManager registry
-        # - Initialize VectorstoreManager
-        # - Re-embed files ONLY if vectorstore is empty
-        # - Safe for HF Spaces restart (stateless execution)
+        # - Load FileManager registry
+        # - Initialize Vectorstore
+        # - If vectorstore is empty:
+        #   - Ensure files exist locally (download if missing)
+        #   - Rebuild embeddings
+        #
+        # No uploads, no HF sync, no side effects.
+        #
 
-        # Initialize FileManager registry
         global _RAG_BOOTSTRAPPED
         if _RAG_BOOTSTRAPPED:
             print("[RAG BOOTSTRAP] ⚠️ Already bootstrapped")
@@ -95,27 +98,44 @@ def launch_real_ui():
 
         file_manager = get_file_manager()
         vectorstore_manager = get_vectorstore_manager()
+        hf_persistence = getattr(file_manager, "hf_persistence", None)
 
-        # Load registry / local state
+        # Load registry
         files = file_manager.refresh_state()
         print(f"[RAG BOOTSTRAP] 📄 Registry loaded: {len(files)} file(s)")
 
-        # Initialize vectorstore (load persisted Chroma if any)
-        vectorstore = vectorstore_manager.get_vectorstore()
+        # Initialize vectorstore (persistent Chroma)
+        vectorstore_manager.get_vectorstore()
         print("[RAG BOOTSTRAP] 📦 Vectorstore initialized")
 
-        # 🔑 CRITICAL FIX:
-        # If files exist but vectorstore is empty → rebuild embeddings
+        # Rebuild embeddings only if needed
         if files and not vectorstore_manager.has_documents():
             print("[RAG BOOTSTRAP] 🔄 Vectorstore empty, rebuilding embeddings")
 
             for f in files:
-                path = f.get("path")
                 name = f.get("name")
+                path = f.get("path")
 
-                if not path or not os.path.exists(path):
-                    print(f"[RAG BOOTSTRAP] ⚠️ File not available locally: {name}")
+                if not name:
                     continue
+
+                # Ensure local file exists
+                if not path or not os.path.exists(path):
+                    if hf_persistence:
+                        print(f"[RAG BOOTSTRAP] 📥 Downloading missing file: {name}")
+                        success = hf_persistence.download_document(
+                            filename=name,
+                            local_path=os.path.join(
+                                file_manager.storage_dir, name
+                            )
+                        )
+                        if not success:
+                            print(f"[RAG BOOTSTRAP] ❌ Failed to download {name}")
+                            continue
+                        path = os.path.join(file_manager.storage_dir, name)
+                    else:
+                        print(f"[RAG BOOTSTRAP] ⚠️ No HF persistence, cannot download {name}")
+                        continue
 
                 try:
                     with open(path, "r", encoding="utf-8", errors="ignore") as file:
@@ -146,7 +166,7 @@ def launch_real_ui():
     bootstrap_rag()
 
     with gr.Blocks() as demo:
-        demo.api_mode = False  # HF-safe
+        demo.api_mode = False
 
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
 
