@@ -150,6 +150,19 @@ class VectorstoreManager:
         # Recreate empty directory
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
 
+        # 🔑 IMPORTANT: force fresh Chroma initialization
+        self._vectorstore = Chroma(
+            persist_directory=str(self.chroma_dir),
+            embedding_function=self._embeddings,
+        )
+
+        # Warmup to force schema creation
+        try:
+            self._vectorstore.similarity_search(" ", k=1)
+            print("[VECTORSTORE] 🔥 Warmup completed")
+        except Exception as e:
+            print(f"[VECTORSTORE] ⚠️ Warmup skipped: {e}")
+
         print("[VECTORSTORE] ✅ Local vectorstore cleared")
         print("[VECTORSTORE] ℹ️ Remote HF Hub snapshot untouched")
 
