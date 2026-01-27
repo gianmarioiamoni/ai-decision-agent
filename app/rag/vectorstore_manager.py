@@ -8,6 +8,7 @@
 #
 # File ownership and registry are handled by FileManager.
 
+import os
 from pathlib import Path
 from typing import List, Dict
 
@@ -27,20 +28,16 @@ _vectorstore_instance = None
 
 
 class VectorstoreManager:
-    """
-    VectorstoreManager
-
-    Responsibilities:
-    - Persistent ChromaDB storage
-    - Text chunking
-    - Embedding generation
-    - Optional HF Hub sync
-
-    Does NOT:
-    - Know about files
-    - Manage registry
-    - Access filesystem documents
-    """
+    #
+    # Responsibilities:
+    # - Persistent ChromaDB storage
+    # - Text chunking
+    # - Embedding generation
+    # - Optional HF Hub sync
+    #
+    # Does NOT:
+    # - Know about files
+    # - Manage registry
 
     def __init__(self):
         self.project_root = Path(__file__).resolve().parent.parent.parent
@@ -196,6 +193,64 @@ class VectorstoreManager:
         chunks = splitter.split_text(text)
         print(f"[VECTORSTORE] ✂️ {len(chunks)} chunks created")
         return chunks
+
+    # ------------------------------------------------------------------
+    # ENSURE INDEXED FILES
+    # ------------------------------------------------------------------
+    def ensure_indexed_files(self, files: List[Dict], read_file_fn: Callable[[str], str]) -> int:
+        #
+        # Ensure that all files from FileManager are indexed in the vectorstore.
+        # Safe to call multiple times (idempotent).
+        #
+        # Args:
+        #     files: List of files from FileManager
+        #
+        
+        if not files:
+            print("[VECTORSTORE] ℹ️ No files to index")
+            return
+
+        for file in files:
+            filename = file.get("name")
+            path = file.get("path")
+
+            if not filename or not path:
+                continue
+        
+            if filename in self._indexed_files:
+                continue
+
+            if not os.path.exists(path):
+                print(f"[VECTORSTORE] ⚠️ File missing on disk: {path}")
+                continue
+
+            print(f"[VECTORSTORE] 🔄 Indexing file: {filename}")
+
+            try:
+                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+
+
+                if not content.strip():
+                    print(f"[VECTORSTORE] ⚠️ Empty file: {filename}")
+                    continue
+
+                self.add_documents(
+                    documents=[content],
+                    metadatas=[{
+                        "filename": filename,
+                        "uploaded_at": file.get("modified", "N/A"),
+                    }],
+                    sync_to_hub=False,
+                )
+
+                self._indexed_files.add(filename)
+
+            except Exception as e:
+                print(f"[VECTORSTORE] ❌ Failed indexing {filename}: {e}")
+
+        print(f"[VECTORSTORE] ✅ Indexed files: {len(self._indexed_files)}")
+
 
 
 # ------------------------------------------------------------------
