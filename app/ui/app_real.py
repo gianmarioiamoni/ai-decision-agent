@@ -43,7 +43,7 @@ from .handlers.rag_handlers import (
 # ========================================
 # GLOBAL VARIABLES
 # ========================================
-# RAG_BOOTSTRAPPED = False  # Flag to check if RAG has been bootstrapped
+_RAG_BOOTSTRAPPED = False  # Flag to check if RAG has been bootstrapped
 
 # -----------------------------
 # Main UI Assembly
