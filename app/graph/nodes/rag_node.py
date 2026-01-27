@@ -21,10 +21,8 @@ def rag_node(state: DecisionState) -> Dict:
     
     # Check if vectorstore has any documents
     try:
-        # Try a test query to check if vectorstore is populated
-        test_results = vectorstore.similarity_search("test", k=1)
-        if not test_results:
-            # Vectorstore is empty
+        # check if vectorstore has documents
+        if not vectorstore_manager.has_documents():
             return {
                 "rag_context": "",
                 "messages": [
@@ -34,6 +32,7 @@ def rag_node(state: DecisionState) -> Dict:
                     }
                 ]
             }
+            
     except Exception as e:
         # Vectorstore not initialized or empty
         print(f"[RAG_NODE] ⚠️ Vectorstore check failed: {e}")

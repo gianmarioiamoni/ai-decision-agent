@@ -245,6 +245,15 @@ class VectorstoreManager:
         print(f"[VECTORSTORE] 🎉 Indexing complete: {added_chunks} chunks added")
         return added_chunks
 
+    def has_documents(self) -> bool:
+        vectorstore = self.get_vectorstore()
+        try:
+            collection = vectorstore._collection
+            count = collection.count()
+            return count > 0
+        except Exception as e:
+            return False
+
 
 # ------------------------------------------------------------------
 # SINGLETON ACCESS
