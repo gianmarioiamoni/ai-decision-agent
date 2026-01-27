@@ -15,7 +15,6 @@
 #
 import os
 import gradio as gr
-from pathlib import Path
 
 # Import UI components
 from .components.header import create_header
@@ -30,7 +29,6 @@ from .components.report_download_section import create_report_download_section
 
 from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
-from app.rag.hf_persistence import get_hf_persistence
 
 # Import handlers
 from .handlers.graph_handler_parallel import run_graph_parallel_streaming
@@ -45,7 +43,8 @@ from .handlers.rag_handlers import (
 # ========================================
 # GLOBAL VARIABLES
 # ========================================
-_RAG_BOOTSTRAPPED = False  # Flag to check if RAG has been bootstrapped
+_RAG_BOOTSTRAPPED = False  # One-time bootstrap guard
+
 
 # -----------------------------
 # Main UI Assembly
@@ -63,7 +62,6 @@ def launch_real_ui():
     messages_output = create_output_messages()
     report_output, format_selector, report_download_output = create_output_report()
 
-    # Additional outputs
     historical_output = gr.HTML(value="", label="Similar Historical Decisions")
     rag_evidence_output = gr.HTML(value="", label="RAG Context & Evidence")
 
@@ -74,91 +72,50 @@ def launch_real_ui():
         font=["Helvetica", "Arial", "sans-serif"]
     )
 
-    # --------------------------------------------------
-    # RAG BOOTSTRAP (HF-SAFE, FILESYSTEM-AWARE)
-    # --------------------------------------------------
+    # -------------------------------------------------
+    # 🔑 RAG BOOTSTRAP (CORRECTED)
+    # -------------------------------------------------
     def bootstrap_rag():
-        global _RAG_BOOTSTRAPPED
+        """
+        One-time RAG bootstrap.
 
+        Responsibilities:
+        - Initialize FileManager state (registry only)
+        - Initialize VectorstoreManager (load persistent Chroma)
+        - DO NOT index files
+        - DO NOT download documents
+        - DO NOT embed anything
+
+        Embedding happens ONLY on file upload.
+        """
+
+        global _RAG_BOOTSTRAPPED
         if _RAG_BOOTSTRAPPED:
-            print("[RAG BOOTSTRAP] ⚠️ Already completed")
+            print("[RAG BOOTSTRAP] ⚠️ Already bootstrapped")
             return
 
         print("[RAG BOOTSTRAP] 🚀 RAG BOOTSTRAP START")
 
+        # Initialize singletons
         file_manager = get_file_manager()
         vectorstore_manager = get_vectorstore_manager()
-        hf_persistence = get_hf_persistence()
 
+        # Load registry / local state ONLY
         files = file_manager.refresh_state()
+        print(f"[RAG BOOTSTRAP] 📄 Registry loaded: {len(files)} file(s)")
 
-        if not files:
-            print("[RAG BOOTSTRAP] ℹ️ No files in registry")
-            _RAG_BOOTSTRAPPED = True
-            return
+        # Force vectorstore initialization (load persisted Chroma)
+        vectorstore_manager.get_vectorstore()
+        print("[RAG BOOTSTRAP] 📦 Vectorstore initialized")
 
-        base_dir = Path(file_manager.storage_dir)
-
-        total_chunks = 0
-
-        for file in files:
-            filename = file["name"]
-            local_path = base_dir / filename
-
-            # --------------------------------------------------
-            # Ensure file exists locally (HF Spaces are stateless)
-            # --------------------------------------------------
-            if not local_path.exists():
-                if hf_persistence:
-                    print(f"[RAG BOOTSTRAP] 📥 Downloading {filename} from HF Hub...")
-                    success = hf_persistence.download_document(
-                        filename=filename,
-                        local_path=str(local_path)
-                    )
-                    if not success:
-                        print(f"[RAG BOOTSTRAP] ❌ Failed to download {filename}")
-                        continue
-                else:
-                    print(f"[RAG BOOTSTRAP] ❌ Missing file and no HF persistence: {filename}")
-                    continue
-
-            # --------------------------------------------------
-            # Read + embed
-            # --------------------------------------------------
-            try:
-                with open(local_path, "r", encoding="utf-8", errors="ignore") as f:
-                    content = f.read()
-
-                if not content.strip():
-                    print(f"[RAG BOOTSTRAP] ⚠️ Empty file: {filename}")
-                    continue
-
-                chunks = vectorstore_manager.add_documents(
-                    documents=[content],
-                    metadatas=[{
-                        "filename": filename,
-                        "source": "hf_registry",
-                    }],
-                    sync_to_hub=False
-                )
-
-                total_chunks += chunks
-                print(f"[RAG BOOTSTRAP] ➕ Indexed {chunks} chunks from {filename}")
-
-            except Exception as e:
-                print(f"[RAG BOOTSTRAP] ❌ Failed indexing {filename}: {e}")
-
-        print(f"[RAG BOOTSTRAP] 🎉 Indexing complete: {total_chunks} chunks added")
         _RAG_BOOTSTRAPPED = True
+        print("[RAG BOOTSTRAP] ✅ RAG bootstrap completed")
 
-    # 🔑 ONE-TIME RAG BOOTSTRAP (process-level)
+    # 🔑 RUN BOOTSTRAP EXACTLY ONCE
     bootstrap_rag()
 
-    # ------------------------
-    # BUILD UI
-    # ------------------------
     with gr.Blocks() as demo:
-        demo.api_mode = False
+        demo.api_mode = False  # HF-safe
 
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
 
@@ -179,8 +136,10 @@ def launch_real_ui():
         with gr.Tabs():
             with gr.Tab("📊 Planning & Analysis"):
                 with gr.Row():
-                    plan_output.render()
-                    analysis_output.render()
+                    with gr.Column():
+                        plan_output.render()
+                    with gr.Column():
+                        analysis_output.render()
 
             with gr.Tab("✅ Decision"):
                 decision_output.render()
@@ -190,8 +149,9 @@ def launch_real_ui():
                 messages_output.render()
 
             with gr.Tab("📄 Report"):
-                create_report_preview_section(report_output)
-                create_report_download_section(format_selector, report_download_output)
+                with gr.Row():
+                    create_report_preview_section(report_output)
+                    create_report_download_section(format_selector, report_download_output)
 
             with gr.Tab("📜 Historical Decisions"):
                 historical_output.render()
@@ -199,11 +159,9 @@ def launch_real_ui():
             with gr.Tab("📚 RAG Context & Evidence"):
                 rag_evidence_output.render()
 
-        gr.Markdown("---")
-
-        # ------------------------
-        # EVENTS
-        # ------------------------
+        # -----------------------------
+        # EVENT HANDLERS
+        # -----------------------------
         demo.load(
             fn=init_ui_on_load,
             inputs=None,
@@ -278,3 +236,4 @@ def launch_real_ui():
 
 if __name__ == "__main__":
     launch_real_ui()
+
