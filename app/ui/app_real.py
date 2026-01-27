@@ -15,6 +15,7 @@
 #
 import os
 import gradio as gr
+from pathlib import Path
 
 # Import UI components
 from .components.header import create_header
@@ -29,6 +30,7 @@ from .components.report_download_section import create_report_download_section
 
 from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
+from app.rag.hf_persistence import get_hf_persistence
 
 # Import handlers
 from .handlers.graph_handler_parallel import run_graph_parallel_streaming
@@ -51,9 +53,6 @@ _RAG_BOOTSTRAPPED = False  # Flag to check if RAG has been bootstrapped
 def launch_real_ui():
     # Launch the Gradio UI for the AI Decision Support Agent.
 
-    # ------------------------
-    # Create UI Components
-    # ------------------------
     TITLE_COLOR = "#ffffff"
     SUBTITLE_COLOR = "#a0aec0"
 
@@ -64,13 +63,10 @@ def launch_real_ui():
     messages_output = create_output_messages()
     report_output, format_selector, report_download_output = create_output_report()
 
-    # Additional outputs (with empty string value to avoid None)
+    # Additional outputs
     historical_output = gr.HTML(value="", label="Similar Historical Decisions")
     rag_evidence_output = gr.HTML(value="", label="RAG Context & Evidence")
 
-    # ------------------------
-    # Assemble UI Layout
-    # ------------------------
     theme = gr.themes.Soft(
         primary_hue="violet",
         secondary_hue="purple",
@@ -78,44 +74,94 @@ def launch_real_ui():
         font=["Helvetica", "Arial", "sans-serif"]
     )
 
+    # --------------------------------------------------
+    # RAG BOOTSTRAP (HF-SAFE, FILESYSTEM-AWARE)
+    # --------------------------------------------------
     def bootstrap_rag():
-
         global _RAG_BOOTSTRAPPED
+
         if _RAG_BOOTSTRAPPED:
-            print(f"[RAG BOOTSTRAP] ⚠️ RAG already bootstrapped")
+            print("[RAG BOOTSTRAP] ⚠️ Already completed")
             return
 
-        print(f"[RAG BOOTSTRAP] 🚀 RAG BOOTSTRAP START")
-        
+        print("[RAG BOOTSTRAP] 🚀 RAG BOOTSTRAP START")
+
         file_manager = get_file_manager()
         vectorstore_manager = get_vectorstore_manager()
+        hf_persistence = get_hf_persistence()
 
         files = file_manager.refresh_state()
-        def read_file(path: str) -> str:
-            with open(path, "r", encoding="utf-8", errors="ignore") as file:
-                return file.read()
 
-        vectorstore_manager.ensure_indexed_files(
-            files=files, 
-            read_file_fn=read_file
-        )
+        if not files:
+            print("[RAG BOOTSTRAP] ℹ️ No files in registry")
+            _RAG_BOOTSTRAPPED = True
+            return
 
-        print(f"[RAG BOOTSTRAP] ✅ RAG bootstrap completed")
+        base_dir = Path(file_manager.storage_dir)
+
+        total_chunks = 0
+
+        for file in files:
+            filename = file["name"]
+            local_path = base_dir / filename
+
+            # --------------------------------------------------
+            # Ensure file exists locally (HF Spaces are stateless)
+            # --------------------------------------------------
+            if not local_path.exists():
+                if hf_persistence:
+                    print(f"[RAG BOOTSTRAP] 📥 Downloading {filename} from HF Hub...")
+                    success = hf_persistence.download_document(
+                        filename=filename,
+                        local_path=str(local_path)
+                    )
+                    if not success:
+                        print(f"[RAG BOOTSTRAP] ❌ Failed to download {filename}")
+                        continue
+                else:
+                    print(f"[RAG BOOTSTRAP] ❌ Missing file and no HF persistence: {filename}")
+                    continue
+
+            # --------------------------------------------------
+            # Read + embed
+            # --------------------------------------------------
+            try:
+                with open(local_path, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+
+                if not content.strip():
+                    print(f"[RAG BOOTSTRAP] ⚠️ Empty file: {filename}")
+                    continue
+
+                chunks = vectorstore_manager.add_documents(
+                    documents=[content],
+                    metadatas=[{
+                        "filename": filename,
+                        "source": "hf_registry",
+                    }],
+                    sync_to_hub=False
+                )
+
+                total_chunks += chunks
+                print(f"[RAG BOOTSTRAP] ➕ Indexed {chunks} chunks from {filename}")
+
+            except Exception as e:
+                print(f"[RAG BOOTSTRAP] ❌ Failed indexing {filename}: {e}")
+
+        print(f"[RAG BOOTSTRAP] 🎉 Indexing complete: {total_chunks} chunks added")
         _RAG_BOOTSTRAPPED = True
 
-    # 🔑 ONE-TIME RAG BOOTSTRAP
+    # 🔑 ONE-TIME RAG BOOTSTRAP (process-level)
     bootstrap_rag()
 
+    # ------------------------
+    # BUILD UI
+    # ------------------------
     with gr.Blocks() as demo:
-        # ------------------------
-        # HF-SAFE SETTINGS
-        # ------------------------
-        demo.api_mode = False  # Disable automatic generation of /api_info
+        demo.api_mode = False
 
-        # Header
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
 
-        # Input Section (includes RAG file management)
         (
             question_input,
             submit_button,
@@ -130,104 +176,57 @@ def launch_real_ui():
 
         gr.Markdown("---")
 
-        # Output Tabs
-        with gr.Tabs() as tabs:
-            # Planning & Analysis
+        with gr.Tabs():
             with gr.Tab("📊 Planning & Analysis"):
                 with gr.Row():
-                    with gr.Column(scale=1):
-                        gr.Markdown("### 📋 Step-by-Step Plan")
-                        plan_output.render()
-                    with gr.Column(scale=1):
-                        gr.Markdown("### 🔍 Analysis")
-                        analysis_output.render()
+                    plan_output.render()
+                    analysis_output.render()
 
-            # Decision & Confidence
             with gr.Tab("✅ Decision"):
-                gr.Markdown("### 🎯 Final Decision")
-                with gr.Row():
-                    with gr.Column(scale=3):
-                        decision_output.render()
-                    with gr.Column(scale=1):
-                        confidence_output.render()
+                decision_output.render()
+                confidence_output.render()
 
-            # Conversation Log
             with gr.Tab("💬 Messages"):
-                gr.Markdown("### 💬 Conversation History")
-                gr.Markdown(
-                    f"<p style='color:{SUBTITLE_COLOR}; margin-bottom:15px;'>"
-                    "View the complete conversation history and reasoning steps."
-                    "</p>"
-                )
                 messages_output.render()
 
-            # Session Report
             with gr.Tab("📄 Report"):
-                with gr.Row():
-                    create_report_preview_section(report_output)
-                    create_report_download_section(format_selector, report_download_output)
+                create_report_preview_section(report_output)
+                create_report_download_section(format_selector, report_download_output)
 
-            # Historical Decisions
             with gr.Tab("📜 Historical Decisions"):
-                gr.Markdown(
-                    f"<p style='color:{SUBTITLE_COLOR}; margin-bottom:15px;'>"
-                    "Similar decisions from past sessions that may inform your current analysis."
-                    "</p>"
-                )
                 historical_output.render()
 
-            # RAG Context & Evidence
             with gr.Tab("📚 RAG Context & Evidence"):
-                gr.Markdown(
-                    f"<p style='color:{SUBTITLE_COLOR}; margin-bottom:15px;'>"
-                    "Context documents and retrieved evidence used to ground the analysis."
-                    "</p>"
-                )
                 rag_evidence_output.render()
 
-        # Footer
         gr.Markdown("---")
-        gr.Markdown(
-            f"<p style='text-align:center; color:{SUBTITLE_COLOR}; font-size:0.9em;'>"
-            "🤖 Powered by LangGraph, OpenAI GPT-4, and ChromaDB"
-            "</p>"
-        )
 
-        # ========================================
-        # SIMPLE EVENT-DRIVEN PATTERN
-        # ========================================
-
-        # 1️⃣ Initialize UI on page load/reload
+        # ------------------------
+        # EVENTS
+        # ------------------------
         demo.load(
             fn=init_ui_on_load,
             inputs=None,
             outputs=[storage_summary, files_list_display]
         )
 
-        # 2️⃣ File upload → returns updated values
         rag_input.upload(
             fn=handle_file_upload,
             inputs=[rag_input],
             outputs=[upload_status_output, storage_summary, files_list_display]
         )
 
-        # 3️⃣ Refresh button → returns updated values
         refresh_files_btn.click(
             fn=handle_refresh,
             inputs=[],
             outputs=[storage_summary, files_list_display]
         )
 
-        # 4️⃣ Clear button → returns updated values
         clear_files_btn.click(
             fn=handle_clear_files,
             inputs=[],
             outputs=[clear_status_display, storage_summary, files_list_display]
         )
-
-        # ========================================
-        # DECISION GRAPH EXECUTION
-        # ========================================
 
         submit_button.click(
             fn=run_graph_parallel_streaming,
@@ -267,23 +266,15 @@ def launch_real_ui():
             outputs=[report_download_output]
         )
 
-    # ========================================
-    # ALWAYS ENABLE QUEUE (HF-SAFE)
-    # ========================================
-    # Required for streaming/async/generator functions
-    # HF Spaces REQUIRES queue() when using LangGraph/streaming
-    demo.queue(
-        default_concurrency_limit=1,  # Process one request at a time (safer for HF)
-        max_size=32  # Max queued requests
-    )
+    demo.queue(default_concurrency_limit=1, max_size=32)
 
-    # Launch the Gradio interface
     demo.launch(
-        theme=theme, 
+        theme=theme,
         server_name="0.0.0.0",
         server_port=7860,
         ssr_mode=False
     )
+
 
 if __name__ == "__main__":
     launch_real_ui()
