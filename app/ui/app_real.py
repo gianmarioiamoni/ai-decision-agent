@@ -73,22 +73,19 @@ def launch_real_ui():
     )
 
     # -------------------------------------------------
-    # 🔑 RAG BOOTSTRAP (CORRECTED)
+    # 🔑 RAG BOOTSTRAP (FIXED & FINAL)
     # -------------------------------------------------
     def bootstrap_rag():
-        """
-        One-time RAG bootstrap.
+        #
+        # One-time RAG bootstrap.
+        #
+        # Responsibilities:
+        # - Initialize FileManager registry
+        # - Initialize VectorstoreManager
+        # - Re-embed files ONLY if vectorstore is empty
+        # - Safe for HF Spaces restart (stateless execution)
 
-        Responsibilities:
-        - Initialize FileManager state (registry only)
-        - Initialize VectorstoreManager (load persistent Chroma)
-        - DO NOT index files
-        - DO NOT download documents
-        - DO NOT embed anything
-
-        Embedding happens ONLY on file upload.
-        """
-
+        # Initialize FileManager registry
         global _RAG_BOOTSTRAPPED
         if _RAG_BOOTSTRAPPED:
             print("[RAG BOOTSTRAP] ⚠️ Already bootstrapped")
@@ -96,17 +93,51 @@ def launch_real_ui():
 
         print("[RAG BOOTSTRAP] 🚀 RAG BOOTSTRAP START")
 
-        # Initialize singletons
         file_manager = get_file_manager()
         vectorstore_manager = get_vectorstore_manager()
 
-        # Load registry / local state ONLY
+        # Load registry / local state
         files = file_manager.refresh_state()
         print(f"[RAG BOOTSTRAP] 📄 Registry loaded: {len(files)} file(s)")
 
-        # Force vectorstore initialization (load persisted Chroma)
-        vectorstore_manager.get_vectorstore()
+        # Initialize vectorstore (load persisted Chroma if any)
+        vectorstore = vectorstore_manager.get_vectorstore()
         print("[RAG BOOTSTRAP] 📦 Vectorstore initialized")
+
+        # 🔑 CRITICAL FIX:
+        # If files exist but vectorstore is empty → rebuild embeddings
+        if files and not vectorstore_manager.has_documents():
+            print("[RAG BOOTSTRAP] 🔄 Vectorstore empty, rebuilding embeddings")
+
+            for f in files:
+                path = f.get("path")
+                name = f.get("name")
+
+                if not path or not os.path.exists(path):
+                    print(f"[RAG BOOTSTRAP] ⚠️ File not available locally: {name}")
+                    continue
+
+                try:
+                    with open(path, "r", encoding="utf-8", errors="ignore") as file:
+                        content = file.read()
+
+                    if not content.strip():
+                        print(f"[RAG BOOTSTRAP] ⚠️ Empty file skipped: {name}")
+                        continue
+
+                    vectorstore_manager.add_documents(
+                        documents=[content],
+                        metadatas=[{"filename": name}],
+                        sync_to_hub=False,
+                    )
+
+                    print(f"[RAG BOOTSTRAP] ✅ Embedded {name}")
+
+                except Exception as e:
+                    print(f"[RAG BOOTSTRAP] ❌ Failed embedding {name}: {e}")
+
+        else:
+            print("[RAG BOOTSTRAP] ℹ️ Vectorstore already populated")
 
         _RAG_BOOTSTRAPPED = True
         print("[RAG BOOTSTRAP] ✅ RAG bootstrap completed")
@@ -236,4 +267,3 @@ def launch_real_ui():
 
 if __name__ == "__main__":
     launch_real_ui()
-
