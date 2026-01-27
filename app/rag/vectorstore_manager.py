@@ -72,19 +72,6 @@ class VectorstoreManager:
             embedding_function=self._embeddings,
         )
         
-        # Restore indexed files from metadata
-        try:
-            collection = self._vectorstore._collection
-            metadatas = collection.get(include=["metadatas"]).get("metadatas", [])
-
-            for meta in metadatas:
-                if meta and "filename" in meta:
-                    self._indexed_files.add(meta["filename"])
-
-            print(f"[VECTORSTORE] 🔁 Restored {len(self._indexed_files)} indexed files")
-        except Exception as e:
-            print(f"[VECTORSTORE] ⚠️ Could not restore indexed files: {e}")
-
         self._warmup()
         print("[VECTORSTORE] ✅ Vectorstore ready")
 
@@ -162,9 +149,6 @@ class VectorstoreManager:
 
         # Recreate empty directory
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
-
-        # reset indexed files tracking
-        self._indexed_files.clear()
 
         print("[VECTORSTORE] ✅ Local vectorstore cleared")
         print("[VECTORSTORE] ℹ️ Remote HF Hub snapshot untouched")
