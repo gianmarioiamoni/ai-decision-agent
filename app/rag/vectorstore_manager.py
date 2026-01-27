@@ -10,7 +10,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Callable
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
