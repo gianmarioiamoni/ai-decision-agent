@@ -66,7 +66,7 @@ def retriever_node(state: DecisionState) -> Dict:
         "messages": [
             {
                 "role": "assistant",
-                "content": f"📚 Historical Context: Retrieved {len(retrieved_docs)} similar past decisions from memory"
+                "content": f"📚 Authoritative Context: Retrieved {k} relevant evidence chunks from organizational documents"
             }
         ],
     }

@@ -2,8 +2,14 @@
 # Gradio component for displaying and downloading the HTML session report
 
 import gradio as gr
-from typing import Tuple
 import tempfile
+
+from datetime import datetime
+import re
+
+def build_report_filename(ext: str) -> str:
+    date = datetime.now().strftime("%Y-%m-%d")
+    return f"decision_report_{date}.{ext}"
 
 def create_output_report():
     # Creates a modular Gradio output component for session report.
@@ -28,9 +34,12 @@ def create_output_report():
         show_label=False
     )
 
-    # File download component  
+    # File download component 
+    # Build filename dynamically based on question and timestamp
+    filename = build_report_filename("html")
     report_download_component = gr.File(
         value=[],  # None for single File download (no file initially)
+        filename=filename,
         label="report_download_component",  # No internal label - using external section title with icon
         file_count="single",
         file_types=[".html", ".pdf", ".docx"],
