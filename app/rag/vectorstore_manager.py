@@ -172,11 +172,11 @@ class VectorstoreManager:
         self,
         text: str,
         chunk_size: int = 300,
-        overlap: int = 100,
+        chunk_overlap: int = 100,
     ) -> List[str]:
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
-            overlap=overlap,
+            chunk_overlap=chunk_overlap,
             separators=["\n\n", "\n", " ", "", ".", "?", "!", ":", ";", ","],
         )
         chunks = splitter.split_text(text)

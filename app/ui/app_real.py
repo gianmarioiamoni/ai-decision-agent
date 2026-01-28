@@ -155,6 +155,7 @@ def launch_real_ui():
 
                 except Exception as e:
                     print(f"[RAG BOOTSTRAP] ❌ Failed embedding {name}: {e}")
+                    continue
 
         else:
             print("[RAG BOOTSTRAP] ℹ️ Vectorstore already populated")
