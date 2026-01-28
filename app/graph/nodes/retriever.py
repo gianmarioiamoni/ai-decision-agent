@@ -66,7 +66,7 @@ def retriever_node(state: DecisionState) -> Dict:
         "messages": [
             {
                 "role": "assistant",
-                "content": f"📚 Authoritative Context: Retrieved {k} relevant evidence chunks from organizational documents"
+                "content": f"📚 Authoritative Context: Retrieved {len(retrieved_docs)} relevant evidence chunks from organizational documents"
             }
         ],
     }
