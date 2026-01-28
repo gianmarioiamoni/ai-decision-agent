@@ -13,10 +13,11 @@ from typing import List, Dict
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.rag.hf_persistence import get_hf_persistence
-
+from app.config.settings import EMBEDDING_MODEL_NAME
 
 # ------------------------------------------------------------------
 # SINGLETON
@@ -24,6 +25,25 @@ from app.rag.hf_persistence import get_hf_persistence
 
 _vectorstore_instance = None
 
+
+_VECTORSTORE_MANAGER = None
+
+
+def get_vectorstore_manager(embedding_function=None, chroma_dir: Path | None = None):
+    global _VECTORSTORE_MANAGER
+
+    if _VECTORSTORE_MANAGER is None:
+        _VECTORSTORE_MANAGER = VectorstoreManager(
+            embedding_function=embedding_function,
+            chroma_dir=chroma_dir
+        )
+
+    return _VECTORSTORE_MANAGER
+
+
+def _reset_vectorstore_manager():
+    global _VECTORSTORE_MANAGER
+    _VECTORSTORE_MANAGER = None
 
 class VectorstoreManager:
     #
@@ -37,13 +57,24 @@ class VectorstoreManager:
     # - Know about files
     # - Manage registry
 
-    def __init__(self, embedding_function = None):
+    def __init__(self, embedding_function = None, chroma_dir: Path | None = None):
+        self.embedding_function = embedding_function
+        self._vectorstore = None
         self.project_root = Path(__file__).resolve().parent.parent.parent
-        self.chroma_dir = self.project_root / "chroma_db"
+        self.chroma_dir = (
+            chroma_dir
+            if chroma_dir is not None
+            else self.project_root / "chroma_db"
+        )
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
 
         self.hf_persistence = get_hf_persistence()
-        self._embeddings = embedding_function
+        self._embeddings = (
+            self.embedding_function
+            if embedding_function is not None
+            else OpenAIEmbeddings(model=EMBEDDING_MODEL_NAME)
+        )
+
         self._vectorstore: Chroma | None = None
 
         print("[VECTORSTORE] 📦 Initialized")
@@ -58,11 +89,6 @@ class VectorstoreManager:
             self._initialize_vectorstore()
         return self._vectorstore
 
-    def _get_embeddings(self):
-        if self._embeddings is None:
-            from langchain_openai import OpenAIEmbeddings
-            self._embeddings = OpenAIEmbeddings()
-        return self._embeddings
 
     def _initialize_vectorstore(self):
         print("\n[VECTORSTORE] 🔧 Initializing vectorstore")
@@ -76,7 +102,7 @@ class VectorstoreManager:
         # - NEVER destroyed or recreated at runtime
         self._vectorstore = Chroma(
             persist_directory=str(self.chroma_dir),
-            embedding_function=self._get_embeddings(),
+            embedding_function=self.embedding_function,
         )
 
         print("[VECTORSTORE] ✅ Vectorstore ready")
@@ -142,15 +168,23 @@ class VectorstoreManager:
 
         vectorstore = self.get_vectorstore()
         collection = vectorstore._collection
+        count = collection.count()
 
-        ids = collection.vectorstore.get_ids()
-        if not ids:
+        if count == 0:
             print("[VECTORSTORE] ℹ️ No embeddings to delete")
             return
         
-        collection.delete(ids=ids)
+        # delete by ids
+        items = collection.get(include=[])
+        all_ids = items.get("ids", [])
+        if not all_ids:
+            print("[VECTORSTORE] ℹ️ No embeddings to delete")
+            return
+        
+        collection.delete(ids=all_ids)
+        print(f"[VECTORSTORE] 🗑️ Deleted {count} embeddings")
 
-        print("[VECTORSTORE] ✅ Vectorstore cleared (filesystem untouched)")
+        print("[VECTORSTORE] ✅ Vectorstore cleared")
 
     # ------------------------------------------------------------------
     # HF SYNC
@@ -200,21 +234,4 @@ class VectorstoreManager:
             return 0
 
 
-# ------------------------------------------------------------------
-# SINGLETON ACCESS
-# ------------------------------------------------------------------
-
-def get_vectorstore_manager() -> VectorstoreManager:
-    global _vectorstore_instance
-    if _vectorstore_instance is None:
-        _vectorstore_instance = VectorstoreManager()
-    return _vectorstore_instance
-
-
-def reset_vectorstore_singleton():
-    # WARNING:
-    # Use ONLY in tests or cold restart scenarios
-    global _vectorstore_instance
-    _vectorstore_instance = None
-    print("[VECTORSTORE] 🔄 Singleton reset")
-
+#

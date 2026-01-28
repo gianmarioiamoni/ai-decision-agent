@@ -30,6 +30,7 @@ from .components.report_download_section import create_report_download_section
 
 from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
+from app.rag.bootstrap import bootstrap_rag
 from app.ui.handlers.graph_handler_parallel import run_graph_parallel_streaming
 
 
@@ -74,43 +75,6 @@ def launch_real_ui():
         neutral_hue="slate",
         font=["Helvetica", "Arial", "sans-serif"]
     )
-
-    # -------------------------------------------------
-    # 🔑 RAG BOOTSTRAP (FINAL, CORRECT)
-    # -------------------------------------------------
-    def bootstrap_rag():
-        #
-        # One-time RAG bootstrap.
-        #
-        # Responsibilities:
-        # - Load FileManager registry
-        # - Initialize Vectorstore
-        #
-        # No uploads, no HF sync, no side effects.
-        # Embeddings are created ONLY during file upload.
-        #
-
-        global _RAG_BOOTSTRAPPED
-        if _RAG_BOOTSTRAPPED:
-            print("[RAG BOOTSTRAP] ⚠️ Already bootstrapped")
-            return
-
-        print("[RAG BOOTSTRAP] 🚀 RAG BOOTSTRAP START")
-
-        # Initialize managers (lazy, no side effects)
-        file_manager = get_file_manager()
-        vectorstore_manager = get_vectorstore_manager()
-
-        # Load registry (metadata only)
-        files = file_manager.refresh_state()
-        print(f"[RAG BOOTSTRAP] 📄 Registry loaded: {len(files)} file(s)")
-
-        # Initialize vectorstore once (persistent Chroma)
-        vectorstore_manager.get_vectorstore()
-        print("[RAG BOOTSTRAP] 📦 Vectorstore initialized")
-
-        _RAG_BOOTSTRAPPED = True
-        print("[RAG BOOTSTRAP] ✅ RAG bootstrap completed")
 
     # 🔑 RUN BOOTSTRAP EXACTLY ONCE
     bootstrap_rag()
