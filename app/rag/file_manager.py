@@ -103,10 +103,6 @@ class FileManager:
 
         self._files = []
 
-        if self.hf_persistence:
-            self._load_from_hf_hub()
-            return self._files
-
         # Local filesystem (dev)
         for file_path in self.storage_dir.iterdir():
             if file_path.is_file() and file_path.name != ".gitkeep":
@@ -153,12 +149,12 @@ class FileManager:
 
         self._files.append(file_info)
 
-        # Registry only (HF-safe)
-        if self.hf_persistence:
-            self.hf_persistence.add_document_to_registry_only(
-                filename=stored_name,
-                source=str(stored_path),
-            )
+        # HF registry updates DISABLED at runtime (HF Spaces rebuild protection) - registry only (HF-safe)
+        # if self.hf_persistence:
+        #     self.hf_persistence.add_document_to_registry_only(
+        #         filename=stored_name,
+        #         source=str(stored_path),
+        #     )
 
         # ------------------------------------------------------------------
         # EMBEDDING (SINGLE SOURCE OF TRUTH)
@@ -238,8 +234,9 @@ class FileManager:
         # 🔑 Clear embeddings ONCE here
         get_vectorstore_manager().clear()
 
-        if self.hf_persistence:
-            self.hf_persistence.clear_registry()
+        # HF registry updates DISABLED at runtime (HF Spaces rebuild protection)
+        # if self.hf_persistence:
+        #     self.hf_persistence.clear_registry()
 
         print(f"[FILE_MANAGER] 🗑️ Cleared {count} file(s)")
         return count
