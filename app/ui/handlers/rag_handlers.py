@@ -69,34 +69,45 @@ def handle_file_upload(uploaded_files):
     # Returns:
     #     Tuple of (upload_status, storage_summary, files_list_text)
     #
-    print("\n[RAG UPLOAD DEBUG] ===== FILE UPLOAD =====")
-    print(f"type(uploaded_files) = {type(uploaded_files)}")
+    print("\n[RAG UPLOAD DEBUG] === ENTER handle_file_upload ===", flush=True)
+    try:
+        if uploaded_files is not None:
+            print(f"uploaded_files.name = {getattr(uploaded_files, 'name', None)}")
+            print(f"uploaded_files.size = {getattr(uploaded_files, 'size', None)}")
+            print(f"dir(uploaded_files) = {dir(uploaded_files)}")
 
-    if uploaded_files is not None:
-        print(f"uploaded_files.name = {getattr(uploaded_files, 'name', None)}")
-        print(f"uploaded_files.size = {getattr(uploaded_files, 'size', None)}")
-        print(f"dir(uploaded_files) = {dir(uploaded_files)}")
+        if not uploaded_files:
+            OperationLogger.no_files_provided()
+            return (
+                StatusMessageBuilder.empty_upload_status(),
+                get_storage_summary(),
+                get_files_status_text()
+            )
+   
+        OperationLogger.upload_started(len(uploaded_files))
+    
+        # Process all files using modular components
+        result = _process_upload_batch(uploaded_files)
+    
+        # Generate status message using builder
+        status_msg = StatusMessageBuilder.upload_status(
+            result.saved_count,
+            result.failed_count
+        )
+        OperationLogger.upload_complete(result.saved_count, result.failed_count)
+        
 
-    if not uploaded_files:
-        OperationLogger.no_files_provided()
+    except Exception as e:
+        print(f"[RAG UPLOAD DEBUG] ❌ EXCEPTION:", e, flush=True)
+        import traceback
+        traceback.print_exc()
         return (
-            StatusMessageBuilder.empty_upload_status(),
-            get_storage_summary(),
-            get_files_status_text()
+            "❌ Upload failed",
+            "",
+            ""
         )
     
-    OperationLogger.upload_started(len(uploaded_files))
     
-    # Process all files using modular components
-    result = _process_upload_batch(uploaded_files)
-    
-    # Generate status message using builder
-    status_msg = StatusMessageBuilder.upload_status(
-        result.saved_count,
-        result.failed_count
-    )
-    
-    OperationLogger.upload_complete(result.saved_count, result.failed_count)
     
     # Return updated UI values
     return status_msg, get_storage_summary(), get_files_status_text()
