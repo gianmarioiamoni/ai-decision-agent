@@ -16,20 +16,25 @@ except Exception as e:
     HF_PERSISTENCE_AVAILABLE = False
     print(f"[FILE_MANAGER] ⚠️ HF persistence not available: {e}")
 
+# ------------------------------------------------------------------
+# STORAGE PATH (HF-SAFE)
+# ------------------------------------------------------------------
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-RAG_STORAGE_DIR = PROJECT_ROOT / "data" / "uploaded_rag"
+RAG_STORAGE_DIR = PROJECT_ROOT / "uploaded_rag"
 RAG_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class FileManager:
-    
+    #
     # Stateful file manager for RAG context documents.
-
+    #
     # Responsibilities:
     # - Maintain authoritative file state
     # - Persist files locally
     # - Sync registry to HF Hub
     # - Trigger vectorstore updates (delegated)
+    #
 
     def __init__(self, storage_dir: Path = RAG_STORAGE_DIR):
         self.storage_dir = storage_dir
@@ -42,7 +47,7 @@ class FileManager:
         print("[FILE_MANAGER] 🏗️ Initialized (lazy loading)")
 
     # ------------------------------------------------------------------
-    # HF HUB REGISTRY
+    # HF HUB REGISTRY + FILE RESTORE
     # ------------------------------------------------------------------
 
     def _load_from_hf_hub(self):
@@ -53,18 +58,39 @@ class FileManager:
             return
 
         registry = self.hf_persistence.load_registry()
-        self._files = [
-            {
-                "name": doc["filename"],
-                "path": doc.get("source", ""),
-                "size": 0,
-                "size_kb": 0.0,
+        self._files = []
+
+        for doc in registry or []:
+            filename = doc.get("filename")
+            if not filename:
+                continue
+
+            local_path = self.storage_dir / filename
+
+            # 🔑 Restore file content if missing locally
+            if not local_path.exists():
+                try:
+                    self.hf_persistence.download_file(
+                        filename=filename,
+                        target_dir=self.storage_dir,
+                    )
+                except Exception as e:
+                    print(f"[FILE_MANAGER] ⚠️ Failed to restore file {filename}: {e}")
+                    continue
+
+            if not local_path.exists():
+                print(f"[FILE_MANAGER] ⚠️ File still missing after restore: {filename}")
+                continue
+
+            stat = local_path.stat()
+            self._files.append({
+                "name": filename,
+                "path": str(local_path),
+                "size": stat.st_size,
+                "size_kb": round(stat.st_size / 1024, 2),
                 "modified": doc.get("uploaded_at", "N/A"),
-                "timestamp": 0,
-            }
-            for doc in registry or []
-            if "filename" in doc
-        ]
+                "timestamp": stat.st_mtime,
+            })
 
         print(f"[FILE_MANAGER] ✅ Loaded {len(self._files)} file(s)")
 
@@ -90,7 +116,9 @@ class FileManager:
                     "path": str(file_path),
                     "size": stat.st_size,
                     "size_kb": round(stat.st_size / 1024, 2),
-                    "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                    "modified": datetime.fromtimestamp(
+                        stat.st_mtime
+                    ).strftime("%Y-%m-%d %H:%M:%S"),
                     "timestamp": stat.st_mtime,
                 })
 
@@ -132,11 +160,18 @@ class FileManager:
                 source=str(stored_path),
             )
 
-        # 🔑 SINGLE SOURCE OF TRUTH FOR EMBEDDING
-        vectorstore = get_vectorstore_manager()
+        # ------------------------------------------------------------------
+        # EMBEDDING (SINGLE SOURCE OF TRUTH)
+        # ------------------------------------------------------------------
+
         with open(stored_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
+        if not content.strip():
+            print(f"[FILE_MANAGER] ⚠️ Empty file skipped: {stored_name}")
+            return file_info
+
+        vectorstore = get_vectorstore_manager()
         vectorstore.add_documents(
             documents=[content],
             metadatas=[{
@@ -176,12 +211,6 @@ class FileManager:
         }
 
     def render_storage_summary(self) -> str:
-        #
-        # Render a human-readable storage summary for UI display.
-        #
-        # Returns:
-        #     str: Human-readable storage summary
-        #
         info = self.get_storage_info()
 
         if info["file_count"] == 0:
@@ -192,10 +221,9 @@ class FileManager:
             f"💾 Total size: {info['total_size_mb']} MB\n"
             f"📁 Storage path: {info['storage_path']}"
         )
-    
 
     # ------------------------------------------------------------------
-    # DELETE / CLEAR
+    # DELETE / CLEAR (SINGLE CLEAR POINT)
     # ------------------------------------------------------------------
 
     def clear_all_files(self) -> int:
@@ -207,6 +235,7 @@ class FileManager:
                 file_path.unlink()
                 count += 1
 
+        # 🔑 Clear embeddings ONCE here
         get_vectorstore_manager().clear()
 
         if self.hf_persistence:
@@ -222,8 +251,10 @@ class FileManager:
 
 _file_manager_instance = None
 
+
 def get_file_manager() -> FileManager:
     global _file_manager_instance
     if _file_manager_instance is None:
         _file_manager_instance = FileManager()
     return _file_manager_instance
+

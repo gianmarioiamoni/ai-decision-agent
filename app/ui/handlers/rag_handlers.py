@@ -177,9 +177,6 @@ def handle_clear_files():
     # 1️⃣ Clear files
     deleted_count = file_manager.clear_all_files()
 
-    # 2️⃣ Clear embeddings (SAFE – FIX 1)
-    vectorstore_manager.clear()
-
     # 3️⃣ Build UI message
     status_msg = StatusMessageBuilder.clear_status(deleted_count)
 
