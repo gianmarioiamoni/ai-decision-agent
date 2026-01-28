@@ -8,11 +8,9 @@
 #
 # File ownership and registry are handled by FileManager.
 
-import os
 from pathlib import Path
-from typing import List, Dict, Callable
+from typing import List, Dict
 
-from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -39,13 +37,13 @@ class VectorstoreManager:
     # - Know about files
     # - Manage registry
 
-    def __init__(self):
+    def __init__(self, embedding_function = None):
         self.project_root = Path(__file__).resolve().parent.parent.parent
         self.chroma_dir = self.project_root / "chroma_db"
         self.chroma_dir.mkdir(parents=True, exist_ok=True)
 
         self.hf_persistence = get_hf_persistence()
-        self._embeddings = OpenAIEmbeddings()
+        self._embeddings = embedding_function
         self._vectorstore: Chroma | None = None
 
         print("[VECTORSTORE] 📦 Initialized")
@@ -60,6 +58,12 @@ class VectorstoreManager:
             self._initialize_vectorstore()
         return self._vectorstore
 
+    def _get_embeddings(self):
+        if self._embeddings is None:
+            from langchain_openai import OpenAIEmbeddings
+            self._embeddings = OpenAIEmbeddings()
+        return self._embeddings
+
     def _initialize_vectorstore(self):
         print("\n[VECTORSTORE] 🔧 Initializing vectorstore")
 
@@ -67,20 +71,17 @@ class VectorstoreManager:
             print("[VECTORSTORE] ☁️ Attempting HF Hub download...")
             self.hf_persistence.download_vectorstore()
 
+        # IMPORTANT:
+        # - initialized ONCE per process
+        # - NEVER destroyed or recreated at runtime
         self._vectorstore = Chroma(
             persist_directory=str(self.chroma_dir),
-            embedding_function=self._embeddings,
+            embedding_function=self._get_embeddings(),
         )
-        
-        self._warmup()
+
         print("[VECTORSTORE] ✅ Vectorstore ready")
 
-    def _warmup(self):
-        try:
-            self._vectorstore.similarity_search(" ", k=1)
-            print("[VECTORSTORE] 🔥 Warmup completed")
-        except Exception as e:
-            print(f"[VECTORSTORE] ⚠️ Warmup skipped: {e}")
+    
 
     # ------------------------------------------------------------------
     # ADD DOCUMENTS
@@ -106,12 +107,14 @@ class VectorstoreManager:
 
             base_meta = metadatas[i] if metadatas else {}
             for idx in range(len(doc_chunks)):
-                chunk_metadatas.append({
-                    **base_meta,
-                    "chunk_id": idx + 1,
-                    "total_chunks": len(doc_chunks),
-                    "doc_index": i,
-                })
+                chunk_metadatas.append(
+                    {
+                        **base_meta,
+                        "chunk_id": idx + 1,
+                        "total_chunks": len(doc_chunks),
+                        "doc_index": i,
+                    }
+                )
 
         print(f"[VECTORSTORE] 💾 Adding {len(chunks)} chunks")
         vectorstore.add_texts(chunks, metadatas=chunk_metadatas)
@@ -131,27 +134,27 @@ class VectorstoreManager:
         return self.get_vectorstore().similarity_search(query, k=k)
 
     # ------------------------------------------------------------------
-    # CLEAR
+    # CLEAR (FIX 1 – SAFE, NO RESTART)
     # ------------------------------------------------------------------
 
-    def clear(self):
-        print("[VECTORSTORE] 🗑️ Clearing vectorstore")
+    def clear(self) -> None:
+        print("[VECTORSTORE] 🧹 Clearing embeddings (safe)")
 
-        import shutil
+        vectorstore = self.get_vectorstore()
+        collection = vectorstore._collection
 
-        # Drop in-memory reference to avoid data loss
-        self._vectorstore = None
+        try:
+            ids = collection.get()["ids"]
+            if ids:
+                collection.delete(ids=ids)
+                print(f"[VECTORSTORE] 🗑️ Deleted {len(ids)} embeddings")
+            else:
+                print("[VECTORSTORE] ℹ️ No embeddings to delete")
 
-        # Remove local Chroma DB directory
-        if self.chroma_dir.exists():
-            shutil.rmtree(self.chroma_dir)
-            print(f"[VECTORSTORE] 🗑️ Removed local dir: {self.chroma_dir}")
+        except Exception as e:
+            print(f"[VECTORSTORE] ⚠️ Clear skipped: {e}")
 
-        # Recreate empty directory
-        self.chroma_dir.mkdir(parents=True, exist_ok=True)
-
-        print("[VECTORSTORE] ✅ Local vectorstore cleared")
-        print("[VECTORSTORE] ℹ️ Remote HF Hub snapshot untouched")
+        print("[VECTORSTORE] ✅ Vectorstore cleared (filesystem untouched)")
 
     # ------------------------------------------------------------------
     # HF SYNC
@@ -179,6 +182,7 @@ class VectorstoreManager:
             chunk_overlap=chunk_overlap,
             separators=["\n\n", "\n", " ", "", ".", "?", "!", ":", ";", ","],
         )
+
         chunks = splitter.split_text(text)
         print(f"[VECTORSTORE] ✂️ {len(chunks)} chunks created")
         return chunks
@@ -188,13 +192,18 @@ class VectorstoreManager:
     # ------------------------------------------------------------------
 
     def has_documents(self) -> bool:
-        vectorstore = self.get_vectorstore()
         try:
-            collection = vectorstore._collection
-            count = collection.count()
-            return count > 0
-        except Exception as e:
+            collection = self.get_vectorstore()._collection
+            return collection.count() > 0
+        except Exception:
             return False
+
+    def count(self) -> int:
+        try:
+            collection = self.get_vectorstore()._collection
+            return collection.count()
+        except Exception:
+            return 0
 
 
 # ------------------------------------------------------------------
@@ -209,6 +218,9 @@ def get_vectorstore_manager() -> VectorstoreManager:
 
 
 def reset_vectorstore_singleton():
+    # WARNING:
+    # Use ONLY in tests or cold restart scenarios
     global _vectorstore_instance
     _vectorstore_instance = None
     print("[VECTORSTORE] 🔄 Singleton reset")
+
