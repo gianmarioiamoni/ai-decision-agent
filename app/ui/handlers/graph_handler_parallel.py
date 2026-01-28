@@ -19,7 +19,8 @@ from app.rag.vectorstore_manager import get_vectorstore_manager
 
 # Import modular components
 from .formatters import OutputAssembler
-from .loaders import ContextLoader, ContextLogger
+from .loaders import ContextLogger
+from app.rag.context_loader import ContextLoader
 
 # Import markdown conversion for streaming display
 from app.ui.utils.markdown_utils import md_to_plain_text
