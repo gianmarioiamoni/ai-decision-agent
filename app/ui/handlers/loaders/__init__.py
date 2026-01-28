@@ -1,13 +1,7 @@
 # app/ui/handlers/loaders/__init__.py
 #
-# Loaders for context documents and related data.
-#
-
-from .context_loader import ContextLoader
-from .context_logger import ContextLogger
-
-__all__ = [
-    "ContextLoader",
-    "ContextLogger",
-]
+# IMPORTANT:
+# This package must not import runtime logic.
+# ContextLoader lives in app.rag.context_loader
+# This package only contains UI-related helpers (e.g. ContextLogger).
 
