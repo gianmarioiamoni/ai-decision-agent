@@ -143,16 +143,12 @@ class VectorstoreManager:
         vectorstore = self.get_vectorstore()
         collection = vectorstore._collection
 
-        try:
-            ids = collection.get()["ids"]
-            if ids:
-                collection.delete(ids=ids)
-                print(f"[VECTORSTORE] 🗑️ Deleted {len(ids)} embeddings")
-            else:
-                print("[VECTORSTORE] ℹ️ No embeddings to delete")
-
-        except Exception as e:
-            print(f"[VECTORSTORE] ⚠️ Clear skipped: {e}")
+        ids = collection.vectorstore.get_ids()
+        if not ids:
+            print("[VECTORSTORE] ℹ️ No embeddings to delete")
+            return
+        
+        collection.delete(ids=ids)
 
         print("[VECTORSTORE] ✅ Vectorstore cleared (filesystem untouched)")
 
@@ -192,11 +188,9 @@ class VectorstoreManager:
     # ------------------------------------------------------------------
 
     def has_documents(self) -> bool:
-        try:
             collection = self.get_vectorstore()._collection
             return collection.count() > 0
-        except Exception:
-            return False
+
 
     def count(self) -> int:
         try:

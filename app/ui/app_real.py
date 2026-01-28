@@ -14,6 +14,7 @@
 # - FileManager: Backend state singleton
 #
 import os
+from re import I
 import gradio as gr
 
 # Import UI components
@@ -82,11 +83,9 @@ def launch_real_ui():
         # Responsibilities:
         # - Load FileManager registry
         # - Initialize Vectorstore
-        # - If vectorstore is empty:
-        #   - Ensure files exist locally (download if missing)
-        #   - Rebuild embeddings
         #
         # No uploads, no HF sync, no side effects.
+        # Embeddings are created ONLY during file upload.
         #
 
         global _RAG_BOOTSTRAPPED
@@ -96,69 +95,17 @@ def launch_real_ui():
 
         print("[RAG BOOTSTRAP] 🚀 RAG BOOTSTRAP START")
 
+        # Initialize managers (lazy, no side effects)
         file_manager = get_file_manager()
         vectorstore_manager = get_vectorstore_manager()
-        hf_persistence = getattr(file_manager, "hf_persistence", None)
 
-        # Load registry
+        # Load registry (metadata only)
         files = file_manager.refresh_state()
         print(f"[RAG BOOTSTRAP] 📄 Registry loaded: {len(files)} file(s)")
 
-        # Initialize vectorstore (persistent Chroma)
+        # Initialize vectorstore once (persistent Chroma)
         vectorstore_manager.get_vectorstore()
         print("[RAG BOOTSTRAP] 📦 Vectorstore initialized")
-
-        # Rebuild embeddings only if needed
-        if files and not vectorstore_manager.has_documents():
-            print("[RAG BOOTSTRAP] 🔄 Vectorstore empty, rebuilding embeddings")
-
-            for f in files:
-                name = f.get("name")
-                path = f.get("path")
-
-                if not name:
-                    continue
-
-                # Ensure local file exists
-                if not path or not os.path.exists(path):
-                    if hf_persistence:
-                        print(f"[RAG BOOTSTRAP] 📥 Downloading missing file: {name}")
-                        success = hf_persistence.download_document(
-                            filename=name,
-                            local_path=os.path.join(
-                                file_manager.storage_dir, name
-                            )
-                        )
-                        if not success:
-                            print(f"[RAG BOOTSTRAP] ❌ Failed to download {name}")
-                            continue
-                        path = os.path.join(file_manager.storage_dir, name)
-                    else:
-                        print(f"[RAG BOOTSTRAP] ⚠️ No HF persistence, cannot download {name}")
-                        continue
-
-                try:
-                    with open(path, "r", encoding="utf-8", errors="ignore") as file:
-                        content = file.read()
-
-                    if not content.strip():
-                        print(f"[RAG BOOTSTRAP] ⚠️ Empty file skipped: {name}")
-                        continue
-
-                    vectorstore_manager.add_documents(
-                        documents=[content],
-                        metadatas=[{"filename": name}],
-                        sync_to_hub=False,
-                    )
-
-                    print(f"[RAG BOOTSTRAP] ✅ Embedded {name}")
-
-                except Exception as e:
-                    print(f"[RAG BOOTSTRAP] ❌ Failed embedding {name}: {e}")
-                    continue
-
-        else:
-            print("[RAG BOOTSTRAP] ℹ️ Vectorstore already populated")
 
         _RAG_BOOTSTRAPPED = True
         print("[RAG BOOTSTRAP] ✅ RAG bootstrap completed")

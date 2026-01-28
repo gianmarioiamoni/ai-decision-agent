@@ -61,6 +61,12 @@ def handle_file_upload(uploaded_files):
     #
     # Handle file upload event.
     #
+    # - Upload is the ONLY place where embeddings are created
+    # - No refresh_state()
+    # - No bootstrap
+    # - No HF sync here
+    # - UI rendering is READ-ONLY
+    #
     print("\n[RAG UPLOAD DEBUG] === ENTER handle_file_upload ===", flush=True)
 
     try:
@@ -68,12 +74,13 @@ def handle_file_upload(uploaded_files):
             OperationLogger.no_files_provided()
             return (
                 StatusMessageBuilder.empty_upload_status(),
-                get_storage_summary(),
-                get_files_status_text(),
+                file_manager.render_storage_summary(),
+                file_manager.render_files_text(),
             )
 
         OperationLogger.upload_started(len(uploaded_files))
 
+        # Process upload batch (FileManager handles persistence + refresh)
         result = _process_upload_batch(uploaded_files)
 
         status_msg = StatusMessageBuilder.upload_status(
@@ -92,11 +99,15 @@ def handle_file_upload(uploaded_files):
         traceback.print_exc()
         return (
             "❌ Upload failed",
-            "",
-            "",
+            file_manager.render_storage_summary(),
+            file_manager.render_files_text(),
         )
 
-    return status_msg, get_storage_summary(), get_files_status_text()
+    return (
+        status_msg,
+        file_manager.render_storage_summary(),
+        file_manager.render_files_text(),
+    )
 
 
 def _process_upload_batch(uploaded_files):
