@@ -69,7 +69,14 @@ def handle_file_upload(uploaded_files):
     # Returns:
     #     Tuple of (upload_status, storage_summary, files_list_text)
     #
-    
+    print("\n[RAG UPLOAD DEBUG] ===== FILE UPLOAD =====")
+    print(f"type(uploaded_files) = {type(uploaded_files)}")
+
+    if uploaded_files is not None:
+        print(f"uploaded_files.name = {getattr(uploaded_files, 'name', None)}")
+        print(f"uploaded_files.size = {getattr(uploaded_files, 'size', None)}")
+        print(f"dir(uploaded_files) = {dir(uploaded_files)}")
+
     if not uploaded_files:
         OperationLogger.no_files_provided()
         return (
