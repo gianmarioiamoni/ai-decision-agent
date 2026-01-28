@@ -39,7 +39,6 @@ def create_output_report():
     filename = build_report_filename("html")
     report_download_component = gr.File(
         value=[],  # None for single File download (no file initially)
-        filename=filename,
         label="report_download_component",  # No internal label - using external section title with icon
         file_count="single",
         file_types=[".html", ".pdf", ".docx"],
