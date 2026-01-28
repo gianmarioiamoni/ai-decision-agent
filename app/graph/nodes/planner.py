@@ -42,6 +42,7 @@ def planner_node(state: DecisionState) -> Dict:
     print("🗺️  PLANNER PHASE")
     print("="*60)
     print(f"📝 Question: {question[:100]}...")
+    print("="*60 + "\n")
     if bundle.rag_significant:
         print(f"✅ Context-Grounded Mode: Planning with organizational constraints")
     else:
@@ -64,11 +65,4 @@ def planner_node(state: DecisionState) -> Dict:
     
     return {
         "plan": plan_text,
-        # Append the plan to the message history for transparency
-        "messages": [
-            {
-                "role": "assistant",
-                "content": f"Proposed plan:\n{plan_text}",
-            }
-        ],
     }

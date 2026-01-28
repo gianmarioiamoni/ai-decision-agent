@@ -91,10 +91,4 @@ def rag_node(state: DecisionState) -> Dict:
     
     return {
         "rag_context": rag_context.strip(),
-        "messages": [
-            {
-                "role": "assistant",
-                "content": f"📄 RAG Context: Retrieved {len(retrieved)} authoritative chunks from {num_documents} uploaded document(s)"
-            }
-        ]
     }

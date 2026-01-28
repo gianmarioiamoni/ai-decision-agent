@@ -24,13 +24,6 @@ def intake_node(state: DecisionState) -> Dict:
         "analysis": state.get("analysis"),
         "decision": state.get("decision"),
         "confidence": state.get("confidence"),
-        # Add an initial message to the conversation history
-        "messages": [
-            {
-                "role": "user",
-                "content": normalized_question,
-            }
-        ],
         # Initialize attempts counter
         "attempts": 0,
         # Initialize decision finalization flag
