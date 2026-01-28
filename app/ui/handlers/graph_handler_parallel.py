@@ -18,8 +18,8 @@ from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
 
 # Import modular components
-from .formatters import OutputAssembler
-from .loaders import ContextLogger
+from app.ui.handlers.formatters.output_assembler import OutputAssembler
+from app.ui.handlers.loaders.context_logger import ContextLogger
 from app.rag.context_loader import ContextLoader
 
 # Import markdown conversion for streaming display
