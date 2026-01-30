@@ -244,14 +244,11 @@ def run_graph_parallel_streaming(
         state.update(decision_result)
         state["messages"].extend(decision_messages)
 
-        summarize_result = summarize_node(state)
-        state.update(summarize_result)
-
         # Finalization
         summarize_result = summarize_node(state)
         state.update(summarize_result)
 
-        # Post-summarize
+        # Post-summarize (History persistence)
         from app.application.decision.decision_state_mapper import (
             map_state_to_decision_record,
         )
@@ -267,7 +264,7 @@ def run_graph_parallel_streaming(
             analysis,
             decision,
             confidence,
-            messages,
+            _,
             report_preview,
             report_file_path,
             historical_html,
