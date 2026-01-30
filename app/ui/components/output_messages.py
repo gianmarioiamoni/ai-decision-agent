@@ -7,14 +7,23 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 def messages_to_chatbot(messages):
     chat = []
-    current_user = None
 
     for msg in messages:
         if isinstance(msg, HumanMessage):
-            current_user = msg.content
+            chat.append({
+                "role": "user",
+                "content": msg.content
+            })
         elif isinstance(msg, AIMessage):
-            chat.append((current_user, msg.content))
-            current_user = None
+            chat.append({
+                "role": "assistant",
+                "content": msg.content
+            })
+        elif isinstance(msg, SystemMessage):
+            chat.append({
+                "role": "system",
+                "content": msg.content
+            })
 
     return chat
 
