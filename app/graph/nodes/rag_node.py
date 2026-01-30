@@ -4,91 +4,103 @@
 from typing import Dict
 from app.graph.state import DecisionState
 from app.rag.vectorstore_manager import get_vectorstore_manager
+from langchain_core.messages import AIMessage
+
 
 def rag_node(state: DecisionState) -> Dict:
+    #
     # Retrieve relevant information from persistent vectorstore for Hybrid RAG.
     #
-    # Args:
-    #     state: DecisionState containing the question
-    #
     # Returns:
-    #     Dict containing 'rag_context': str (textual summary of retrieved chunks)
-    #     and a message for traceability
+    # - rag_context: formatted authoritative context for LLM
+    # - messages: LangChain messages for conversation traceability
     #
-    # Get persistent vectorstore
+
     vectorstore_manager = get_vectorstore_manager()
     vectorstore = vectorstore_manager.get_vectorstore()
-    
-    # Check if vectorstore has any documents
+
+    # --------------------------------------------------
+    # SAFETY CHECK: no embeddings
+    # --------------------------------------------------
     try:
-        # check if vectorstore has documents
         if not vectorstore_manager.has_documents():
             return {
                 "rag_context": "",
                 "messages": [
-                    {
-                        "role": "assistant",
-                        "content": "No context documents uploaded. Using general knowledge only."
-                    }
-                ]
+                    AIMessage(
+                        content="📄 No RAG context available. Using general knowledge only."
+                    )
+                ],
             }
-            
+
     except Exception as e:
-        # Vectorstore not initialized or empty
         print(f"[RAG_NODE] ⚠️ Vectorstore check failed: {e}")
         return {
             "rag_context": "",
             "messages": [
-                {
-                    "role": "assistant",
-                    "content": "No context documents available. Using general knowledge only."
-                }
-            ]
+                AIMessage(
+                    content="📄 RAG unavailable due to internal error. Using general knowledge only."
+                )
+            ],
         }
-    
-    # Query embedding for the question
+
+    # --------------------------------------------------
+    # RETRIEVAL
+    # --------------------------------------------------
     question = state.get("question", "")
-    
-    # 🔍 RAG DEBUG - Before retrieval
-    print("\n" + "="*60)
+
+    print("\n" + "=" * 60)
     print("🔍 RAG DEBUG - RETRIEVAL PHASE")
-    print("="*60)
+    print("=" * 60)
     print(f"📝 Question: {question}")
-    print(f"🎯 Retrieving top-5 most relevant chunks from persistent vectorstore...")
-    
-    # Retrieve top 5 relevant chunks from persistent vectorstore
+    print("🎯 Retrieving top-5 most relevant chunks from persistent vectorstore...")
+
     retrieved = vectorstore.similarity_search_with_score(question, k=5)
-    
-    # 🔍 RAG DEBUG - After retrieval
+
     print(f"✅ Retrieved {len(retrieved)} chunks")
     for i, (doc, score) in enumerate(retrieved, start=1):
-        preview = doc.page_content[:150].replace('\n', ' ')
-        print(f"\n📄 Chunk {i} (similarity: {score:.4f}, first 150 chars):")
+        preview = doc.page_content[:150].replace("\n", " ")
+        print(f"\n📄 Chunk {i} (distance: {score:.4f})")
         print(f"   {preview}...")
-    print("="*60 + "\n")
-    
-    # 🆕 Aggregate retrieved chunks with structured cognitive framing
+    print("=" * 60 + "\n")
+
+    # --------------------------------------------------
+    # BUILD AUTHORITATIVE RAG CONTEXT
+    # --------------------------------------------------
     rag_context = "Use the following chunks in priority order (most relevant first):\n\n"
     unique_sources = set()
-    
+
     for i, (doc, score) in enumerate(retrieved, start=1):
-        # Metadata
-        doc_source = doc.metadata.get('filename', doc.metadata.get('source', f'Document_{i}'))
-        chunk_id = doc.metadata.get('chunk_id', i)
-        
-        # Track unique document sources
+        doc_source = doc.metadata.get(
+            "filename", doc.metadata.get("source", f"Document_{i}")
+        )
+        chunk_id = doc.metadata.get("chunk_id", i)
+
         unique_sources.add(doc_source)
-        
-        # Converting L2 distance to similarity score (0-1)
-        # Lower distance = higher similarity
+
+        # Convert distance to similarity (0–1)
         similarity = max(0.0, min(1.0, 1 - min(score, 1.0)))
-        
-        rag_context += f"[CHUNK {i}] Source: {doc_source} | Chunk ID: {chunk_id} | Similarity: {similarity:.2f}\n"
-        rag_context += f"ORGANIZATIONAL FACT:\n{doc.page_content}\n\n"
-    
-    # Count unique documents
+
+        rag_context += (
+            f"[CHUNK {i}] Source: {doc_source} | Chunk ID: {chunk_id} | "
+            f"Similarity: {similarity:.2f}\n"
+            f"ORGANIZATIONAL FACT:\n{doc.page_content}\n\n"
+        )
+
     num_documents = len(unique_sources)
-    
+
+    # --------------------------------------------------
+    # RETURN (STRICTLY LangChain messages)
+    # --------------------------------------------------
     return {
         "rag_context": rag_context.strip(),
+        "messages": [
+            AIMessage(
+                content=(
+                    f"📄 RAG Context: Retrieved {len(retrieved)} authoritative chunks "
+                    f"from {num_documents} uploaded document(s)."
+                )
+            )
+        ],
     }
+

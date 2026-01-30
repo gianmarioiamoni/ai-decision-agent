@@ -18,6 +18,8 @@ from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
 from app.rag.context_loader import ContextLoader
 
+from langchain_core.messages import AIMessage
+
 # Import modular components
 from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.handlers.loaders.context_logger import ContextLogger
@@ -26,6 +28,54 @@ from app.ui.components.output_messages import messages_to_chatbot
 # Import markdown conversion for streaming display
 from app.ui.utils.markdown_utils import md_to_plain_text
 
+
+# ==============================================================================
+# Helper Functions
+# ==============================================================================
+
+def _format_streaming_output(
+    plan,
+    analysis,
+    decision,
+    confidence,
+    messages,
+    report_preview,
+    report_file_path,
+    historical_html,
+    rag_evidence_html,
+):
+    return (
+        plan,
+        analysis,
+        decision,
+        confidence,
+        messages,
+        report_preview,
+        report_file_path,
+        historical_html,
+        rag_evidence_html,
+    )
+
+
+def _format_error_output(error_message):
+    error_msg = f"❌ Error: {error_message}"
+    error_html = f"<p style='color: red;'>{error_msg}</p>"
+    return (
+        error_msg,
+        error_msg,
+        error_msg,
+        0.0,
+        error_html,
+        error_html,
+        None,
+        error_html,
+        error_html,
+    )
+
+
+# ==============================================================================
+# Main Function
+# ==============================================================================
 
 def run_graph_parallel_streaming(
     question,
@@ -168,7 +218,24 @@ def run_graph_parallel_streaming(
         # FINAL PHASES (Decision + Summarize)
         # --------------------------------------------------------------
         state["plan"] = plan_accumulated
+        state["messages"].append(
+            AIMessage(
+                content=(
+                    "Proposed plan:\n\n"
+                    f"{plan_accumulated}"
+                )
+            )
+        )
+
         state["analysis"] = analysis_accumulated
+        state["messages"].append(
+            AIMessage(
+                content=(
+                    "Analysis summery:\n\n"
+                    f"{analysis_accumulated}"
+                )
+            )
+        )
 
         decision_result = decision_node(state)
         decision_messages = decision_result.pop("messages", [])
@@ -190,6 +257,9 @@ def run_graph_parallel_streaming(
             rag_evidence_html,
         ) = assembler.assemble(state, context_docs)
 
+        # 🔒 SAFETY: ensure we use the authoritative message history
+        assert isinstance(state.get("messages"), list)
+
         chat_history = messages_to_chatbot(state["messages"])
 
         yield _format_streaming_output(
@@ -208,47 +278,3 @@ def run_graph_parallel_streaming(
         import traceback
         traceback.print_exc()
         yield _format_error_output(str(e))
-
-
-# ==============================================================================
-# Helper Functions
-# ==============================================================================
-
-def _format_streaming_output(
-    plan,
-    analysis,
-    decision,
-    confidence,
-    messages,
-    report_preview,
-    report_file_path,
-    historical_html,
-    rag_evidence_html,
-):
-    return (
-        plan,
-        analysis,
-        decision,
-        confidence,
-        messages,
-        report_preview,
-        report_file_path,
-        historical_html,
-        rag_evidence_html,
-    )
-
-
-def _format_error_output(error_message):
-    error_msg = f"❌ Error: {error_message}"
-    error_html = f"<p style='color: red;'>{error_msg}</p>"
-    return (
-        error_msg,
-        error_msg,
-        error_msg,
-        0.0,
-        error_html,
-        error_html,
-        None,
-        error_html,
-        error_html,
-    )

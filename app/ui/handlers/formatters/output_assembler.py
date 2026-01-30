@@ -19,7 +19,7 @@ class OutputAssembler:
     #
     
     def __init__(self):
-        """Initialize all formatters."""
+        # Initialize all formatters
         self.message_formatter = MessageFormatter()
         self.historical_formatter = HistoricalFormatter()
     
