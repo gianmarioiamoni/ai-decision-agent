@@ -27,6 +27,8 @@ from app.ui.components.output_messages import messages_to_chatbot
 
 # Import markdown conversion for streaming display
 from app.ui.utils.markdown_utils import md_to_plain_text
+from domain.decision.decision_mapper import map_decision_result_to_record
+from infrastructure.memory.historical_writer import historical_writer
 
 
 # ==============================================================================
@@ -244,6 +246,21 @@ def run_graph_parallel_streaming(
 
         summarize_result = summarize_node(state)
         state.update(summarize_result)
+
+        # Finalization
+        summarize_result = summarize_node(state)
+        state.update(summarize_result)
+
+        # Post-summarize
+        from app.application.decision.decision_state_mapper import (
+            map_state_to_decision_record,
+        )
+        record = map_state_to_decision_record(state)
+        historical_writer.persist(record)
+
+        # ==============================================================
+        # UI / OUTPUT ASSEMBLY (NO SIDE EFFECTS AFTER THIS)
+        # ==============================================================
 
         (
             plan,
