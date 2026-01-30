@@ -28,7 +28,17 @@ from app.ui.components.output_messages import messages_to_chatbot
 # Import markdown conversion for streaming display
 from app.ui.utils.markdown_utils import md_to_plain_text
 from domain.decision.decision_mapper import map_decision_result_to_record
-from infrastructure.memory.historical_writer import historical_writer
+from infrastructure.memory.historical_writer import HistoricalDecisionWriter
+from infrastructure.memory.chroma_client import get_chroma_collection
+
+# ==============================================================================
+# GLOBAL VARIABLES
+# ==============================================================================
+
+# ChromaDB collection for historical decisions
+# Infrastructure is initialized once and reused across the application.
+_chroma_collection = get_chroma_collection()
+historical_writer = HistoricalDecisionWriter(_chroma_collection)
 
 
 # ==============================================================================

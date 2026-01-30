@@ -27,6 +27,7 @@ class HistoricalDecisionWriter:
 
     def _build_metadata(self, record: DecisionRecord) -> dict:
         return {
+            "decision_id": record.decision_id,
             "decision": record.decision,
             "confidence": record.confidence,
             "project_id": record.project_id,
