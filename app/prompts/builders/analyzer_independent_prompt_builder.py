@@ -49,6 +49,7 @@ class AnalyzerIndependentPromptBuilder(BasePromptBuilder):
         question: str,
         rag_context: str,
         retrieved_docs: List[str],
+        historical_context: str = "",
     ) -> PromptBundle:
         #
         # Build complete prompt bundle for independent analyzer node.
@@ -67,7 +68,7 @@ class AnalyzerIndependentPromptBuilder(BasePromptBuilder):
         rag_mode = cls.determine_rag_mode(rag_context)
         
         # Build system prompt
-        system_prompt = cls._build_system_prompt()
+        system_prompt = cls._build_system_prompt(historical_context=historical_context)
         
         # Build human prompt with context FIRST if significant
         human_prompt = cls._build_human_prompt(
@@ -85,7 +86,7 @@ class AnalyzerIndependentPromptBuilder(BasePromptBuilder):
         )
     
     @classmethod
-    def _build_system_prompt(cls) -> str:
+    def _build_system_prompt(cls, historical_context: str = "") -> str:
         # Build the system prompt for independent analyzer.
         
         return f"""
@@ -122,8 +123,18 @@ Your job is to evaluate the question based SOLELY on:
 - Making assumptions that contradict the context
 - Confirming hypothetical plans without evidence
 
+Previous similar decisions (supportive evidence only):
+{historical_context}
+
+IMPORTANT:
+- These past decisions are NOT authoritative
+- They may inform reasoning but MUST NOT override current context
+- Historical decisions are provided for qualitative insight only
+- They MUST NOT be treated as statistical evidence or majority rule
+
+
 **IF NO CONTEXT PROVIDED**:
-Only then may you use general knowledge and historical patterns, but state this clearly.
+Only then may you use general knowledge, but state this clearly.
 """.strip()
     
     @classmethod
@@ -176,7 +187,7 @@ Only then may you use general knowledge and historical patterns, but state this 
                 for i, doc in enumerate(retrieved_docs)
             )
             human_prompt += f"""
-Retrieved Historical Information (supportive, do not override authoritative context):
+Retrieved Supporting Documentation (non-authoritative):
 {docs_context}
 """
         

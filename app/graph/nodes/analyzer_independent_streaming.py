@@ -19,12 +19,14 @@ import re
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from app.prompts.builders import AnalyzerIndependentPromptBuilder
+from app.prompts.historical_context_formatter import format_historical_context
 
 
 def analyzer_independent_stream(
     question: str,
     rag_context: str,
-    retrieved_docs: list
+    retrieved_docs: list,
+    historical_evidence: list | None = None,
 ) -> Generator[str, None, None]:
     #
     # Stream independent analyzer output token-by-token.
@@ -59,11 +61,23 @@ def analyzer_independent_stream(
     else:
         print("❌ NO RAG Context - Using general reasoning only")
     
+    historical_context = format_historical_context(
+        historical_evidence or [],
+    )
+
+    if historical_context:
+        print(f"✅ Historical Context Available: {len(historical_context)} chars")
+        print(f"📋 First 300 chars of historical context:")
+        print(f"   {historical_context[:300].replace(chr(10), ' ')}...")
+    else:
+        print("❌ NO Historical Context - Using general reasoning only")
+
     # Build prompt using Independent PromptBuilder (NO plan!)
     bundle = AnalyzerIndependentPromptBuilder.build(
         question=question,
         rag_context=rag_context,
         retrieved_docs=retrieved_docs,
+        historical_context=historical_context,
     )
     
     print(f"\n🎯 RAG Mode: {bundle.rag_mode}")
