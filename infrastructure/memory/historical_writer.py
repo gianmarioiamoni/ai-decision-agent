@@ -1,9 +1,13 @@
-from chromadb.api.models.Collection import Collection
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from chromadb.api.models.Collection import Collection
+
 from domain.decision.decision_record import DecisionRecord
 
 
 class HistoricalDecisionWriter:
-    def __init__(self, collection: Collection) -> None:
+    def __init__(self, collection: "Collection") -> None:
         self._collection = collection
 
     def persist(self, record: DecisionRecord) -> None:
