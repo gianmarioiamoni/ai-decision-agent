@@ -5,7 +5,7 @@ from typing import Dict
 import re
 
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import AIMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from app.graph.state import DecisionState
 from app.graph.memory import (
@@ -153,9 +153,12 @@ def decision_node(state: DecisionState) -> Dict:
     )
 
     # ------------------------------------------------------------------
-    # ✅ FINAL CHAT MESSAGE (ONLY ONE, AIMessage)
+    # ✅ FINAL CHAT MESSAGE (uUSER + AIMessage)
     # ------------------------------------------------------------------
-
+    user_message = HumanMessage(
+        content=question,
+    )
+    
     assistant_message = AIMessage(
         content=(
             f"Decision:\n{decision_text}\n\n"
