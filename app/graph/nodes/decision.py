@@ -1,20 +1,19 @@
 # app/graph/nodes/decision.py
 # Decision node – confidence-aware, history-consumer only
 
-from typing import Dict
+from typing import Dict, Mapping, Any
 import re
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage
 
-from app.graph.state import DecisionState
 from app.prompts.builders import DecisionPromptBuilder
 from app.application.decision.confidence_factor import (
     historical_confidence_factor,
 )
 
 
-def decision_node(state: DecisionState) -> Dict:
+def decision_node(state: Mapping[str, Any]) -> Dict:
     # ------------------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------------------

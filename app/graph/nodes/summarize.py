@@ -1,13 +1,12 @@
 # app/graph/nodes/summarize.py
 # Final summarization node and session report generation
 
-from typing import Dict
-from app.graph.state import DecisionState
+from typing import Dict, Mapping, Any
 from app.report.session_report import generate_session_report, generate_preview_html
 
 # Summarize node
 # This node compresses message history and generates a final session report
-def summarize_node(state: DecisionState) -> Dict:
+def summarize_node(state: Mapping[str, Any]) -> Dict:
     #
     # Summarize node:
     # - Compresses message history to manage context length

@@ -8,7 +8,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.graph.graph import compiled_graph
-from app.graph.state import DecisionState
 
 def test_graph():
     print("🧪 Testing AI Decision Agent Graph...")
@@ -23,7 +22,7 @@ def test_graph():
     print("✅ OPENAI_API_KEY is set")
     
     # Create test state
-    state = DecisionState(
+    state = {
         messages=[],
         question="Should a small startup use LangGraph?",
         plan=None,
@@ -32,7 +31,7 @@ def test_graph():
         decision=None,
         confidence=None,
         attempts=0
-    )
+    }
     
     # Configure with thread_id
     config = {

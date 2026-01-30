@@ -1,8 +1,7 @@
 # app/graph/nodes/router.py
 # Intelligent routing with convergence rules and decision lock
 
-from typing import Dict
-from app.graph.state import DecisionState
+from typing import Dict, Mapping, Any
 
 # Maximum number of retry attempts allowed
 MAX_ATTEMPTS = 3
@@ -15,7 +14,7 @@ CONVERGENCE_DELTA = 0.05
 
 # Router node
 # This node updates the attempts counter and checks for decision finalization
-def confidence_router(state: DecisionState) -> Dict:
+def confidence_router(state: Mapping[str, Any]) -> Dict:
     #
     # Updates attempts counter and prepares routing decision.
     #

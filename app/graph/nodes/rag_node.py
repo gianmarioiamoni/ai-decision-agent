@@ -1,13 +1,12 @@
 # /app/graph/nodes/rag_node.py
 # Node to integrate Hybrid RAG support: contextual documents retrieval
 
-from typing import Dict
-from app.graph.state import DecisionState
+from typing import Dict, Mapping, Any
 from app.rag.vectorstore_manager import get_vectorstore_manager
 from langchain_core.messages import AIMessage
 
 
-def rag_node(state: DecisionState) -> Dict:
+def rag_node(state: Mapping[str, Any]) -> Dict:
     #
     # Retrieve relevant information from persistent vectorstore for Hybrid RAG.
     #

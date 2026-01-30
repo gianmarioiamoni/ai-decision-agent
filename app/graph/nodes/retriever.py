@@ -1,7 +1,6 @@
 # app/graph/nodes/retriever.py
-from typing import Dict, List
+from typing import Dict, List, Mapping, Any
 
-from app.graph.state import DecisionState
 from app.rag.vectorstore_manager import get_vectorstore_manager
 
 
@@ -14,7 +13,7 @@ from app.rag.vectorstore_manager import get_vectorstore_manager
 # - It MUST NOT emit chat messages
 # - It only enriches the shared state with retrieved evidence
 #
-def retriever_node(state: DecisionState) -> Dict:
+def retriever_node(state: Mapping[str, Any]) -> Dict:
     #
     # Retrieves relevant documents from the vectorstore based on the question and the generated plan.
     #

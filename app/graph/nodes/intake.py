@@ -1,13 +1,12 @@
 # app/graph/nodes/intake.py
 
-from typing import Dict
-from app.graph.state import DecisionState
+from typing import Dict, Mapping, Any
 from langchain_core.messages import HumanMessage
 
 # Intake node
 # Initializes the workflow by validating and normalizing
 # the user input question and initializing conversation state
-def intake_node(state: DecisionState) -> Dict:
+def intake_node(state: Mapping[str, Any]) -> Dict:
     # Basic validation
     question = state.get("question")
 

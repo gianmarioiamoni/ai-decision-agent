@@ -1,25 +1,35 @@
 # app/graph/nodes/historical_retriever.py
 
-from typing import Dict
+from typing import Dict, Mapping, Any, Optional
 
-from app.graph.state import DecisionState
-from infrastructure.memory.historical_retriever import (
-    HistoricalDecisionRetriever,
-)
-from infrastructure.memory.chroma_client import get_chroma_collection
+from infrastructure.memory.historical_retriever import HistoricalDecisionRetriever
 
 
-_collection = get_chroma_collection()
-_historical_retriever = HistoricalDecisionRetriever(_collection)
+_retriever_instance: Optional[HistoricalDecisionRetriever] = None
 
 
-def historical_retriever_node(state: DecisionState) -> Dict:
+def _get_historical_retriever() -> HistoricalDecisionRetriever:
+    global _retriever_instance
+
+    if _retriever_instance is None:
+        # ⬇️ IMPORT LAZY (CRITICO)
+        from infrastructure.memory.chroma_client import get_chroma_collection
+
+        collection = get_chroma_collection()
+        _retriever_instance = HistoricalDecisionRetriever(collection)
+
+    return _retriever_instance
+
+
+def historical_retriever_node(state: Mapping[str, Any]) -> Dict:
     question = state.get("question")
 
     if not question:
         raise ValueError("Historical retriever requires a valid question")
 
-    evidences = _historical_retriever.retrieve(
+    retriever = _get_historical_retriever()
+
+    evidences = retriever.retrieve(
         query=question,
         k=3,
     )
@@ -31,3 +41,4 @@ def historical_retriever_node(state: DecisionState) -> Dict:
     return {
         "historical_evidence": evidences,
     }
+

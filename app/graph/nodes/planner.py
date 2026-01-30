@@ -1,13 +1,12 @@
 # app/graph/nodes/planner.py
 # Planner node - refactored with PromptBuilder pattern
 
-from typing import Dict
+from typing import Dict, Mapping, Any
 from langchain_openai import ChatOpenAI
-from app.graph.state import DecisionState
 from app.prompts.builders import PlannerPromptBuilder
 
 
-def planner_node(state: DecisionState) -> Dict:
+def planner_node(state: Mapping[str, Any]) -> Dict:
     # Planner node using PromptBuilder pattern.
     #
     # Responsibilities:
