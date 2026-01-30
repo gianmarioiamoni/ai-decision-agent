@@ -4,7 +4,6 @@
 from typing import Dict, Mapping, Any
 import re
 
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage
 
 from app.prompts.builders import DecisionPromptBuilder
@@ -12,8 +11,14 @@ from app.application.decision.confidence_factor import (
     historical_confidence_factor,
 )
 
+def _get_llm():
+    from langchain_openai import ChatOpenAI
+    return ChatOpenAI(
+        temperature=0.1,
+        model="gpt-4o-mini",
+    )
 
-def decision_node(state: Mapping[str, Any]) -> Dict:
+def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
     # ------------------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------------------
@@ -66,10 +71,7 @@ def decision_node(state: Mapping[str, Any]) -> Dict:
     # LLM INVOCATION
     # ------------------------------------------------------------------
 
-    llm = ChatOpenAI(
-        temperature=0.1,
-        model="gpt-4o-mini",
-    )
+    llm = llm or _get_llm()
 
     response = llm.invoke(
         [
