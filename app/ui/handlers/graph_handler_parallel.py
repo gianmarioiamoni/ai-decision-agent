@@ -151,7 +151,7 @@ def run_graph_parallel_streaming(
                 analysis=analysis_display,
                 decision="",
                 confidence=0.0,
-                messages="",
+                messages=None,
                 report_preview="",
                 report_file_path=None,
                 historical_html="",
