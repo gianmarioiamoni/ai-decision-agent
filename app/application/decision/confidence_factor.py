@@ -1,50 +1,38 @@
 # app/application/decision/confidence_factor.py
 
-# This file contains the confidence factor for historical decisions.
-# It is used to compute the confidence contribution from historical decisions.
+from typing import Iterable, Mapping
 
-from typing import List
-from app.application.decision.historical_evidence import (
-    HistoricalDecisionEvidence,
-)
-
-
-MAX_HISTORICAL_CONFIDENCE = 0.3
+# Tunables (centralizzati)
+SIMILARITY_THRESHOLD = 0.75
+MAX_HISTORICAL_BONUS = 0.25
+PER_DECISION_BONUS = 0.08
 
 
 def historical_confidence_factor(
-    evidences: List[HistoricalDecisionEvidence],
+    historical_evidence: Iterable[Mapping]
 ) -> float:
     #
-    # Computes the confidence contribution from historical decisions.
-    #
-    # Args:
-    #     evidences: List of HistoricalDecisionEvidence
-    #
-    # Returns:
-    #     float: Confidence contribution from historical decisions
-    #
-    #
+    # Computes a confidence bonus based on historical decision similarity.
+
     # Rules:
-    # - Uses average similarity
-    # - Scaled by decision confidence
-    # - Capped to avoid dominance
+    # - Only decisions with similarity >= SIMILARITY_THRESHOLD count
+    # - Missing confidence is treated as neutral (1.0)
+    # - Bonus is additive but capped
+    # - Returns a value in [0.0, MAX_HISTORICAL_BONUS]
     #
 
-    if not evidences:
+    if not historical_evidence:
         return 0.0
 
-    weighted_similarities = [
-        e.similarity_score * e.confidence
-        for e in evidences
-        if e.similarity_score > 0 and e.confidence > 0
-    ]
+    bonus = 0.0
 
-    if not weighted_similarities:
-        return 0.0
+    for e in historical_evidence:
+        similarity = float(e.get("similarity", 0.0))
+        confidence = float(e.get("confidence", 1.0) or 1.0)
 
-    avg_weighted_similarity = (
-        sum(weighted_similarities) / len(weighted_similarities)
-    )
+        if similarity < SIMILARITY_THRESHOLD:
+            continue
 
-    return min(avg_weighted_similarity, MAX_HISTORICAL_CONFIDENCE)
+        bonus += PER_DECISION_BONUS * confidence
+
+    return min(bonus, MAX_HISTORICAL_BONUS)
