@@ -2,7 +2,29 @@
 
 import gradio as gr
 
-# Responsibility: display messages log
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+
+def render_messages_as_text(messages) -> str:
+    if not messages:
+        return ""
+
+    blocks = []
+
+    for msg in messages:
+        if isinstance(msg, HumanMessage):
+            blocks.append(f"💬 USER:\n{msg.content}")
+        elif isinstance(msg, AIMessage):
+            blocks.append(f"🤖 ASSISTANT:\n{msg.content}")
+        elif isinstance(msg, SystemMessage):
+            blocks.append(f"⚙️ SYSTEM:\n{msg.content}")
+        else:
+            # Fallback for safety
+            blocks.append(str(msg))
+
+    # Double newline = visual separation
+    return "\n\n" + ("\n\n" + "-" * 40 + "\n\n").join(blocks)
+
+
 def create_output_messages():
     messages_output = gr.Textbox(
         label="messages_output",  # No internal label - using external section title with icon
