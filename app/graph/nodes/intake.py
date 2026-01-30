@@ -2,21 +2,21 @@
 
 from typing import Dict
 from app.graph.state import DecisionState
+from langchain_core.messages import HumanMessage
 
 # Intake node
-# This node initializes the workflow by validating and normalizing
-# the user input question and ensuring the state is correctly populated
+# Initializes the workflow by validating and normalizing
+# the user input question and initializing conversation state
 def intake_node(state: DecisionState) -> Dict:
-    # Basic validation: ensure a question is present
+    # Basic validation
     question = state.get("question")
 
     if not question or not question.strip():
         raise ValueError("Input question must be a non-empty string")
 
-    # Normalize the question
+    # Normalize question
     normalized_question = question.strip()
 
-    # Initialize mandatory fields if not already set
     return {
         "question": normalized_question,
         "retrieved_docs": state.get("retrieved_docs", []),
@@ -24,8 +24,9 @@ def intake_node(state: DecisionState) -> Dict:
         "analysis": state.get("analysis"),
         "decision": state.get("decision"),
         "confidence": state.get("confidence"),
-        # Initialize attempts counter
+        "messages": [
+            HumanMessage(content=normalized_question)
+        ],
         "attempts": 0,
-        # Initialize decision finalization flag
-        "decision_finalized": False,
+        "decision_finalized": False, # Flag to indicate if the decision has been finalized
     }
