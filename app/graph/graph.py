@@ -10,11 +10,11 @@ from .nodes.intake import intake_node
 from .nodes.planner import planner_node
 from .nodes.rag_node import rag_node  # 🆕 Hybrid RAG support
 from .nodes.retriever import retriever_node
-from .nodes.analyzer import analyzer_node
+from .nodes.analyzer_independent_streaming import analyzer_independent_stream
 from .nodes.decision import decision_node
 from .nodes.router import confidence_router, should_retry
 from .nodes.summarize import summarize_node
-
+from .nodes.persist_history import persist_history_node
 # Initialize the main graph with DecisionState
 graph = StateGraph(DecisionState)
 
@@ -23,11 +23,11 @@ graph.add_node("intake", intake_node)
 graph.add_node("planner", planner_node)
 graph.add_node("rag", rag_node)  # 🆕 RAG context retrieval
 graph.add_node("retriever", retriever_node)
-graph.add_node("analyzer", analyzer_node)
+graph.add_node("analyzer", analyzer_independent_stream)
 graph.add_node("decision", decision_node)
 graph.add_node("router", confidence_router)
 graph.add_node("summarize", summarize_node)
-
+graph.add_node("persist_history", persist_history_node)
 # Entry point
 graph.set_entry_point("intake")
 

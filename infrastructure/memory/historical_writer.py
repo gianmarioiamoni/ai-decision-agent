@@ -1,0 +1,36 @@
+from chromadb.api.models.Collection import Collection
+from domain.decision.decision_record import DecisionRecord
+
+
+class HistoricalDecisionWriter:
+    def __init__(self, collection: Collection) -> None:
+        self._collection = collection
+
+    def persist(self, record: DecisionRecord) -> None:
+        document = self._build_document(record)
+        metadata = self._build_metadata(record)
+
+        self._collection.add(
+            ids=[record.decision_id],
+            documents=[document],
+            metadatas=[metadata],
+        )
+
+    def _build_document(self, record: DecisionRecord) -> str:
+        factors = ", ".join(record.key_factors)
+        return (
+            f"Question: {record.question}\n"
+            f"Decision: {record.decision}\n"
+            f"Rationale: {record.rationale}\n"
+            f"Key factors: {factors}"
+        )
+
+    def _build_metadata(self, record: DecisionRecord) -> dict:
+        return {
+            "decision": record.decision,
+            "confidence": record.confidence,
+            "project_id": record.project_id,
+            "tags": record.tags,
+            "timestamp": record.timestamp.isoformat(),
+            "context_type": "historical",
+        }
