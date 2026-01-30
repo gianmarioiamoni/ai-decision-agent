@@ -21,7 +21,7 @@ from app.rag.context_loader import ContextLoader
 # Import modular components
 from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.handlers.loaders.context_logger import ContextLogger
-from app.ui.components.output_messages import render_messages_as_text
+from app.ui.components.output_messages import messages_to_chatbot
 
 # Import markdown conversion for streaming display
 from app.ui.utils.markdown_utils import md_to_plain_text
@@ -190,16 +190,14 @@ def run_graph_parallel_streaming(
             rag_evidence_html,
         ) = assembler.assemble(state, context_docs)
 
-        # Render messages as text for display. 
-        # state is the final state of the graph.
-        messages_text = render_messages_as_text(state["messages"])
+        chat_history = messages_to_chatbot(state["messages"])
 
         yield _format_streaming_output(
             plan=plan,
             analysis=analysis,
             decision=decision,
             confidence=confidence,
-            messages=messages_text,
+            messages=chat_history,
             report_preview=report_preview,
             report_file_path=report_file_path,
             historical_html=historical_html,
