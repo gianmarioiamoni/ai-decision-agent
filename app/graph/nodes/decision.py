@@ -1,5 +1,5 @@
 # app/graph/nodes/decision.py
-# Decision node with long-term memory - refactored with PromptBuilder pattern
+# Decision node – confidence-aware, history-consumer only
 
 from typing import Dict
 import re
@@ -8,16 +8,10 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage
 
 from app.graph.state import DecisionState
-from app.graph.memory import (
-    init_chroma_vectorstore,
-    retrieve_similar_decisions,
-    save_decision,
-)
 from app.prompts.builders import DecisionPromptBuilder
-
-# Constants for confidence adjustment
-SIMILARITY_THRESHOLD = 0.75
-CONFIDENCE_BONUS = 0.10
+from app.application.decision.confidence_factor import (
+    historical_confidence_factor,
+)
 
 
 def decision_node(state: DecisionState) -> Dict:
@@ -28,6 +22,7 @@ def decision_node(state: DecisionState) -> Dict:
     question = state.get("question")
     analysis = state.get("analysis")
     rag_context = state.get("rag_context", "")
+    historical_evidence = state.get("historical_evidence", [])
 
     if not question:
         raise ValueError("Decision node requires a valid question in state")
@@ -35,51 +30,37 @@ def decision_node(state: DecisionState) -> Dict:
         raise ValueError("Decision node requires an analysis to make a decision")
 
     # ------------------------------------------------------------------
-    # 🔧 FIX 6 — INIT CHROMA AT RUNTIME (NOT AT IMPORT)
+    # DEBUG LOGGING
     # ------------------------------------------------------------------
-
-    chroma_store = init_chroma_vectorstore()
-
-    # ------------------------------------------------------------------
-    # RETRIEVE SIMILAR DECISIONS (LONG-TERM MEMORY)
-    # ------------------------------------------------------------------
-
-    similar_decisions = retrieve_similar_decisions(
-        question,
-        chroma_store,
-        top_k=3,
-    )
 
     print("\n" + "=" * 60)
-    print("🔍 RAG DEBUG - DECISION PHASE (Before LLM)")
+    print("⚖️ DECISION PHASE")
     print("=" * 60)
     print(f"📝 Question: {question[:100]}...")
 
     if rag_context:
-        print(f"✅ RAG Context Available: {len(rag_context)} chars")
-        print("📋 Context will be sent to LLM as AUTHORITATIVE")
+        print(f"✅ RAG Context Available ({len(rag_context)} chars)")
     else:
-        print("❌ NO RAG Context - Decision based on analysis only")
+        print("❌ No authoritative RAG context")
 
-    if similar_decisions:
-        print(f"📚 Historical Decisions: {len(similar_decisions)} similar past decisions")
+    print(
+        f"📚 Historical Evidence Items: {len(historical_evidence)}"
+    )
 
     # ------------------------------------------------------------------
-    # BUILD PROMPT
+    # BUILD DECISION PROMPT (NO HISTORY HERE!)
     # ------------------------------------------------------------------
 
     bundle = DecisionPromptBuilder.build(
         question=question,
         analysis=analysis,
         rag_context=rag_context,
-        similar_decisions=similar_decisions,
     )
 
-    print(f"\n🎯 RAG Mode: {bundle.rag_mode}")
-    print("📤 System Prompt (first 600 chars):")
-    print(f"   {bundle.system_message.content[:600]}...")
+    print("\n📤 System Prompt (first 400 chars):")
+    print(bundle.system_message.content[:400] + "...")
     print("\n📤 Human Prompt (first 400 chars):")
-    print(f"   {bundle.human_message.content[:400]}...")
+    print(bundle.human_message.content[:400] + "...")
     print("=" * 60 + "\n")
 
     # ------------------------------------------------------------------
@@ -91,10 +72,12 @@ def decision_node(state: DecisionState) -> Dict:
         model="gpt-4o-mini",
     )
 
-    response = llm.invoke([
-        bundle.system_message,
-        bundle.human_message,
-    ])
+    response = llm.invoke(
+        [
+            bundle.system_message,
+            bundle.human_message,
+        ]
+    )
 
     content = response.content.strip()
 
@@ -132,43 +115,42 @@ def decision_node(state: DecisionState) -> Dict:
 
     if not decision_text:
         decision_text = content
+
     if confidence_value is None:
         confidence_value = 0.75
 
     # ------------------------------------------------------------------
-    # CONFIDENCE ADJUSTMENT
+    # CONFIDENCE ADJUSTMENT (HISTORICAL FACTOR ONLY)
     # ------------------------------------------------------------------
 
-    for sim in similar_decisions:
-        if sim["similarity"] >= SIMILARITY_THRESHOLD:
-            confidence_value = min(confidence_value + CONFIDENCE_BONUS, 1.0)
+    history_factor = historical_confidence_factor(historical_evidence)
+    final_confidence = min(confidence_value + history_factor, 1.0)
+
+    print(f"📊 Base Confidence: {confidence_value:.2f}")
+    print(f"📊 Historical Factor: {history_factor:.2f}")
+    print(f"📊 Final Confidence: {final_confidence:.2f}")
 
     # ------------------------------------------------------------------
-    # SAVE TO LONG-TERM MEMORY
+    # FINAL CHAT MESSAGE
     # ------------------------------------------------------------------
 
-    decision_id = save_decision(
-        state=state,
-        vectordb=chroma_store,
-    )
-
-    # ------------------------------------------------------------------
-    # ✅ FINAL CHAT MESSAGE (AIMessage)
-    # ------------------------------------------------------------------
-    
     assistant_message = AIMessage(
         content=(
             f"Decision:\n{decision_text}\n\n"
-            f"Confidence: {confidence_value:.2f}\n\n"
+            f"Confidence: {final_confidence:.2f}\n\n"
             f"Contextual Factors:\n{context_factors}"
         )
     )
 
     return {
         "decision": decision_text,
-        "confidence": confidence_value,
+        "confidence": final_confidence,
+        "confidence_factors": {
+            "base": confidence_value,
+            "historical": history_factor,
+        },
         "rag_significant": bundle.rag_significant,
         "rag_mode": bundle.rag_mode,
         "messages": [assistant_message],
-        "similar_decisions":similar_decisions,
     }
+

@@ -13,6 +13,8 @@ from app.graph.nodes.rag_node import rag_node
 from app.graph.nodes.analyzer_independent_streaming import analyzer_independent_stream
 from app.graph.nodes.decision import decision_node
 from app.graph.nodes.summarize import summarize_node
+from app.graph.nodes.historical_retriever import historical_retriever_node
+
 
 from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
@@ -156,11 +158,17 @@ def run_graph_parallel_streaming(
             state["rag_context"] = None
 
         # --------------------------------------------------------------
-        # PHASE 3: RETRIEVER (historical / non-user RAG)
+        # PHASE 3a: TECHNICAL RETRIEVER (documents / knowledge)
         # --------------------------------------------------------------
         retriever_result = retriever_node(state)
         state.update(retriever_result)
         state["messages"].extend(retriever_result.get("messages", []))
+
+        # --------------------------------------------------------------
+        # PHASE 3b: HISTORICAL DECISION RETRIEVER
+        # --------------------------------------------------------------
+        historical_result = historical_retriever_node(state)
+        state.update(historical_result)
 
         # --------------------------------------------------------------
         # PHASE 4: PARALLEL STREAMING (Planner + Analyzer)
@@ -174,6 +182,7 @@ def run_graph_parallel_streaming(
             question,
             state["rag_context"],
             state["retrieved_docs"],
+            state["historical_evidence"],
         )
 
         plan_accumulated = ""
