@@ -4,7 +4,7 @@
 import os
 import sqlite3
 from typing import List, Dict, Optional, Union
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 
 from langchain_openai import OpenAIEmbeddings
@@ -53,7 +53,7 @@ def save_decision_to_db(question: str, plan: str, analysis: str, decision: str, 
     c.execute("""
         INSERT INTO decisions (question, plan, analysis, decision, confidence, timestamp, embedding)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (question, plan, analysis, decision, confidence, datetime.utcnow().isoformat(), embedding_bytes))
+    """, (question, plan, analysis, decision, confidence, datetime.now(timezone.utc).isoformat(), embedding_bytes))
     conn.commit()
     conn.close()
 

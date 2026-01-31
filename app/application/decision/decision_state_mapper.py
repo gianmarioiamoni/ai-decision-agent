@@ -1,12 +1,22 @@
 # app/application/decision/decision_state_mapper.py
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from domain.decision.decision_record import DecisionRecord
 from domain.decision.decision_validation import validate_decision_record
 
+# ------------------------------------------------------------------
+# Helper functions (pure, replaceable, testable)
+# ------------------------------------------------------------------
+def _normalize_tags(tags: list[str] | None) -> str | None:
+    if not tags:
+        return None
+    return ", ".join(tags)
 
+# ------------------------------------------------------------------
+# Main function
+# ------------------------------------------------------------------
 def map_state_to_decision_record(state: dict) -> DecisionRecord:
     # Maps a finalized DecisionState to a DecisionRecord.
     # Must be called ONLY post-SUMMARIZE.
@@ -14,7 +24,7 @@ def map_state_to_decision_record(state: dict) -> DecisionRecord:
     
     record = DecisionRecord(
         decision_id=str(uuid4()),
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
 
         question=state["question"],
 
@@ -28,7 +38,7 @@ def map_state_to_decision_record(state: dict) -> DecisionRecord:
         historical_context_refs=_extract_historical_refs(state),
 
         project_id=_extract_project_id(state),
-        tags=_extract_tags(state),
+        tags=_normalize_tags(_extract_tags(state)),
     )
 
     validate_decision_record(record)

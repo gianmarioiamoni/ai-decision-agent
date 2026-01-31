@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -9,7 +9,7 @@ from domain.decision.decision_validation import validate_decision_record
 def make_valid_record(**overrides) -> DecisionRecord:
     base = {
         "decision_id": "decision-1",
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "question": "Should we adopt solution X?",
         "decision": "YES",
         "confidence": 0.9,

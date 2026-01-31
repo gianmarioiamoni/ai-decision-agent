@@ -7,7 +7,7 @@
 # - Logic: Python code focuses on data preparation only
 #
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 import re
 from .template_loader import get_template_loader
@@ -128,7 +128,7 @@ def _prepare_report_context(state: Dict[str, Any], inline_styles: bool = False) 
     # Returns:
     #     Dictionary with all template variables
     #
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     
     return {
         "timestamp": timestamp,

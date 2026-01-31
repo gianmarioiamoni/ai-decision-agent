@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -38,7 +38,7 @@ def test_mapper_creates_decision_record_from_valid_state():
     assert record.project_id == state["project_id"]
 
     assert record.rationale == state["report_preview"]
-    assert record.timestamp <= datetime.utcnow()
+    assert record.timestamp <= datetime.now(timezone.utc)
 
 
 def test_mapper_uses_analysis_when_report_preview_missing():
