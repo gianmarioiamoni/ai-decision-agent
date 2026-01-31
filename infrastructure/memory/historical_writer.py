@@ -35,7 +35,7 @@ class HistoricalDecisionWriter:
             "decision": record.decision,
             "confidence": record.confidence,
             "project_id": record.project_id,
-            "tags": record.tags,
+            "tags": ",".join(record.tags) if record.tags else None,
             "timestamp": record.timestamp.isoformat(),
             "context_type": "historical",
         }
