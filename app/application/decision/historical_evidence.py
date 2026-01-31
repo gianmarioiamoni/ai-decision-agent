@@ -5,6 +5,7 @@ from typing import Optional
 
 @dataclass(frozen=True)
 class HistoricalDecisionEvidence:
+    decision_id: str
     decision: str
     confidence: float
     rationale: str
