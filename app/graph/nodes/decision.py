@@ -1,24 +1,99 @@
 # app/graph/nodes/decision.py
 # Decision node – confidence-aware, history-consumer only
+# Generates BOTH:
+# - final decision + confidence
+# - concise short_rationale for historical memory
 
-from typing import Dict, Mapping, Any
+from typing import Dict, Mapping, Any, List
 import re
 
 from langchain_core.messages import AIMessage
+from langchain_openai import ChatOpenAI
 
 from app.prompts.builders import DecisionPromptBuilder
 from app.application.decision.confidence_factor import (
     historical_confidence_factor,
 )
 
-def _get_llm():
-    from langchain_openai import ChatOpenAI
+
+# ------------------------------------------------------------------
+# LLM FACTORY
+# ------------------------------------------------------------------
+
+def _get_llm() -> ChatOpenAI:
     return ChatOpenAI(
         temperature=0.1,
         model="gpt-4o-mini",
     )
 
-def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
+
+# ------------------------------------------------------------------
+# HELPERS
+# ------------------------------------------------------------------
+
+def _build_short_rationale_prompt(
+    question: str,
+    decision: str,
+    analysis: str,
+) -> List[AIMessage]:
+    """
+    Dedicated prompt for generating a SHORT rationale for memory.
+    This MUST stay small and clean.
+    """
+    system = AIMessage(
+        content=(
+            "You are a decision support system.\n"
+            "Your task is to extract ONLY the decisive rationale.\n"
+            "Be concise and factual."
+        )
+    )
+
+    human = AIMessage(
+        content=(
+            f"Question:\n{question}\n\n"
+            f"Final Decision:\n{decision}\n\n"
+            f"Supporting Analysis:\n{analysis}\n\n"
+            "Provide a concise rationale for this decision.\n\n"
+            "Requirements:\n"
+            "- Maximum 5 bullet points\n"
+            "- Each bullet must be a single sentence\n"
+            "- Focus ONLY on decisive factors\n"
+            "- Do NOT restate the full analysis\n"
+            "- Do NOT include the decision text\n"
+            "- Do NOT include any headers or explanations\n"
+            "- Output ONLY the bullet list"
+        )
+    )
+
+    return [system, human]
+
+
+def _parse_bullets(text: str) -> str:
+    """
+    Normalize bullet output to a clean, newline-separated bullet list.
+    """
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip().startswith(("-", "•"))
+    ]
+
+    if not lines:
+        # fallback: single sentence
+        return f"- {text.strip()}"
+
+    return "\n".join(lines)
+
+
+# ------------------------------------------------------------------
+# MAIN NODE
+# ------------------------------------------------------------------
+
+def decision_node(
+    state: Mapping[str, Any],
+    llm: ChatOpenAI | None = None,
+) -> Dict[str, Any]:
+
     # ------------------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------------------
@@ -47,14 +122,12 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
     else:
         print("❌ No authoritative RAG context")
 
-    print(
-        f"📚 Historical Evidence Items: {len(historical_evidence)}"
-    )
+    print(f"📚 Historical Evidence Items: {len(historical_evidence)}")
 
     # ------------------------------------------------------------------
-    # FORMAT HISTORICAL EVIDENCE
+    # FORMAT HISTORICAL EVIDENCE (FOR PROMPT ONLY)
     # ------------------------------------------------------------------
-    historical_evidence = state.get("historical_evidence", [])
+
     similar_decisions = [
         {
             "decision": e.decision,
@@ -65,7 +138,7 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
     ]
 
     # ------------------------------------------------------------------
-    # BUILD DECISION PROMPT (NO HISTORY HERE!)
+    # BUILD DECISION PROMPT
     # ------------------------------------------------------------------
 
     bundle = DecisionPromptBuilder.build(
@@ -82,7 +155,7 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
     print("=" * 60 + "\n")
 
     # ------------------------------------------------------------------
-    # LLM INVOCATION
+    # LLM INVOCATION (DECISION)
     # ------------------------------------------------------------------
 
     llm = llm or _get_llm()
@@ -97,7 +170,7 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
     content = response.content.strip()
 
     # ------------------------------------------------------------------
-    # PARSE RESPONSE
+    # PARSE DECISION RESPONSE
     # ------------------------------------------------------------------
 
     decision_text = ""
@@ -135,7 +208,7 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
         confidence_value = 0.75
 
     # ------------------------------------------------------------------
-    # CONFIDENCE ADJUSTMENT (HISTORICAL FACTOR ONLY)
+    # CONFIDENCE ADJUSTMENT (HISTORICAL ONLY)
     # ------------------------------------------------------------------
 
     history_factor = historical_confidence_factor(historical_evidence)
@@ -146,7 +219,20 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
     print(f"📊 Final Confidence: {final_confidence:.2f}")
 
     # ------------------------------------------------------------------
-    # FINAL CHAT MESSAGE
+    # SHORT RATIONALE GENERATION (SECOND LLM CALL)
+    # ------------------------------------------------------------------
+
+    rationale_prompt = _build_short_rationale_prompt(
+        question=question,
+        decision=decision_text,
+        analysis=analysis,
+    )
+
+    rationale_response = llm.invoke(rationale_prompt)
+    short_rationale = _parse_bullets(rationale_response.content.strip())
+
+    # ------------------------------------------------------------------
+    # FINAL CHAT MESSAGE (UI ONLY)
     # ------------------------------------------------------------------
 
     assistant_message = AIMessage(
@@ -157,9 +243,14 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
         )
     )
 
+    # ------------------------------------------------------------------
+    # RETURN STATE UPDATE
+    # ------------------------------------------------------------------
+
     return {
         "decision": decision_text,
         "confidence": final_confidence,
+        "short_rationale": short_rationale,  # 🔑 MEMORY-SAFE
         "confidence_factors": {
             "base": confidence_value,
             "historical": history_factor,
@@ -168,4 +259,3 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
         "rag_mode": bundle.rag_mode,
         "messages": [assistant_message],
     }
-

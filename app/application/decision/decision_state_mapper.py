@@ -22,27 +22,18 @@ def map_state_to_decision_record(state: dict) -> DecisionRecord:
     # Must be called ONLY post-SUMMARIZE.
     #
     
-    record = DecisionRecord(
-        decision_id=str(uuid4()),
-        timestamp=datetime.now(timezone.utc),
-
+    DecisionRecord(
+        decision_id=state["decision_id"] ,
         question=state["question"],
-
         decision=state["decision"],
         confidence=state["confidence"],
-
-        rationale=_extract_rationale(state),
-        key_factors=_extract_key_factors(state),
-
-        authoritative_context_refs=_extract_authoritative_refs(state),
-        historical_context_refs=_extract_historical_refs(state),
-
-        project_id=_extract_project_id(state),
-        tags=_normalize_tags(_extract_tags(state)),
+        short_rationale=state["short_rationale"],  # 🔑
+        key_factors=state.get("key_factors", []),
+        project_id=None,
+        tags=[],
+        report_html=state["report_html"],
+        timestamp=datetime.now(timezone.utc),
     )
-
-    validate_decision_record(record)
-    return record
 
 
 # ------------------------------------------------------------------

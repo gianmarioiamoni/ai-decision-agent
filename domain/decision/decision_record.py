@@ -1,32 +1,27 @@
+f# domain/decision/decision_record.py
+
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Literal
-
-
-DecisionOutcome = Literal["YES", "NO", "CONDITIONAL"]
+from typing import List, Optional
 
 
 @dataclass(frozen=True)
 class DecisionRecord:
-    # Identity
     decision_id: str
+    question: str
+    decision: str
+    confidence: float
+
+    # 🔑 NUOVO: rationale sintetico per memoria
+    short_rationale: str
+
+    # opzionali / contesto
+    key_factors: List[str]
+    project_id: Optional[str]
+    tags: List[str]
+
+    # output UI
+    report_html: str
+
     timestamp: datetime
 
-    # Core question
-    question: str
-
-    # Outcome
-    decision: DecisionOutcome
-    confidence: float  # [0.0 - 1.0]
-
-    # Rationale
-    rationale: str
-    key_factors: List[str]
-
-    # Context references (by id / source, not raw text)
-    authoritative_context_refs: List[str]
-    historical_context_refs: List[str]
-
-    # Classification
-    project_id: str
-    tags: List[str]
