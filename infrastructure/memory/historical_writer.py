@@ -24,12 +24,12 @@ class HistoricalDecisionWriter:
         return record.short_rationale.strip()
 
     def _build_metadata(self, record: DecisionRecord) -> dict:
-        return {
+        metadata = {
             "decision_id": record.decision_id,
             "decision": record.decision,
-            "confidence": record.confidence,
-            "project_id": record.project_id,
-            "tags": ",".join(record.tags) if record.tags else None,
+            "confidence": float(record.confidence),
             "timestamp": record.timestamp.isoformat(),
             "context_type": "historical",
         }
+
+        return metadata
