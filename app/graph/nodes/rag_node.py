@@ -79,16 +79,21 @@ def rag_node(state: Mapping[str, Any]) -> Dict:
 
         # Convert distance to similarity (0–1)
         raw_similarity = 1.0 - score
-        similarity = max(0.0, min(1.0, raw_similarity))*100
+        similarity = max(0.0, min(1.0, raw_similarity))
 
 
         rag_context += (
             f"[CHUNK {i}] Source: {doc_source} | Chunk ID: {chunk_id} | "
-            f"Similarity: {similarity:.2f}\n"
+            #f"Similarity: {similarity:.2f}\n"
+            f"Similarity: {similarity}\n"
             f"ORGANIZATIONAL FACT:\n{doc.page_content}\n\n"
         )
 
     num_documents = len(unique_sources)
+
+    print("==== RAG CONTEXT DEBUG ====")
+    print(rag_context)
+    print("===========================")
 
     # --------------------------------------------------
     # RETURN (STRICTLY LangChain messages)
