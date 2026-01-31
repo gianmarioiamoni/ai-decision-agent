@@ -5,7 +5,7 @@
 #
 
 from .base_formatter import BaseFormatter
-
+from app.application.decision.historical_evidence import HistoricalDecisionEvidence
 
 class HistoricalFormatter(BaseFormatter):
     # Format historical decisions into HTML cards.
