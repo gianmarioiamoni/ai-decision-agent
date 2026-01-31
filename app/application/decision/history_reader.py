@@ -20,7 +20,8 @@ def load_decision_history(limit: int = 20) -> List[HistoricalDecisionEvidence]:
     try:
         result = collection.get(
             limit=limit,
-            include=["documents", "metadatas"]
+            include=["documents", "metadatas"],
+            where={"context_type": "historical"},
         )
     except Exception as e:
         print(f"[HISTORY] ❌ Failed to load history: {e}")
@@ -28,7 +29,10 @@ def load_decision_history(limit: int = 20) -> List[HistoricalDecisionEvidence]:
 
     history: List[HistoricalDecisionEvidence] = []
 
-    for meta in result.get("metadatas", []):
+    documents = result.get("documents", [])
+    metadatas = result.get("metadatas", [])
+
+    for document, meta in zip(documents, metadatas):
         try:
             raw_ts = meta.get("timestamp")
 
@@ -43,7 +47,8 @@ def load_decision_history(limit: int = 20) -> List[HistoricalDecisionEvidence]:
                     decision_id=meta.get("decision_id", ""),
                     decision=meta.get("decision", ""),
                     confidence=float(meta.get("confidence", 0.0)),
-                    similarity_score=0.0,
+                    rationale=document,          # ✅ CORRETTO
+                    similarity_score=0.0,        # UI-only
                     timestamp=timestamp,
                 )
             )

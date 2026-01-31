@@ -129,19 +129,18 @@ def _format_chunk_card(
     similarity: str,
     content: str
 ) -> str:
-    """
-    Format a single RAG chunk into a styled HTML card.
-    
-    Args:
-        chunk_num: Chunk number
-        source: Source document name
-        chunk_id: Unique chunk identifier
-        similarity: Similarity score (0.0-1.0)
-        content: Chunk content text
-    
-    Returns:
-        HTML string for chunk card
-    """
+    #
+    # Format a single RAG chunk into a styled HTML card.
+    #
+    # Args:
+    #     chunk_num: Chunk number
+    #     source: Source document name
+    #     chunk_id: Unique chunk identifier
+    #     similarity: Similarity score (0.0-1.0)
+    #     content: Chunk content text
+    #
+    # Returns:
+    #     HTML string for chunk card
     sim_pct = float(similarity) * 100
     
     # Color based on similarity score
