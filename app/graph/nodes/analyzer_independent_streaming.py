@@ -105,10 +105,21 @@ def analyzer_independent_stream(
     
     # Stream tokens
     accumulated = ""
-    for chunk in chain.stream([
-        bundle.system_message,
-        bundle.human_message,
-    ]):
-        accumulated += chunk
-        yield accumulated
-
+    print(f"🔍 Streaming analyzer output...")
+    print(f"🔍 System message: {bundle.system_message.content[:400]}...")
+    print(f"🔍 Human message: {bundle.human_message.content[:400]}...")
+    try:
+        for chunk in chain.stream([
+            bundle.system_message,
+            bundle.human_message,
+        ]):
+            accumulated += chunk
+            yield accumulated
+    except Exception as e:
+        print(f"❌ ANALYZER STREAMING FAILED")
+        print(f"🔍 Error: {e}")
+        print(f"🔍 System message: {bundle.system_message.content[:400]}...")
+        print(f"🔍 Human message: {bundle.human_message.content[:400]}...")
+        raise RuntimeError("Analyzer failed during streaming — aborting decision flow"
+            ) from e
+        
