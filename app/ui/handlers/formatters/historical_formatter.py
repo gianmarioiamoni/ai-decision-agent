@@ -10,13 +10,6 @@ from .base_formatter import BaseFormatter
 class HistoricalFormatter(BaseFormatter):
     # Format historical decisions into HTML cards.
     #
-    # Args:
-    #     similar_decisions: List of similar decision dictionaries
-    #         Expected keys: decision_id, similarity, content
-    #
-    # Returns:
-    #     HTML-formatted historical decisions string
-    #
     # Responsibility: Convert list of similar decisions to styled HTML representation.
     
     def format(self, similar_decisions):
@@ -39,24 +32,26 @@ class HistoricalFormatter(BaseFormatter):
         
         return "".join(cards)
     
-    def _create_decision_card(self, decision):
-        # Create HTML card for a single decision.
-        #
-        # Args:
-        #     decision: Decision dictionary with id, similarity, content
-        #
-        # Returns:
-        #     HTML string for decision card
-        #
-        decision_id = decision.get('decision_id', 'Unknown')
-        similarity = decision.get('similarity', 0.0)
-        content = decision.get('content', '')
-        
-        return (
-            f"<div style='border:1px solid #e2e8f0; background-color:#f9fafb; "
-            f"padding:8px; margin-bottom:5px; border-radius:6px;'>"
-            f"<b>ID:</b> {decision_id} &nbsp; "
-            f"<b>Similarity:</b> {similarity:.2f}<br>"
-            f"{content}</div>"
-        )
+    def _create_decision_card(self, decision: HistoricalDecisionEvidence) -> str:
+        decision_text = decision.decision
+        confidence = decision.confidence
+        rationale = decision.rationale
+        similarity = decision.similarity_score
+        timestamp = decision.timestamp.strftime("%Y-%m-%d %H:%M") if decision.timestamp else "N/A"
+
+        return f"""
+            <div class="decision-card">
+                <h4>Decision</h4>
+                <p><strong>Outcome:</strong> {decision_text}</p>
+                <p><strong>Confidence:</strong> {confidence:.2f}</p>
+                <p><strong>Similarity:</strong> {similarity:.2f}</p>
+                <p><strong>Timestamp:</strong> {timestamp}</p>
+                <details>
+                    <summary>Rationale</summary>
+                    <pre>{rationale}</pre>
+                </details>
+            </div>
+        """
+
+
 
