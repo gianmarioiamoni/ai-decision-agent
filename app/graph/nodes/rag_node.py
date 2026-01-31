@@ -78,7 +78,9 @@ def rag_node(state: Mapping[str, Any]) -> Dict:
         unique_sources.add(doc_source)
 
         # Convert distance to similarity (0–1)
-        similarity = max(0.0, min(1.0, 1 - min(score, 1.0)))
+        raw_similarity = 1.0 - score
+        similarity = max(0.0, min(1.0, raw_similarity))
+
 
         rag_context += (
             f"[CHUNK {i}] Source: {doc_source} | Chunk ID: {chunk_id} | "

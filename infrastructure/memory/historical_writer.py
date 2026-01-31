@@ -32,4 +32,11 @@ class HistoricalDecisionWriter:
             "context_type": "historical",
         }
 
-        return metadata
+        # Optional fields 
+        if record.project_id:
+            metadata["project_id"] = record.project_id
+
+        if record.tags:
+            metadata["tags"] = ",".join(record.tags)
+
+        return metadata 

@@ -1,10 +1,10 @@
 # app/ui/utils/rag_formatter.py
-"""
-RAG context formatting utilities for UI display.
-
-This module provides functions to format retrieved RAG context and uploaded documents
-into HTML for display in the Gradio interface.
-"""
+#
+# RAG context formatting utilities for UI display.
+#
+# This module provides functions to format retrieved RAG context and uploaded documents
+# into HTML for display in the Gradio interface.
+#
 
 import re
 from typing import List, Tuple
@@ -14,20 +14,13 @@ def format_rag_context_for_ui(
     context_docs,
     rag_context: str
 ) -> str:
-    """
-    Format RAG context and uploaded documents into styled HTML for UI display.
-    
-    This function creates a readable HTML representation of:
-    1. Uploaded context documents (with preview)
-    2. Retrieved evidence chunks (with similarity scores)
-    
-    Args:
-        context_docs: List of uploaded document contents
-        rag_context: Retrieved RAG context string with chunk metadata
-    
-    Returns:
-        Styled HTML string for display in Gradio interface
-    """
+    #
+    # Format RAG context and uploaded documents into styled HTML for UI display.
+    #
+    # This function creates a readable HTML representation of:
+    # 1. Uploaded context documents (with preview)
+    # 2. Retrieved evidence chunks (with similarity scores)
+    #
     rag_evidence_html = "<div style='font-family: monospace;'>"
     
     # Section 1: Uploaded Context Documents
@@ -52,15 +45,17 @@ def format_rag_context_for_ui(
 
 
 def _format_uploaded_documents(context_docs):
-    """
-    Format uploaded context documents section.
-    
-    Args:
-        context_docs: List of uploaded document contents
-    
-    Returns:
-        HTML string for uploaded documents section
-    """
+    #
+    # Format uploaded context documents section.
+    #
+    # This function creates a readable HTML representation of the uploaded context documents.
+    #
+    # Args:
+    #     context_docs: List of uploaded document contents
+    #
+    # Returns:
+    #     HTML string for uploaded documents section
+    #
     html = (
         "<h3 style='color: #e5e7eb; font-weight: bold; margin-top: 0;'>"
         "📂 Uploaded Context Documents</h3>"
@@ -86,18 +81,17 @@ def _format_uploaded_documents(context_docs):
 
 
 def _format_retrieved_chunks(rag_context: str) -> str:
-    """
-    Format retrieved RAG chunks section.
-    
-    Parses the rag_context string to extract chunks with metadata (source, chunk ID, similarity)
-    and formats them into styled HTML cards.
-    
-    Args:
-        rag_context: RAG context string with chunk metadata
-    
-    Returns:
-        HTML string for retrieved chunks section
-    """
+    #
+    # Format retrieved RAG chunks section.
+    #
+    # This function creates a readable HTML representation of the retrieved RAG chunks.
+    #
+    # Args:
+    #     rag_context: RAG context string with chunk metadata
+    #
+    # Returns:
+    #     HTML string for retrieved chunks section
+    #
     html = (
         "<h3 style='color: #e5e7eb; font-weight: bold;'>"
         "📚 Retrieved Evidence (RAG Chunks)</h3>"
