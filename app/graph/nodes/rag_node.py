@@ -79,7 +79,7 @@ def rag_node(state: Mapping[str, Any]) -> Dict:
 
         # Convert distance to similarity (0–1)
         raw_similarity = 1.0 - score
-        similarity = max(0.0, min(1.0, raw_similarity))
+        similarity = max(0.0, min(1.0, raw_similarity))*100
 
 
         rag_context += (
