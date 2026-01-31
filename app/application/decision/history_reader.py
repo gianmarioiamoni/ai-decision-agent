@@ -43,7 +43,7 @@ def load_decision_history(limit: int = 20) -> List[HistoricalDecisionEvidence]:
                     decision_id=meta.get("decision_id", ""),
                     decision=meta.get("decision", ""),
                     confidence=float(meta.get("confidence", 0.0)),
-                    similarity=0.0,
+                    similarity_score=0.0,
                     timestamp=timestamp,
                 )
             )
