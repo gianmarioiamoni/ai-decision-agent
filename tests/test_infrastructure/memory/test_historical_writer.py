@@ -25,7 +25,7 @@ def make_decision_record() -> DecisionRecord:
         question="Should we adopt solution X?",
         decision="YES",
         confidence=0.9,
-        rationale="Strong alignment with requirements",
+        short_rationale="Strong alignment with requirements",
         key_factors=["cost", "scalability"],
         authoritative_context_refs=["policy-1"],
         historical_context_refs=[],

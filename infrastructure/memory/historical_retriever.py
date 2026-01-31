@@ -21,9 +21,13 @@ class HistoricalDecisionRetriever:
         results = self._collection.query(
             query_texts=[query],
             n_results=k,
+            where={"context_type": "historical"},  # 🔑 FONDAMENTALE
         )
 
         evidences: List[HistoricalDecisionEvidence] = []
+
+        if not results.get("ids"):
+            return evidences
 
         for i in range(len(results["ids"][0])):
             metadata = results["metadatas"][0][i]
@@ -32,12 +36,16 @@ class HistoricalDecisionRetriever:
 
             evidences.append(
                 HistoricalDecisionEvidence(
-                    decision_id=metadata.get("decision_id"),
-                    decision=metadata.get("decision"),
-                    confidence=metadata.get("confidence"),
-                    rationale=document,
-                    similarity_score=1.0 - distance,  # cosine similarity
+                    decision_id=metadata.get("decision_id", ""),
+                    decision=metadata.get("decision", ""),
+                    confidence=float(metadata.get("confidence", 0.0)),
+
+                    # 🔑 QUI IL SENSO CAMBIA
+                    rationale=document.strip(),
+
+                    similarity_score=max(0.0, 1.0 - distance),
                 )
             )
 
         return evidences
+

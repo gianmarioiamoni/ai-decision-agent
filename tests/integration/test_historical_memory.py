@@ -34,7 +34,7 @@ def test_historical_memory_full_flow():
         question="Should we adopt Python?",
         decision="Do not adopt Python",
         confidence=0.72,
-        rationale="- Lack of performance guarantees\n- No org context",
+        short_rationale="Lack of authoritative context and performance concerns",
         key_factors=["performance", "missing context"],
         project_id="test-project",
         tags=["tech", "language"],
