@@ -12,7 +12,7 @@ class DecisionRecord:
     decision: str
     confidence: float
 
-    # 🔑 NUOVO: rationale sintetico per memoria
+    # 🔑 short rationale for memory 
     short_rationale: str
 
     # opzionali / contesto

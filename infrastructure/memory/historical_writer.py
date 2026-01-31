@@ -21,10 +21,12 @@ class HistoricalDecisionWriter:
         )
 
     def _build_document(self, record: DecisionRecord) -> str:
+        factors = ", ".join(record.key_factors)
         return (
             f"Question: {record.question}\n"
             f"Decision: {record.decision}\n"
-            f"Rationale: {record.short_rationale}"
+            f"Short rationale: {record.short_rationale}\n"
+            f"Key factors: {factors}"
         )
 
 

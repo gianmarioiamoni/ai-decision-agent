@@ -69,7 +69,7 @@ def _build_short_rationale_prompt(
 
 
 def _parse_bullets(text: str) -> str:
-    """
+    """ 
     Normalize bullet output to a clean, newline-separated bullet list.
     """
     lines = [

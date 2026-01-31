@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 from uuid import uuid4
+from datetime import datetime, timezone
 
 from domain.decision.decision_record import DecisionRecord
 from domain.decision.decision_validation import validate_decision_record
@@ -11,19 +11,21 @@ def map_decision_result_to_record(decision_result) -> DecisionRecord:
         timestamp=datetime.now(timezone.utc),
 
         question=decision_result.question,
-
-        decision=decision_result.final_decision,
+        decision=decision_result.decision,
         confidence=decision_result.confidence,
 
-        rationale=decision_result.rationale,
-        key_factors=decision_result.key_factors,
+        # 🔑 SOLO rationale sintetico
+        short_rationale=decision_result.short_rationale,
 
-        authoritative_context_refs=decision_result.authoritative_context_ids,
-        historical_context_refs=decision_result.historical_context_ids,
+        key_factors=decision_result.key_factors or [],
 
         project_id=decision_result.project_id,
-        tags=decision_result.tags,
+        tags=decision_result.tags or [],
+
+        # 🔑 report completo SOLO per UI / export
+        report_html=decision_result.report_html,
     )
 
     validate_decision_record(record)
     return record
+
