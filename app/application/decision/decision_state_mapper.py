@@ -23,14 +23,14 @@ def map_state_to_decision_record(state: dict) -> DecisionRecord:
     #
     
     DecisionRecord(
-        decision_id=state["decision_id"] ,
+        decision_id=str(uuid4()),
         question=state["question"],
         decision=state["decision"],
         confidence=state["confidence"],
-        short_rationale=state["short_rationale"],  # 🔑
+        short_rationale=state["short_rationale"],  
         key_factors=state.get("key_factors", []),
-        project_id=None,
-        tags=[],
+        project_id=state.get("project_id"),
+        tags=state.get("tags",[]),
         report_html=state["report_html"],
         timestamp=datetime.now(timezone.utc),
     )
