@@ -1,4 +1,4 @@
-f# domain/decision/decision_record.py
+# domain/decision/decision_record.py
 
 from dataclasses import dataclass
 from datetime import datetime
