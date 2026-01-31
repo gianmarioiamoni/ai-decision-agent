@@ -27,6 +27,8 @@ from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.handlers.loaders.context_logger import ContextLogger
 from app.ui.components.output_messages import messages_to_chatbot
 
+from app.application.decision.history_reader import load_decision_history
+
 # Import markdown conversion for streaming display
 from app.ui.utils.markdown_utils import md_to_plain_text
 from domain.decision.decision_mapper import map_decision_result_to_record
@@ -274,6 +276,10 @@ def run_graph_parallel_streaming(
         record = map_state_to_decision_record(state)
         historical_writer.persist(record)
 
+        # Load decision history
+        # Read complete history from database to be passed to the assembler
+        full_history = load_decision_history(limit=20)
+
         # ==============================================================
         # UI / OUTPUT ASSEMBLY (NO SIDE EFFECTS AFTER THIS)
         # ==============================================================
@@ -288,7 +294,7 @@ def run_graph_parallel_streaming(
             report_file_path,
             historical_html,
             rag_evidence_html,
-        ) = assembler.assemble(state, context_docs)
+        ) = assembler.assemble(state, context_docs, full_history)
 
         # 🔒 SAFETY: ensure we use the authoritative message history
         assert isinstance(state.get("messages"), list)

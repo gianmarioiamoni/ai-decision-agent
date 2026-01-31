@@ -26,13 +26,15 @@ class OutputAssembler:
     def assemble(
         self,
         result,
-        context_docs
+        context_docs,
+        history=None
     ):
         # Assemble complete UI output from graph result.
         #
         # Args:
         #     result: Graph execution result dictionary
         #     context_docs: Context documents used in execution
+        #     full_history: Full decision history
         #
         # Returns:
         #     Tuple of 9 outputs for Gradio UI:
@@ -62,9 +64,10 @@ class OutputAssembler:
         report_preview, report_file_path = self._format_report(result)
         
         # Format historical decisions using dedicated formatter
-        historical_html = self.historical_formatter.format(
-            result.get("similar_decisions", [])
-        )
+        if history:
+            historical_html = self.historical_formatter.format(history)
+        else:
+            historical_html = ""
         
         # Format RAG evidence using existing utility
         rag_context = result.get("rag_context", "")

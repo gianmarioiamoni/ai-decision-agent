@@ -28,8 +28,6 @@ from .components.output_report import create_output_report
 from .components.report_preview_section import create_report_preview_section
 from .components.report_download_section import create_report_download_section
 
-from app.rag.file_manager import get_file_manager
-from app.rag.vectorstore_manager import get_vectorstore_manager
 from app.rag.bootstrap import bootstrap_rag
 from app.ui.handlers.graph_handler_parallel import run_graph_parallel_streaming
 
