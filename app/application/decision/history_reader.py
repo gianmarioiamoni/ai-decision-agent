@@ -7,59 +7,48 @@
 # - is safe if the DB is empty
 # - does not introduce coupling with the UI
 
+from datetime import datetime
 from typing import List
 
 from infrastructure.memory.chroma_client import get_chroma_collection
-from app.application.decision.historical_evidence import (
-    HistoricalDecisionEvidence,
-)
+from app.application.decision.historical_evidence import HistoricalDecisionEvidence
 
 
 def load_decision_history(limit: int = 20) -> List[HistoricalDecisionEvidence]:
-    #
-    # Load global historical decision history for UI display.
-    #
-    # Args:
-    #     limit: Maximum number of decisions to return
-    #
-    # Returns:
-    #     List of HistoricalDecisionEvidence
-    #
-
     collection = get_chroma_collection()
 
     try:
-        results = collection.get(
-            include=["documents", "metadatas"],
+        result = collection.get(
+            limit=limit,
+            include=["documents", "metadatas"]
         )
     except Exception as e:
-        print(f"[HISTORY] ⚠️ Failed to load history: {e}")
+        print(f"[HISTORY] ❌ Failed to load history: {e}")
         return []
-
-    documents = results.get("documents", [])
-    metadatas = results.get("metadatas", [])
 
     history: List[HistoricalDecisionEvidence] = []
 
-    for doc, meta in zip(documents, metadatas):
+    for meta in result.get("metadatas", []):
         try:
+            raw_ts = meta.get("timestamp")
+
+            timestamp = (
+                datetime.fromisoformat(raw_ts)
+                if isinstance(raw_ts, str)
+                else None
+            )
+
             history.append(
                 HistoricalDecisionEvidence(
                     decision=meta.get("decision", ""),
                     confidence=float(meta.get("confidence", 0.0)),
-                    similarity_score=0.0,  # not applicable for global history
-                    rationale=doc,
-                    timestamp=meta.get("timestamp"),
+                    similarity=0.0,
+                    timestamp=timestamp,
                 )
             )
+
         except Exception as e:
             print(f"[HISTORY] ⚠️ Skipping corrupted record: {e}")
-            continue
 
-    # Best-effort ordering: newest first if timestamp exists
-    history.sort(
-        key=lambda h: h.timestamp or "",
-        reverse=True,
-    )
-
-    return history[:limit]
+    print(f"[HISTORY] ✅ Loaded {len(history)} historical decisions")
+    return history
