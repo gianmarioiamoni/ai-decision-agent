@@ -52,6 +52,19 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
     )
 
     # ------------------------------------------------------------------
+    # FORMAT HISTORICAL EVIDENCE
+    # ------------------------------------------------------------------
+    historical_evidence = state.get("historical_evidence", [])
+    similar_decisions = [
+        {
+            "decision": e.decision,
+            "confidence": e.confidence,
+            "similarity": e.similarity_score,
+        }
+        for e in historical_evidence
+    ]
+
+    # ------------------------------------------------------------------
     # BUILD DECISION PROMPT (NO HISTORY HERE!)
     # ------------------------------------------------------------------
 
@@ -59,6 +72,7 @@ def decision_node(state: Mapping[str, Any], llm=None) -> Dict:
         question=question,
         analysis=analysis,
         rag_context=rag_context,
+        similar_decisions=similar_decisions,
     )
 
     print("\n📤 System Prompt (first 400 chars):")
