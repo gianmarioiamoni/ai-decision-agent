@@ -6,16 +6,15 @@ from domain.decision.decision_record import DecisionRecord
 from infrastructure.memory.historical_writer import HistoricalDecisionWriter
 from infrastructure.memory.historical_retriever import HistoricalDecisionRetriever
 from app.application.decision.history_reader import load_decision_history
-
 from infrastructure.memory.chroma_client import get_chroma_collection
 
 
 def test_historical_memory_full_flow():
     """
     Integration test:
-    - persist a decision
-    - retrieve via similarity
-    - retrieve via history reader
+    - persist a decision into historical memory
+    - retrieve via similarity (LLM path)
+    - retrieve via history reader (UI path)
     """
 
     # ------------------------------------------------------------------
@@ -23,7 +22,7 @@ def test_historical_memory_full_flow():
     # ------------------------------------------------------------------
     collection = get_chroma_collection()
 
-    # 🔥 CLEAN SLATE
+    # 🔥 CLEAN SLATE (only historical memory)
     collection.delete(where={"context_type": "historical"})
 
     writer = HistoricalDecisionWriter(collection)
@@ -34,15 +33,22 @@ def test_historical_memory_full_flow():
         question="Should we adopt Python?",
         decision="Do not adopt Python",
         confidence=0.72,
+
+        # 🔑 concise memory-safe rationale
         short_rationale="Lack of authoritative context and performance concerns",
+
         key_factors=["performance", "missing context"],
         project_id="test-project",
         tags=["tech", "language"],
+
+        # 🔑 required by domain, but irrelevant for memory
+        report_html="<html><body>Test report</body></html>",
+
         timestamp=datetime.now(timezone.utc),
     )
 
     # ------------------------------------------------------------------
-    # ACT 1: PERSIST
+    # ACT 1: PERSIST (writer)
     # ------------------------------------------------------------------
     writer.persist(record)
 
@@ -65,8 +71,11 @@ def test_historical_memory_full_flow():
     assert ev.decision == record.decision
     assert ev.confidence == record.confidence
 
-    # 🔑 rationale MUST be concise, not report
+    # 🔑 must NOT contain full report
     assert "AI Decision Session Report" not in ev.rationale
+    assert "Test report" not in ev.rationale
+
+    # rationale must be concise, memory-oriented
     assert len(ev.rationale) < 500
 
     assert 0.0 <= ev.similarity_score <= 1.0
@@ -88,5 +97,7 @@ def test_historical_memory_full_flow():
     assert h.confidence == record.confidence
     assert h.timestamp is not None
 
-    # rationale must be the same stored one
+    # 🔑 history rationale must NOT contain report
     assert "AI Decision Session Report" not in h.rationale
+    assert "Test report" not in h.rationale
+
