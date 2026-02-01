@@ -1,67 +1,88 @@
 # app/graph/nodes/planner.py
-# Planner node - refactored with PromptBuilder pattern
+# Planner node – STEP 0.3 compliant
+# Uses PromptBuilder pattern, no orchestration logic
 
-from typing import Dict, Mapping, Any
 from langchain_openai import ChatOpenAI
+
+from domain.decision.decision_state import DecisionState
 from app.prompts.builders import PlannerPromptBuilder
 
 
-def planner_node(state: Mapping[str, Any]) -> Dict:
-    # Planner node using PromptBuilder pattern.
+def planner_node(state: DecisionState) -> DecisionState:
+    #
+    # Planner node.
     #
     # Responsibilities:
     # - Validate input
-    # - Build prompt using PlannerPromptBuilder
+    # - Build planning prompt using PlannerPromptBuilder
     # - Invoke LLM
-    # - Return plan
+    # - Populate analysis_plan in DecisionState
     #
-    # Key Feature: Context-Grounded Planning
-    # - If context docs exist → generates plan with specific organizational constraints
-    # - If no context → generates generic domain-agnostic plan
-    #
-    # This showcases decision intelligence vs generic LLM.
-    #
-    
-    # Validate required inputs
-    question = state.get("question")
-    if not question:
-        raise ValueError("Planner node requires a valid question in state")
-    
-    # Get context docs (if user uploaded them)
-    context_docs = state.get("context_docs", [])
-    
-    # 🆕 Build prompt using PlannerPromptBuilder (pure, deterministic)
+    # NOTE:
+
+    if not state.user_query:
+        raise ValueError("Planner node requires a valid user_query")
+
+    # ------------------------------------------------------------------
+    # VALIDATION
+    # ------------------------------------------------------------------
+
+    if not state.user_query:
+        raise ValueError("Planner node requires a valid user_query")
+
+    # Context docs provided by user (optional)
+    context_docs = state.input_context_docs
+
+    # ------------------------------------------------------------------
+    # BUILD PROMPT
+    # ------------------------------------------------------------------
+
     bundle = PlannerPromptBuilder.build(
-        question=question,
+        question=state.user_query,
         context_docs=context_docs,
     )
-    
-    # 🔍 Debug logging
-    print("\n" + "="*60)
+
+    # ------------------------------------------------------------------
+    # DEBUG LOGGING
+    # ------------------------------------------------------------------
+
+    print("\n" + "=" * 60)
     print("🗺️  PLANNER PHASE")
-    print("="*60)
-    print(f"📝 Question: {question[:100]}...")
-    print("="*60 + "\n")
+    print("=" * 60)
+    print(f"📝 Question: {state.user_query[:100]}...")
+    print("=" * 60)
+
     if bundle.rag_significant:
-        print(f"✅ Context-Grounded Mode: Planning with organizational constraints")
+        print("✅ Context-Grounded Mode: Planning with organizational constraints")
     else:
-        print(f"⚪ Generic Mode: Domain-agnostic planning")
-    print("="*60 + "\n")
-    
-    # Initialize LLM with low temperature for deterministic plans
+        print("⚪ Generic Mode: Domain-agnostic planning")
+
+    print("=" * 60 + "\n")
+
+    # ------------------------------------------------------------------
+    # LLM INVOCATION
+    # ------------------------------------------------------------------
+
     llm = ChatOpenAI(
         temperature=0.2,
-        model="gpt-4o-mini"
+        model="gpt-4o-mini",
     )
-    
-    # Invoke LLM
-    response = llm.invoke([
-        bundle.system_message,
-        bundle.human_message,
-    ])
-    
+
+    response = llm.invoke(
+        [
+            bundle.system_message,
+            bundle.human_message,
+        ]
+    )
+
     plan_text = response.content.strip()
-    
-    return {
-        "plan": plan_text,
-    }
+
+    # ------------------------------------------------------------------
+    # UPDATE STATE
+    # ------------------------------------------------------------------
+
+    state.analysis_plan = plan_text
+    state.status = "PLANNED"
+
+    return state
+

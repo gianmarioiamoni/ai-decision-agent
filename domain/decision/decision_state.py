@@ -1,8 +1,17 @@
+# domain/decision/decision_state.py
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 @dataclass
 class DecisionState:
+    #
+    # DecisionState class.
+    #
+    # Responsibilities:
+    # - Store the state of the decision process
+    # - Store the input data
+    # - Store the planning data
+    # - Store the RAG data
     # --- INPUT ---
     user_query: str
     input_context_docs: List[str] = field(default_factory=list)

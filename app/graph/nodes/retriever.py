@@ -1,27 +1,18 @@
 # app/graph/nodes/retriever.py
-from typing import Dict, List, Mapping, Any
 
 from app.rag.vectorstore_manager import get_vectorstore_manager
+from domain.decision.decision_state import DecisionState
 
 
-# Retriever node
-# This node retrieves relevant documents from ChromaDB
-# based on the question and the generated plan.
-#
-# IMPORTANT:
-# - This is a TECHNICAL node
-# - It MUST NOT emit chat messages
-# - It only enriches the shared state with retrieved evidence
-#
-def retriever_node(state: Mapping[str, Any]) -> Dict:
+def retriever_node(state: DecisionState) -> DecisionState:
     #
-    # Retrieves relevant documents from the vectorstore based on the question and the generated plan.
+    # Retrieves supportive evidence from the vectorstore based on
+    # the user question and the generated analysis plan.
     #
-    # Args:
-    #     state: DecisionState containing the question and the generated plan
-    #
-    # Returns:
-    #     Dict containing retrieved documents ONLY
+    # IMPORTANT:
+    # - Technical node
+    # - No messages
+    # - No authoritative RAG context
     #
 
     try:
@@ -29,37 +20,33 @@ def retriever_node(state: Mapping[str, Any]) -> Dict:
         vectorstore = vectorstore_manager.get_vectorstore()
     except Exception as e:
         print(f"[RETRIEVER_NODE] ❌ Vectorstore init failed: {e}")
-        return {
-            "retrieved_docs": [],
-        }
+        state.general_context = []
+        return state
 
-    question = state.get("question")
-    plan = state.get("plan")
-
-    if not question:
-        raise ValueError("Retriever node requires a valid question in state")
+    if not state.user_query:
+        raise ValueError("Retriever node requires a valid user query")
 
     # Build retrieval query
-    # Plan is used to enrich semantic search when available
-    if plan:
-        query = f"Question: {question}\n\nRelevant reasoning plan:\n{plan}"
+    if state.analysis_plan:
+        query = (
+            f"Question: {state.user_query}\n\n"
+            f"Relevant reasoning plan:\n{state.analysis_plan}"
+        )
     else:
-        query = question
+        query = state.user_query
 
     # Perform similarity search
     docs = vectorstore.similarity_search(query, k=5)
 
     # Extract page content
-    retrieved_docs: List[str] = [doc.page_content for doc in docs]
+    retrieved_docs = [doc.page_content for doc in docs]
 
     print(
         f"[RETRIEVER_NODE] 📚 Retrieved {len(retrieved_docs)} evidence chunks"
     )
 
-    # IMPORTANT:
-    # - Do NOT touch rag_context
-    # - Do NOT emit messages
-    # - Retrieved docs are SUPPORTIVE evidence only
-    return {
-        "retrieved_docs": retrieved_docs,
-    }
+    # Supportive (non-authoritative) context
+    state.general_context = retrieved_docs
+
+    return state
+

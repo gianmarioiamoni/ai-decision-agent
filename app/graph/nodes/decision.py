@@ -1,15 +1,16 @@
 # app/graph/nodes/decision.py
 # Decision node – confidence-aware, history-consumer only
-# Generates BOTH:
+# Generates:
 # - final decision + confidence
 # - concise short_rationale for historical memory
 
-from typing import Dict, Mapping, Any, List
 import re
+from typing import List
 
 from langchain_core.messages import AIMessage
 from langchain_openai import ChatOpenAI
 
+from domain.decision.decision_state import DecisionState
 from app.prompts.builders import DecisionPromptBuilder
 from app.application.decision.confidence_factor import (
     historical_confidence_factor,
@@ -68,45 +69,39 @@ def _build_short_rationale_prompt(
     return [system, human]
 
 
-def _parse_bullets(text: str) -> str:
-    """ 
-    Normalize bullet output to a clean, newline-separated bullet list.
+def _parse_bullets(text: str) -> List[str]:
+    """
+    Normalize bullet output to a clean list of bullet strings.
     """
     lines = [
-        line.strip()
+        line.strip().lstrip("-• ").strip()
         for line in text.splitlines()
         if line.strip().startswith(("-", "•"))
     ]
 
     if not lines:
-        # fallback: single sentence
-        return f"- {text.strip()}"
+        return [text.strip()]
 
-    return "\n".join(lines)
+    return lines
 
 
 # ------------------------------------------------------------------
-# MAIN NODE
+# MAIN NODE (STEP 0.3 COMPLIANT)
 # ------------------------------------------------------------------
 
 def decision_node(
-    state: Mapping[str, Any],
+    state: DecisionState,
     llm: ChatOpenAI | None = None,
-) -> Dict[str, Any]:
-
+) -> DecisionState:
     # ------------------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------------------
 
-    question = state.get("question")
-    analysis = state.get("analysis")
-    rag_context = state.get("rag_context", "")
-    historical_evidence = state.get("historical_evidence", [])
+    if not state.user_query:
+        raise ValueError("Decision node requires a valid user_query")
 
-    if not question:
-        raise ValueError("Decision node requires a valid question in state")
-    if not analysis:
-        raise ValueError("Decision node requires an analysis to make a decision")
+    if not state.reasoning:
+        raise ValueError("Decision node requires analysis reasoning")
 
     # ------------------------------------------------------------------
     # DEBUG LOGGING
@@ -115,14 +110,14 @@ def decision_node(
     print("\n" + "=" * 60)
     print("⚖️ DECISION PHASE")
     print("=" * 60)
-    print(f"📝 Question: {question[:100]}...")
+    print(f"📝 Question: {state.user_query[:100]}...")
 
-    if rag_context:
-        print(f"✅ RAG Context Available ({len(rag_context)} chars)")
+    if state.authoritative_context:
+        print(f"✅ RAG Context Available ({len(state.authoritative_context)} chunks)")
     else:
         print("❌ No authoritative RAG context")
 
-    print(f"📚 Historical Evidence Items: {len(historical_evidence)}")
+    print(f"📚 Historical Evidence Items: {len(state.historical_evidence)}")
 
     # ------------------------------------------------------------------
     # FORMAT HISTORICAL EVIDENCE (FOR PROMPT ONLY)
@@ -132,9 +127,9 @@ def decision_node(
         {
             "decision": e.decision,
             "confidence": e.confidence,
-            "similarity": e.similarity_score,
+            "similarity": getattr(e, "similarity_score", None),
         }
-        for e in historical_evidence
+        for e in state.historical_evidence
     ]
 
     # ------------------------------------------------------------------
@@ -142,9 +137,9 @@ def decision_node(
     # ------------------------------------------------------------------
 
     bundle = DecisionPromptBuilder.build(
-        question=question,
-        analysis=analysis,
-        rag_context=rag_context,
+        question=state.user_query,
+        analysis=state.reasoning,
+        rag_context="\n\n".join(state.authoritative_context),
         similar_decisions=similar_decisions,
     )
 
@@ -174,8 +169,7 @@ def decision_node(
     # ------------------------------------------------------------------
 
     decision_text = ""
-    confidence_value = None
-    context_factors = "No specific organizational context influenced this decision."
+    confidence_value: float | None = None
 
     decision_match = re.search(
         r"Decision[:\s]+(.+?)(?=Confidence:|$)",
@@ -184,6 +178,8 @@ def decision_node(
     )
     if decision_match:
         decision_text = decision_match.group(1).strip()
+    else:
+        decision_text = content
 
     confidence_match = re.search(
         r"Confidence[:\s]+([\d.]+)",
@@ -192,26 +188,14 @@ def decision_node(
     )
     if confidence_match:
         confidence_value = float(confidence_match.group(1))
-
-    factors_match = re.search(
-        r"Contextual Factors Influencing This Decision[:\s]*(.+)",
-        content,
-        re.IGNORECASE | re.DOTALL,
-    )
-    if factors_match:
-        context_factors = factors_match.group(1).strip()
-
-    if not decision_text:
-        decision_text = content
-
-    if confidence_value is None:
+    else:
         confidence_value = 0.75
 
     # ------------------------------------------------------------------
     # CONFIDENCE ADJUSTMENT (HISTORICAL ONLY)
     # ------------------------------------------------------------------
 
-    history_factor = historical_confidence_factor(historical_evidence)
+    history_factor = historical_confidence_factor(state.historical_evidence)
     final_confidence = min(confidence_value + history_factor, 1.0)
 
     print(f"📊 Base Confidence: {confidence_value:.2f}")
@@ -223,39 +207,23 @@ def decision_node(
     # ------------------------------------------------------------------
 
     rationale_prompt = _build_short_rationale_prompt(
-        question=question,
+        question=state.user_query,
         decision=decision_text,
-        analysis=analysis,
+        analysis=state.reasoning,
     )
 
     rationale_response = llm.invoke(rationale_prompt)
     short_rationale = _parse_bullets(rationale_response.content.strip())
 
     # ------------------------------------------------------------------
-    # FINAL CHAT MESSAGE (UI ONLY)
+    # UPDATE STATE (NO DICT RETURN)
     # ------------------------------------------------------------------
 
-    assistant_message = AIMessage(
-        content=(
-            f"Decision:\n{decision_text}\n\n"
-            f"Confidence: {final_confidence:.2f}\n\n"
-            f"Contextual Factors:\n{context_factors}"
-        )
-    )
+    state.decision = decision_text
+    state.confidence_base = confidence_value
+    state.confidence_final = final_confidence
+    state.short_rationale = short_rationale
+    state.status = "DECIDED"
 
-    # ------------------------------------------------------------------
-    # RETURN STATE UPDATE
-    # ------------------------------------------------------------------
+    return state
 
-    return {
-        "decision": decision_text,
-        "confidence": final_confidence,
-        "short_rationale": short_rationale,  # 🔑 MEMORY-SAFE
-        "confidence_factors": {
-            "base": confidence_value,
-            "historical": history_factor,
-        },
-        "rag_significant": bundle.rag_significant,
-        "rag_mode": bundle.rag_mode,
-        "messages": [assistant_message],
-    }

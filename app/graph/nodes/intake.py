@@ -1,31 +1,36 @@
 # app/graph/nodes/intake.py
 
-from typing import Dict, Mapping, Any
-from langchain_core.messages import HumanMessage
+from domain.decision.decision_state import DecisionState
 
-# Intake node
-# Initializes the workflow by validating and normalizing
-# the user input question and initializing conversation state
-def intake_node(state: Mapping[str, Any]) -> Dict:
-    # Basic validation
-    question = state.get("question")
 
-    if not question or not question.strip():
+def intake_node(state: DecisionState) -> DecisionState:
+    # 
+    # Intake node.
+    # Validates and normalizes the user input.
+    # This node MUST NOT create a new state.
+    #
+    # Args:
+    #     state: DecisionState containing the user query
+    #
+    # Returns:
+    #     DecisionState containing the normalized user query
+    #
+
+    if not state.user_query or not state.user_query.strip():
         raise ValueError("Input question must be a non-empty string")
 
     # Normalize question
-    normalized_question = question.strip()
+    state.user_query = state.user_query.strip()
 
-    return {
-        "question": normalized_question,
-        "retrieved_docs": state.get("retrieved_docs", []),
-        "plan": state.get("plan"),
-        "analysis": state.get("analysis"),
-        "decision": state.get("decision"),
-        "confidence": state.get("confidence"),
-        "messages": [
-            HumanMessage(content=normalized_question)
-        ],
-        "attempts": 0,
-        "decision_finalized": False, # Flag to indicate if the decision has been finalized
-    }
+    # Initialize control flags (explicit, not implicit)
+    state.status = "INTAKE"
+    state.needs_retry = False
+
+    # NOTE:
+    # - No messages here
+    # - No attempts counter
+    # - No decision flags
+    # - No dict return
+
+    return state
+

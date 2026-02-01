@@ -1,7 +1,8 @@
 # app/graph/nodes/historical_retriever.py
 
-from typing import Dict, Mapping, Any, Optional
+from typing import Optional
 
+from domain.decision.decision_state import DecisionState
 from infrastructure.memory.historical_retriever import HistoricalDecisionRetriever
 
 
@@ -12,7 +13,7 @@ def _get_historical_retriever() -> HistoricalDecisionRetriever:
     global _retriever_instance
 
     if _retriever_instance is None:
-        # ⬇️ IMPORT LAZY (CRITICO)
+        # ⬇️ IMPORT LAZY (OK IN FASE 0)
         from infrastructure.memory.chroma_client import get_chroma_collection
 
         collection = get_chroma_collection()
@@ -21,16 +22,14 @@ def _get_historical_retriever() -> HistoricalDecisionRetriever:
     return _retriever_instance
 
 
-def historical_retriever_node(state: Mapping[str, Any]) -> Dict:
-    question = state.get("question")
-
-    if not question:
-        raise ValueError("Historical retriever requires a valid question")
+def historical_retriever_node(state: DecisionState) -> DecisionState:
+    if not state.user_query:
+        raise ValueError("Historical retriever requires a valid user query")
 
     retriever = _get_historical_retriever()
 
     evidences = retriever.retrieve(
-        query=question,
+        query=state.user_query,
         k=3,
     )
 
@@ -38,7 +37,5 @@ def historical_retriever_node(state: Mapping[str, Any]) -> Dict:
         f"[HISTORICAL_RETRIEVER] 🧠 Retrieved {len(evidences)} historical decisions"
     )
 
-    return {
-        "historical_evidence": evidences,
-    }
-
+    state.historical_evidence = evidences
+    return state

@@ -1,56 +1,46 @@
 # app/graph/nodes/summarize.py
 # Final summarization node and session report generation
+# STEP 0.3 compliant
 
-from typing import Dict, Mapping, Any
-from app.report.session_report import generate_session_report, generate_preview_html
+from domain.decision.decision_state import DecisionState
+from app.report.session_report import (
+    generate_session_report,
+    generate_preview_html,
+)
 
-# Summarize node
-# This node compresses message history and generates a final session report
-def summarize_node(state: Mapping[str, Any]) -> Dict:
+
+def summarize_node(state: DecisionState) -> DecisionState:
     #
-    # Summarize node:
-    # - Compresses message history to manage context length
-    # - Generates a final HTML session report
+    # Summarize node.
     #
-    # Args:
-    #     state: DecisionState containing messages
+    # Responsibilities:
+    # - Generate final HTML session report
+    # - Generate preview HTML for UI
     #
-    # Returns:
-    #     Dict containing updated messages and report_html
+    # NOTE:
+    # - No message compression here (handled by graph later)
+    # - No dict return
     #
 
-    messages = state.get("messages", [])
-    MAX_MESSAGES = 10
+    # --------------------------------------------------
+    # SESSION REPORT GENERATION
+    # --------------------------------------------------
 
-    updates: Dict = {}
-
-    # -----------------------------
-    # Message compression logic
-    # -----------------------------
-    if len(messages) > MAX_MESSAGES:
-        # Keep first message (original question) and last N-1 messages
-        compressed_messages = [messages[0]] + messages[-(MAX_MESSAGES - 1):]
-
-        updates["messages"] = compressed_messages + [
-            {
-                "role": "assistant",
-                "content": (
-                    f"[Compressed message history: kept "
-                    f"{len(compressed_messages)} of {len(messages)} messages]"
-                )
-            }
-        ]
-
-    # -----------------------------
-    # Session report generation
-    # -----------------------------
-    # Generate full HTML report for download
     report_html = generate_session_report(state)
-    updates["report_html"] = report_html
-    
-    # Generate preview HTML for Gradio (without html/head/body wrapper)
     preview_html = generate_preview_html(state)
-    updates["report_preview"] = preview_html
 
-    return updates
+    # --------------------------------------------------
+    # UPDATE STATE
+    # --------------------------------------------------
+
+    # Full report (download / persistence)
+    state.justification = report_html
+
+    # Preview for UI (non-domain, UI-only)
+    state.input_metadata["report_preview"] = preview_html
+
+    state.status = "SUMMARIZED"
+
+    return state
+
 
