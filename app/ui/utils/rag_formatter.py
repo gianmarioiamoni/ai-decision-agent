@@ -59,8 +59,11 @@ def _format_uploaded_documents(context_docs):
     html = (
         "<h3 style='color: #e5e7eb; font-weight: bold; margin-top: 0;'>"
         "📂 Uploaded Context Documents</h3>"
-        f"<p style='color: #9ca3af; margin-bottom: 15px;'>"
+        "<p style='color: #9ca3af; margin-bottom: 15px;'>"
+        "Similarity reflects direct semantic match with the question. "
+        "These chunks were used as authoritative organizational constraints regardless of similarity."   
         f"Uploaded {len(context_docs)} document(s)</p>"
+        "</p>"
     )
     
     for i, doc in enumerate(context_docs, 1):
@@ -96,7 +99,8 @@ def _format_retrieved_chunks(rag_context: str) -> str:
         "<h3 style='color: #e5e7eb; font-weight: bold;'>"
         "📚 Retrieved Evidence (RAG Chunks)</h3>"
         "<p style='color: #9ca3af; margin-bottom: 15px;'>"
-        "These specific chunks were retrieved and used to ground the analysis:"
+        "These chunks were used as authoritative organizational context. "
+        "Similarity indicates direct semantic match with the question, not usefulness for the decision."
         "</p>"
     )
     
@@ -143,7 +147,7 @@ def _format_chunk_card(
     elif sim_pct >= 50:
         sim_color = "#facc15"  # Yellow
     else:
-        sim_color = "#ef4444"  # Red
+        sim_color = "#6b7280"  # Gray
     
     html = (
         f"<div style='border:1px solid #16a34a; background-color:#f0fdf4; "
@@ -152,7 +156,7 @@ def _format_chunk_card(
         f"<b style='color: #15803d; font-weight: bold;'>Chunk {chunk_num}</b>"
         f"<span style='background: {sim_color}; color: white; padding: 2px 8px; "
         f"border-radius: 12px; font-size: 0.85em; font-weight: bold;'>"
-        f"{sim_pct:.0f}% relevant</span>"
+        f"{sim_pct:.0f}% query similarity</span>"
         f"</div>"
         f"<div style='font-size: 0.85em; color: #4b5563; margin-bottom: 8px;'>"
         f"<b style='color: #000000; font-weight: bold;'>Source:</b> {source} | "
