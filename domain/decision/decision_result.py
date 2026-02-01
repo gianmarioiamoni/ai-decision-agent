@@ -1,3 +1,4 @@
+# domain/decision/decision_result.py
 class DecisionResult:
     question: str
     final_decision: str
