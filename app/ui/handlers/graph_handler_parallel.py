@@ -13,7 +13,6 @@ from app.graph.nodes.intake import intake_node
 from app.graph.nodes.planner import planner_node
 from app.graph.nodes.retriever import retriever_node
 from app.graph.nodes.rag_node import rag_node
-from app.graph.nodes.analyzer_independent_streaming import analyzer_independent_stream
 from app.graph.nodes.decision import decision_node
 from app.graph.nodes.summarize import summarize_node
 from app.graph.nodes.historical_retriever import historical_retriever_node
@@ -128,10 +127,6 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         state = planner_node(state)
 
-        # --------------------------------------------------------------
-        # PHASE 5: ANALYSIS
-        # --------------------------------------------------------------
-        state = analyzer_independent(state)
 
         # --------------------------------------------------------------
         # PHASE 6: DECISION
