@@ -130,13 +130,15 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 5: ANALYSIS (TEMPORARY FALLBACK – PHASE 0)
         # --------------------------------------------------------------
-        if not state.analysis:
-            state.analysis = (
+        if not state.reasoning  :
+            state.reasoning = (
                 "No dedicated analytical reasoning step was executed. "
                 "The decision is based on the proposed plan, retrieved knowledge, "
-                "and historical evidence when available."
+                "and historical evidence when available." # TODO: remove this fallback
             )
 
+        if not state.analysis:
+            state.analysis = state.reasoning or ""
 
         # --------------------------------------------------------------
         # PHASE 6: DECISION
