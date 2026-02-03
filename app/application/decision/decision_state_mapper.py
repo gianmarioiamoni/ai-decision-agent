@@ -10,16 +10,22 @@ from app.graph.state import DecisionState
 def map_state_to_decision_record(state: DecisionState) -> DecisionRecord:
     # Maps a finalized Decision state to a DecisionRecord.
     # Must be called ONLY after decision + summarize phases.
+    
+    # Get justification (could be string or list)
+    justification = state.get("justification", "")
+    if isinstance(justification, list):
+        justification = "\n".join(justification)
+    
     record = DecisionRecord(
         decision_id=str(uuid4()),
-        question=state["user_query"],
-        decision=state["decision"],
-        confidence=state["confidence_final"],
-        short_rationale="\n".join(state["justification"]), # memory contract
+        question=state.get("user_query", ""),
+        decision=state.get("decision", ""),
+        confidence=state.get("confidence_final", 0.0),
+        justification=justification,
         key_factors=[],
-        project_id=state["input_metadata"].get("project_id"),   # TODO: add project_id to input_metadata,
-        tags=state["input_metadata"].get("tags", []),
-        report_html=state["justification"] or "",
+        project_id=None,  # No input_metadata in dict state
+        tags=[],
+        report_html=justification,
         timestamp=datetime.now(timezone.utc),
     )
 

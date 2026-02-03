@@ -12,24 +12,27 @@ def messages_to_chatbot(messages):
         # Handle dict messages (fallback)
         if isinstance(msg, dict):
             if "role" in msg and "content" in msg:
-                chatbot_messages.append(msg)
+                chatbot_messages.append({
+                    "role": msg["role"],
+                    "content": str(msg["content"])
+                })
             continue
             
         # Handle LangChain message objects
         if isinstance(msg, HumanMessage):
             chatbot_messages.append({
                 "role": "user",
-                "content": msg.content
+                "content": str(msg.content)
             })
         elif isinstance(msg, AIMessage):
             chatbot_messages.append({
                 "role": "assistant",
-                "content": msg.content
+                "content": str(msg.content)
             })
         elif isinstance(msg, SystemMessage):
             chatbot_messages.append({
-                "role": "system",
-                "content": msg.content
+                "role": "assistant",  # Gradio doesn't support system role
+                "content": str(msg.content)
             })
 
     return chatbot_messages
