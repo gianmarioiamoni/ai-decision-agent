@@ -15,6 +15,70 @@ import re
 from domain.decision.decision_state import DecisionState
 from .template_loader import get_template_loader
 
+def _format_messages_html(messages: list, inline_styles: bool) -> str:
+    if not messages:
+        return ""
+
+    items = []
+
+    for msg in messages:
+        # LangChain BaseMessage
+        role = getattr(msg, "type", "unknown")
+        content = getattr(msg, "content", "")
+
+        if inline_styles:
+            items.append(
+                f"<li style='margin-bottom: 6px;'>"
+                f"<strong>{role.capitalize()}:</strong> {content}"
+                f"</li>"
+            )
+        else:
+            items.append(
+                f"<li><strong>{role.capitalize()}:</strong> {content}</li>"
+            )
+
+    return "\n".join(items)
+
+
+
+
+def _format_confidence(confidence: float | None) -> str:
+    if confidence is None:
+        return ""
+    return f"{confidence:.2f} (scale: 0.0–1.0)"
+
+
+def _prepare_report_context(
+    state: DecisionState,
+    inline_styles: bool,
+) -> dict:
+    # Prepare template context from DecisionState only.
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    return {
+        "timestamp": timestamp,
+        "question": state.user_query,
+        "plan": markdown_to_html(
+            state.analysis_plan or "",
+            inline_styles=inline_styles,
+        ),
+        "analysis": markdown_to_html(
+            state.reasoning or "",
+            inline_styles=inline_styles,
+        ),
+        "decision": markdown_to_html(
+            state.decision or "",
+            inline_styles=inline_styles,
+        ),
+        "confidence": _format_confidence(state.confidence_final),
+        "short_rationale": markdown_to_html(
+            "\n".join(f"- {r}" for r in state.short_rationale),
+            inline_styles=inline_styles,
+        ),
+        "messages_html": _format_messages_html(state.messages, inline_styles=inline_styles),
+
+    }
 
 def markdown_to_html(text: str, inline_styles: bool = False) -> str:
     # Convert basic Markdown formatting to HTML.
@@ -59,44 +123,6 @@ def markdown_to_html(text: str, inline_styles: bool = False) -> str:
             formatted.append(p)
 
     return "\n".join(formatted)
-
-
-def _format_confidence(confidence: float | None) -> str:
-    if confidence is None:
-        return ""
-    return f"{confidence:.2f} (scale: 0.0–1.0)"
-
-
-def _prepare_report_context(
-    state: DecisionState,
-    inline_styles: bool,
-) -> dict:
-    # Prepare template context from DecisionState only.
-
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-
-    return {
-        "timestamp": timestamp,
-        "question": state.user_query,
-        "plan": markdown_to_html(
-            state.analysis_plan or "",
-            inline_styles=inline_styles,
-        ),
-        "analysis": markdown_to_html(
-            state.reasoning or "",
-            inline_styles=inline_styles,
-        ),
-        "decision": markdown_to_html(
-            state.decision or "",
-            inline_styles=inline_styles,
-        ),
-        "confidence": _format_confidence(state.confidence_final),
-        "short_rationale": markdown_to_html(
-            "\n".join(f"- {r}" for r in state.short_rationale),
-            inline_styles=inline_styles,
-        ),
-    }
-
 
 def generate_session_report(state: DecisionState) -> str:
     # Generate full HTML report for download.
