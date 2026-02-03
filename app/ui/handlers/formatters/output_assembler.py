@@ -87,23 +87,19 @@ class OutputAssembler:
         markdown = value or default
         return md_to_plain_text(markdown)
 
-    def _format_report(self, state: DecisionState):
-        #
-        # Generate report preview and downloadable file.
-        #
+    def _format_report(self, state):
+        from app.report.session_report import generate_preview_html, generate_session_report
+        from app.ui.handlers.report_format_handler import get_initial_report_file
 
-        report_html = state.report_html or (
-            "<p style='color: orange;'>⚠️ No report generated</p>"
-        )
-
-        report_preview = getattr(
-            state,
-            "report_preview",
-            report_html,
-        )
-
-        report_file_path = get_initial_report_file(report_html)
-
+        try:
+            report_preview = generate_preview_html(state)
+            report_html = generate_session_report(state)
+            report_file_path = get_initial_report_file(report_html)
+        except Exception as e:
+            report_preview = (
+                "<p style='color: orange;'>⚠️ Report generation failed</p>"
+            )
+            report_file_path = None
         return report_preview, report_file_path
 
 
