@@ -37,10 +37,19 @@ def _build_short_rationale_prompt(
     decision: str,
     analysis: str,
 ) -> List[AIMessage]:
-    """
-    Dedicated prompt for generating a SHORT rationale for memory.
-    This MUST stay small and clean.
-    """
+    #
+    # Dedicated prompt for generating a SHORT rationale for memory.
+    # This MUST stay small and clean.
+    #
+    # Args:
+    #     question: The user's question
+    #     decision: The final decision
+    #     analysis: The supporting analysis
+    #
+    # Returns:
+    #     A list of AIMessages containing the system and human messages
+    #
+
     system = AIMessage(
         content=(
             "You are a decision support system.\n"
@@ -70,9 +79,16 @@ def _build_short_rationale_prompt(
 
 
 def _parse_bullets(text: str) -> List[str]:
-    """
-    Normalize bullet output to a clean list of bullet strings.
-    """
+    #
+    # Normalize bullet output to a clean list of bullet strings.
+    #
+    # Args:
+    #     text: The text to parse
+    #
+    # Returns:
+    #     A list of bullet strings
+    #
+
     lines = [
         line.strip().lstrip("-• ").strip()
         for line in text.splitlines()
@@ -224,6 +240,15 @@ def decision_node(
     state.confidence_final = final_confidence
     state.short_rationale = short_rationale
     state.status = "DECIDED"
+    state.messages.append(
+        AIMessage(content=decision_text)
+    )
+    state.messages.append(
+        AIMessage(content=f"Confidence: {final_confidence:.2f}")
+    )
+    state.messages.append(
+        AIMessage(content=short_rationale)
+    )
 
     return state
 

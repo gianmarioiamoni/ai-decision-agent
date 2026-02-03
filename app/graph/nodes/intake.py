@@ -1,7 +1,7 @@
 # app/graph/nodes/intake.py
 
 from domain.decision.decision_state import DecisionState
-
+from langchain_core.messages import HumanMessage
 
 def intake_node(state: DecisionState) -> DecisionState:
     # 
@@ -31,6 +31,9 @@ def intake_node(state: DecisionState) -> DecisionState:
     # - No attempts counter
     # - No decision flags
     # - No dict return
+    state.messages.append(
+        HumanMessage(content=state.user_query)
+    )
 
     return state
 
