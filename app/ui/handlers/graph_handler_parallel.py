@@ -130,15 +130,15 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 5: ANALYSIS (TEMPORARY FALLBACK – PHASE 0)
         # --------------------------------------------------------------
-        if not state.analysis  :
-            state.analysis = (
+        if not state["analysis"]  :
+            state["analysis"] = (
                 "No dedicated analytical analysis step was executed. "
                 "The decision is based on the proposed plan, retrieved knowledge, "
                 "and historical evidence when available." # TODO: remove this fallback
             )
 
-        if not state.analysis:
-            state.analysis = state.analysis or ""
+        if not state["analysis"]:
+            state["analysis"] = state["analysis"] or ""
 
         # --------------------------------------------------------------
         # PHASE 6: DECISION
@@ -154,13 +154,13 @@ def run_graph_parallel_streaming(
 
             # IMPORTANT:
             # We invoke LangGraph on a COPY of the state
-            graph_state = graph.invoke(state.copy())
+            graph_state = graph.invoke(state.copy()) # type: ignore
 
             print("\n" + "=" * 60)
             print("🧪 LANGGRAPH SHADOW EXECUTION")
             print("=" * 60)
-            print(f"Legacy decision:   {state.decision}")
-            print(f"LangGraph decision:{graph_state.get('decision')}")
+            print(f"Legacy decision:   {state["decision"]}")
+            print(f"LangGraph decision:{graph_state["decision"]}")
             print("=" * 60 + "\n")
         except Exception as e:
             print("❌ LangGraph shadow execution failed")
@@ -180,7 +180,7 @@ def run_graph_parallel_streaming(
 
         # Load full historical evidence for UI
         full_history = load_decision_history(limit=20)
-        state.similar_decisions = full_history
+        state["similar_decisions"] = full_history
 
         # --------------------------------------------------------------
         # UI ASSEMBLY
@@ -197,7 +197,7 @@ def run_graph_parallel_streaming(
             rag_evidence_html,
         ) = assembler.assemble(state, context_docs)
 
-        chat_history = messages_to_chatbot(state.messages)
+        chat_history = messages_to_chatbot(state["messages"])
 
         return (
             plan,

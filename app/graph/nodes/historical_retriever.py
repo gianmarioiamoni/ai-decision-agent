@@ -23,13 +23,13 @@ def _get_historical_retriever() -> HistoricalDecisionRetriever:
 
 
 def historical_retriever_node(state: DecisionState) -> DecisionState:
-    if not state.user_query:
+    if not state["user_query"]:
         raise ValueError("Historical retriever requires a valid user query")
 
     retriever = _get_historical_retriever()
 
     similar_decisions = retriever.retrieve(
-        query=state.user_query,
+        query=state["user_query"],
         k=3,
     )
 
@@ -37,5 +37,5 @@ def historical_retriever_node(state: DecisionState) -> DecisionState:
         f"[HISTORICAL_RETRIEVER] 🧠 Retrieved {len(similar_decisions)} historical decisions"
     )
 
-    state.similar_decisions = similar_decisions
+    state["similar_decisions"] = similar_decisions
     return state

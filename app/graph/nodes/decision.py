@@ -67,10 +67,10 @@ def decision_node(
     # VALIDATION
     # ------------------------------------------------------------------
 
-    if not state.user_query:
+    if not state["user_query"]:
         raise ValueError("Decision node requires a valid user_query")
 
-    if not state.analysis:
+    if not state["analysis"]:
         raise ValueError("Decision node requires analysis")
 
     # ------------------------------------------------------------------
@@ -80,10 +80,10 @@ def decision_node(
     print("\n" + "=" * 60)
     print("⚖️ DECISION PHASE")
     print("=" * 60)
-    print(f"📝 Question: {state.user_query[:100]}...")
+    print(f"📝 Question: {state["user_query"][:100]}...")
 
-    if state.authoritative_context:
-        print(f"✅ RAG Context Available ({len(state.authoritative_context)} chunks)")
+    if state["authoritative_context"]:
+        print(f"✅ RAG Context Available ({len(state["authoritative_context"])} chunks)")
     else:
         print("❌ No authoritative RAG context")
 
@@ -98,7 +98,7 @@ def decision_node(
             "confidence": e.confidence,
             "similarity": getattr(e, "similarity_score", None),
         }
-        for e in state.similar_decisions
+        for e in state["similar_decisions"]
     ]
 
     # ------------------------------------------------------------------
@@ -106,9 +106,9 @@ def decision_node(
     # ------------------------------------------------------------------
 
     bundle = DecisionPromptBuilder.build(
-        question=state.user_query,
-        analysis=state.analysis,
-        rag_context="\n\n".join(state.authoritative_context),
+        question=state["user_query"],
+        analysis=state["analysis"],
+        rag_context="\n\n".join(state["authoritative_context"]),
         similar_decisions=similar_decisions,
     )
 
@@ -164,7 +164,7 @@ def decision_node(
     # CONFIDENCE ADJUSTMENT (HISTORICAL ONLY)
     # ------------------------------------------------------------------
 
-    history_factor = historical_confidence_factor(state.similar_decisions)
+    history_factor = historical_confidence_factor(state["similar_decisions"])
     final_confidence = min(confidence_value + history_factor, 1.0)
 
     print(f"📊 Base Confidence: {confidence_value:.2f}")
@@ -175,13 +175,13 @@ def decision_node(
     # UPDATE STATE (NO DICT RETURN)
     # ------------------------------------------------------------------
 
-    state.decision = decision_text
-    state.confidence_base = confidence_value
-    state.confidence_final = final_confidence
-    state.messages.append(
+    state["decision"] = decision_text
+    state["confidence_base"] = confidence_value
+    state["confidence_final"] = final_confidence
+    state["messages"].append(
         AIMessage(content=decision_text)
     )
-    state.messages.append(
+    state["messages"].append(
         AIMessage(content=f"Confidence: {final_confidence:.2f}")
     )
 

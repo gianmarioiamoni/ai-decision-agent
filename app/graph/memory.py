@@ -129,10 +129,10 @@ def save_decision(state, vectordb: Optional[Chroma] = None):
     # Save a decision from a DecisionState to SQLite and optionally to Chroma.
     # Computes embedding for retrieval if vectordb is provided.
     question = state["question"]
-    plan = state.get("plan") or ""
-    analysis = state.get("analysis") or ""
-    decision = state.get("decision") or ""
-    confidence = state.get("confidence") or 0.0
+    plan = state["plan"] or ""
+    analysis = state["analysis"] or ""
+    decision = state["decision"] or ""
+    confidence = state["confidence"] or 0.0
 
     embedding = None
     if vectordb is not None:

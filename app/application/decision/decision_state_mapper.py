@@ -12,14 +12,14 @@ def map_state_to_decision_record(state: DecisionState) -> DecisionRecord:
     # Must be called ONLY after decision + summarize phases.
     record = DecisionRecord(
         decision_id=str(uuid4()),
-        question=state.user_query,
-        decision=state.decision,
-        confidence=state.confidence_final,
-        short_rationale="\n".join(state.justification), # memory contract
+        question=state["user_query"],
+        decision=state["decision"],
+        confidence=state["confidence_final"],
+        short_rationale="\n".join(state["justification"]), # memory contract
         key_factors=[],
-        project_id=state.input_metadata.get("project_id"),   # TODO: add project_id to input_metadata,
-        tags=state.input_metadata.get("tags", []),
-        report_html=state.justification or "",
+        project_id=state["input_metadata"].get("project_id"),   # TODO: add project_id to input_metadata,
+        tags=state["input_metadata"].get("tags", []),
+        report_html=state["justification"] or "",
         timestamp=datetime.now(timezone.utc),
     )
 

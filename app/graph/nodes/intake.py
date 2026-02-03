@@ -16,22 +16,22 @@ def intake_node(state: DecisionState) -> DecisionState:
     #     DecisionState containing the normalized user query
     #
 
-    if not state.user_query or not state.user_query.strip():
+    if not state["user_query"] or not state["user_query"].strip():
         raise ValueError("Input question must be a non-empty string")
 
     # Normalize question
-    state.user_query = state.user_query.strip()
+    state["user_query"] = state["user_query"].strip()
 
     # Initialize control flags (explicit, not implicit)
-    state.needs_retry = False
+    state["needs_retry"] = False
 
     # NOTE:
     # - No messages here
     # - No attempts counter
     # - No decision flags
     # - No dict return
-    state.messages.append(
-        HumanMessage(content=state.user_query)
+    state["messages"].append(
+        HumanMessage(content=state["user_query"])
     )
 
     return state

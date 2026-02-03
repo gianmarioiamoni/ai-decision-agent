@@ -20,14 +20,14 @@ def retriever_node(state: DecisionState) -> DecisionState:
         vectorstore = vectorstore_manager.get_vectorstore()
     except Exception as e:
         print(f"[RETRIEVER_NODE] ❌ Vectorstore init failed: {e}")
-        state.general_context = []
+        state["general_context"] = []
         return state
 
-    if not state.user_query:
+    if not state["user_query"]:
         raise ValueError("Retriever node requires a valid user query")
 
     # Build retrieval query
-    query = state.user_query
+    query = state["user_query"]
 
     # Perform similarity search
     docs = vectorstore.similarity_search(query, k=5)
@@ -40,7 +40,7 @@ def retriever_node(state: DecisionState) -> DecisionState:
     )
 
     # Supportive (non-authoritative) context
-    state.general_context = retrieved_docs
+    state["general_context"] = retrieved_docs
 
     return state
 

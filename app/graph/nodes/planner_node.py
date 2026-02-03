@@ -18,25 +18,25 @@ def planner_node(state: DecisionState) -> DecisionState:
     #
     # NOTE:
 
-    if not state.user_query:
+    if not state["user_query"]:
         raise ValueError("Planner node requires a valid user_query")
 
     # ------------------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------------------
 
-    if not state.user_query:
+    if not state["user_query"]:
         raise ValueError("Planner node requires a valid user_query")
 
     # Context docs provided by user (optional)
-    context_docs = state.input_context_docs
+    context_docs = state["input_context_docs"]
 
     # ------------------------------------------------------------------
     # BUILD PROMPT
     # ------------------------------------------------------------------
 
     bundle = PlannerPromptBuilder.build(
-        question=state.user_query,
+        question=state["user_query"],
         context_docs=context_docs,
     )
 
@@ -47,7 +47,7 @@ def planner_node(state: DecisionState) -> DecisionState:
     print("\n" + "=" * 60)
     print("🗺️  PLANNER PHASE")
     print("=" * 60)
-    print(f"📝 Question: {state.user_query[:100]}...")
+    print(f"📝 Question: {state["user_query"][:100]}...")
     print("=" * 60)
 
     if bundle.rag_significant:

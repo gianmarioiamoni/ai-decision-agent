@@ -20,28 +20,28 @@ def should_retry(state: DecisionState) -> str:
     - "end"   → graph should proceed to finalization
     """
 
-    if state.confidence_final is None:
+    if state["confidence_final"] is None:
         # No confidence computed yet → retry
         print("⚠️ No confidence score available - retrying")
         return "retry"
 
-    if state.confidence_final >= MIN_CONFIDENCE:
+    if state["confidence_final"] >= MIN_CONFIDENCE:
         # Sufficient confidence → finalize
         print(
-            f"✅ Confidence {state.confidence_final:.2f} "
+            f"✅ Confidence {state["confidence_final"]:.2f} "
             f">= threshold {MIN_CONFIDENCE:.2f} - finalizing"
         )
         return "end"
 
     # Low confidence case
     print(
-        f"🔄 Low confidence ({state.confidence_final:.2f}) "
+        f"🔄 Low confidence ({state["confidence_final"]:.2f}) "
         f"< threshold {MIN_CONFIDENCE:.2f}"
     )
 
     # If analysis explicitly signals uncertainty, retry may help
-    if state.analysis and any(
-        keyword in state.analysis.lower()
+    if state["analysis"] and any(
+        keyword in state["analysis"].lower()
         for keyword in ["assumption", "unclear", "uncertain"]
     ):
         print("   → Retry suggested due to uncertainty in analysis")

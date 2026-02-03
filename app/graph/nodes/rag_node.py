@@ -17,22 +17,22 @@ def rag_node(state: DecisionState) -> DecisionState:
     # --------------------------------------------------
     try:
         if not vectorstore_manager.has_documents():
-            state.authoritative_context = []
-            state.general_context = []
-            state.query_similarity = []
+            state["authoritative_context"] = []
+            state["general_context"] = []
+            state["query_similarity"] = []
             return state
 
     except Exception as e:
         print(f"[RAG_NODE] ⚠️ Vectorstore check failed: {e}")
-        state.authoritative_context = []
-        state.general_context = []
-        state.query_similarity = []
+        state["authoritative_context"] = []
+        state["general_context"] = []
+        state["query_similarity"] = []
         return state
 
     # --------------------------------------------------
     # RETRIEVAL
     # --------------------------------------------------
-    question = state.user_query
+    question = state["user_query"]
 
     print("\n" + "=" * 60)
     print("🔍 RAG DEBUG - RETRIEVAL PHASE")
@@ -63,8 +63,8 @@ def rag_node(state: DecisionState) -> DecisionState:
     # --------------------------------------------------
     # UPDATE STATE
     # --------------------------------------------------
-    state.authoritative_context = authoritative_chunks
-    state.query_similarity = similarity_scores
+    state["authoritative_context"] = authoritative_chunks
+    state["query_similarity"] = similarity_scores
 
     return state
 

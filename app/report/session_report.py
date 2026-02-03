@@ -154,26 +154,26 @@ def _prepare_report_context(
 
     return {
         "timestamp": timestamp,
-        "question": state.user_query,
+        "question": state["user_query"],
         "plan": markdown_to_html(
-            state.plan or "",
+            state["plan"] or "",
             inline_styles=inline_styles,
         ),
         "analysis": markdown_to_html(
-            state.analysis or "",
+            state["analysis"] or "",
             inline_styles=inline_styles,
         ),
         "decision": markdown_to_html(
-            state.decision or "",
+            state["decision"] or "",
             inline_styles=inline_styles,
         ),
         "justification": markdown_to_html(
-            state.justification or "",
+            state["justification"] or "",
             inline_styles=inline_styles,
         ),
-        "confidence": _format_confidence(state.confidence_final),
+        "confidence": _format_confidence(state["confidence_final"]),
         "messages_html": _format_messages_html(
-            state.messages,
+            state["messages"],
             inline_styles=inline_styles,
         ),
     }
