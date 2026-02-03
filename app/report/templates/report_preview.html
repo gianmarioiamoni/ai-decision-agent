@@ -1,120 +1,122 @@
-<div class="report-preview"
-     style="font-family: Arial, sans-serif;
-            line-height: 1.6;
-            padding: 10px;
-            background: #ffffff;
-            color: #000000;">
-
-    <!-- Scoped styles: ONLY for report -->
-    <style>
-        .report-preview p,
-        .report-preview li,
-        .report-preview div {
-            color: #000000;
-        }
-
-        .report-preview h1 {
-            color: #ffffff;
-        }
-
-        .report-preview h2,
-        .report-preview h3 {
-            color: #000000;
-        }
-    </style>
+<div style="
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    padding: 16px;
+    background-color: #ffffff;
+    color: #000000;
+">
 
     <!-- TITLE -->
-    <h1 style="font-size: 1.8em; font-weight: bold;">
+    <h1 style="
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #111827;
+        margin-bottom: 6px;
+    ">
         AI Decision Session Report
     </h1>
 
-    <p style="color: #555555; font-style: italic; font-size: 0.9em;">
+    <p style="
+        color: #6b7280;
+        font-style: italic;
+        font-size: 0.9em;
+        margin-bottom: 16px;
+    ">
         Generated on $timestamp
     </p>
 
     <!-- QUESTION -->
-    <div style="background: #e8f4f8;
-                padding: 15px;
-                margin: 15px 0;
-                border-radius: 8px;
-                border-left: 4px solid #3498db;">
-        <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
+    <div style="
+        background-color: #e8f4f8;
+        color: #000000;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+    ">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold;">
             Question
         </h2>
-        <p>$question</p>
+        <p style="color: #000000;">$question</p>
     </div>
 
     <!-- PLAN -->
-    <div style="background: #e8f4f8;
-                padding: 15px;
-                margin: 15px 0;
-                border-radius: 8px;
-                border-left: 4px solid #3498db;">
-        <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
+    <div style="
+        background-color: #e8f4f8;
+        color: #000000;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+    ">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold;">
             Plan
         </h2>
-        <div>$plan</div>
+        <div style="color: #000000;">$plan</div>
     </div>
 
     <!-- ANALYSIS -->
-    <div style="background: #e8f4f8;
-                padding: 15px;
-                margin: 15px 0;
-                border-radius: 8px;
-                border-left: 4px solid #3498db;">
-        <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
+    <div style="
+        background-color: #e8f4f8;
+        color: #000000;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+    ">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold;">
             Analysis
         </h2>
-        <div>$analysis</div>
+        <div style="color: #000000;">$analysis</div>
     </div>
 
     <!-- DECISION -->
-    <div style="background: #e8f4f8;
-                padding: 15px;
-                margin: 15px 0;
-                border-radius: 8px;
-                border-left: 4px solid #27ae60;">
-        <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
+    <div style="
+        background-color: #e8f4f8;
+        color: #000000;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        border-left: 4px solid #27ae60;
+    ">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold;">
             Decision
         </h2>
 
-        <div>$decision</div>
+        <div style="color: #000000;">$decision</div>
 
-        <p>
+        <p style="color: #000000;">
             <strong>Confidence:</strong>
-            <span style="background: #27ae60;
-                         color: #ffffff;
-                         padding: 5px 15px;
-                         border-radius: 20px;
-                         font-weight: bold;">
+            <span style="
+                background-color: #27ae60;
+                color: #ffffff;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-weight: bold;
+            ">
                 $confidence
-            </span>
-        </p>
-
-        <p>
-            <strong>Attempts:</strong>
-            <span style="background: #3498db;
-                         color: #ffffff;
-                         padding: 5px 15px;
-                         border-radius: 20px;
-                         font-weight: bold;">
-                $attempts
             </span>
         </p>
     </div>
 
     <!-- CONVERSATION -->
-    <div style="background: #f8f9fa;
-                padding: 15px;
-                margin: 15px 0;
-                border-radius: 8px;">
-        <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
+    <div style="
+        background-color: #f8f9fa;
+        color: #000000;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+    ">
+        <h2 style="color: #000000; font-size: 1.3em; font-weight: bold;">
             Conversation Log
         </h2>
 
-        <ul style="padding-left: 30px;
-                   list-style-position: outside;
-                   list-style-type: disc;">
+        <ul style="
+            padding-left: 30px;
+            color: #000000;
+            list-style-position: outside;
+            list-style-type: disc;
+        ">
             $messages_html
         </ul>
     </div>
