@@ -1,6 +1,4 @@
-# app/graph/nodes/planner.py
-# Planner node – STEP 0.3 compliant
-# Uses PromptBuilder pattern, no orchestration logic
+# app/graph/nodes/planner_node.py
 
 from langchain_openai import ChatOpenAI
 
@@ -80,9 +78,10 @@ def planner_node(state: DecisionState) -> DecisionState:
     # ------------------------------------------------------------------
     # UPDATE STATE
     # ------------------------------------------------------------------
+    state["plan"] = plan_text
 
-    state.messages.append(
-        AIMessage(content=f"Proposed Plan: {plan_text}")
+    state["messages"].append(
+        AIMessage(content=f"Proposed Plan:\n{plan_text}")
     )
 
     return state

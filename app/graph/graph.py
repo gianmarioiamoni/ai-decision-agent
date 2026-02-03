@@ -1,59 +1,51 @@
 # app/graph/graph.py
+#
+# LangGraph skeleton – FASE 1 (shadow mode)
+#
+# Purpose:
+# - Introduce LangGraph without changing behavior
+# - Linear flow only
+# - planner → analyzer → decision
+#
+# NO routing
+# NO memory
+# NO retry
+#
 
-from langgraph.graph import StateGraph
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import StateGraph, END
 
-from .state import DecisionState
+from app.graph.state import DecisionState
+from app.graph.nodes.planner_node import planner_node
+from app.graph.nodes.analyzer_node import analyzer_node
+from app.graph.nodes.decision_node import decision_node
 
-# Import node functions
-from .nodes.intake import intake_node
-from .nodes.planner import planner_node
-from .nodes.rag_node import rag_node  # 🆕 Hybrid RAG support
-from .nodes.retriever import retriever_node
-from .nodes.analyzer_independent_streaming import analyzer_independent_stream
-from .nodes.decision import decision_node
-from .nodes.router import confidence_router, should_retry
-from .nodes.summarize import summarize_node
-from .nodes.persist_history import persist_history_node
-# Initialize the main graph with DecisionState
-graph = StateGraph(DecisionState)
 
-# Add all nodes
-graph.add_node("intake", intake_node)
-graph.add_node("planner", planner_node)
-graph.add_node("rag", rag_node)  # 🆕 RAG context retrieval
-graph.add_node("retriever", retriever_node)
-graph.add_node("analyzer", analyzer_independent_stream)
-graph.add_node("decision", decision_node)
-graph.add_node("router", confidence_router)
-graph.add_node("summarize", summarize_node)
-graph.add_node("persist_history", persist_history_node)
-# Entry point
-graph.set_entry_point("intake")
+def build_graph():
+    #
+    # Build LangGraph decision flow (linear).
+    #
+    # Entry:
+    #   planner
+    #
+    # Flow:
+    #   planner → analyzer → decision → END
+    #
 
-# Linear flow with RAG integration
-graph.add_edge("intake", "planner")
-graph.add_edge("planner", "rag")        # 🆕 RAG after planning
-graph.add_edge("rag", "retriever")      # 🆕 Then historical retrieval
-graph.add_edge("retriever", "analyzer")
-graph.add_edge("analyzer", "decision")
-graph.add_edge("decision", "router")
+    graph = StateGraph(DecisionState)
 
-# Conditional routing based on confidence
-graph.add_conditional_edges(
-    "router",
-    should_retry,
-    {
-        "retry": "retriever",
-        "end": "summarize",
-    },
-)
+    # --------------------------------------------------
+    # Nodes
+    # --------------------------------------------------
+    graph.add_node("planner", planner_node)
+    graph.add_node("analyzer", analyzer_node)
+    graph.add_node("decision", decision_node)
 
-# End of graph
-graph.add_edge("summarize", "__end__")
+    # --------------------------------------------------
+    # Linear edges (NO conditional routing)
+    # --------------------------------------------------
+    graph.set_entry_point("planner")
+    graph.add_edge("planner", "analyzer")
+    graph.add_edge("analyzer", "decision")
+    graph.add_edge("decision", END)
 
-# Thread-level persistence (in-memory for now)
-checkpointer = InMemorySaver()
-
-# Compile graph
-compiled_graph = graph.compile(checkpointer=checkpointer)
+    return graph.compile()

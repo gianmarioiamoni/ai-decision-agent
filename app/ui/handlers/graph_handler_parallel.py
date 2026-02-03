@@ -146,6 +146,28 @@ def run_graph_parallel_streaming(
         state = decision_node(state)
 
         # --------------------------------------------------------------
+        # SHADOW MODE: LANGGRAPH (FASE 1)
+        # --------------------------------------------------------------
+        from app.graph.graph import build_graph
+        try:
+            graph = build_graph()
+
+            # IMPORTANT:
+            # We invoke LangGraph on a COPY of the state
+            graph_state = graph.invoke(state.copy())
+
+            print("\n" + "=" * 60)
+            print("🧪 LANGGRAPH SHADOW EXECUTION")
+            print("=" * 60)
+            print(f"Legacy decision:   {state.decision}")
+            print(f"LangGraph decision:{graph_state.get('decision')}")
+            print("=" * 60 + "\n")
+        except Exception as e:
+            print("❌ LangGraph shadow execution failed")
+            print(e)
+
+
+        # --------------------------------------------------------------
         # PHASE 7: SUMMARIZE / REPORT
         # --------------------------------------------------------------
         state = summarize_node(state)
