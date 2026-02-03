@@ -1,6 +1,6 @@
 # app/graph/nodes/persist_history.py
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 from domain.decision.decision_mapper import map_state_to_decision_record
 from infrastructure.memory.historical_writer import HistoricalDecisionWriter
 

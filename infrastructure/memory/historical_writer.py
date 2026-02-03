@@ -21,7 +21,7 @@ class HistoricalDecisionWriter:
         )
 
     def _build_document(self, record: DecisionRecord) -> str:
-        return record.short_rationale.strip()
+        return record.justification.strip()
 
     def _build_metadata(self, record: DecisionRecord) -> dict:
         metadata = {

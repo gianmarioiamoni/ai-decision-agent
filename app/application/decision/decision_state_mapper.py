@@ -4,7 +4,7 @@ from uuid import uuid4
 from domain.decision.decision_record import DecisionRecord
 from domain.decision.decision_validation import validate_decision_record
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 
 
 def map_state_to_decision_record(state: DecisionState) -> DecisionRecord:
@@ -15,7 +15,7 @@ def map_state_to_decision_record(state: DecisionState) -> DecisionRecord:
         question=state.user_query,
         decision=state.decision,
         confidence=state.confidence_final,
-        short_rationale="\n".join(state.short_rationale), # memory contract
+        short_rationale="\n".join(state.justification), # memory contract
         key_factors=[],
         project_id=state.input_metadata.get("project_id"),   # TODO: add project_id to input_metadata,
         tags=state.input_metadata.get("tags", []),

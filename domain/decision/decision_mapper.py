@@ -16,14 +16,14 @@ def map_decision_result_to_record(decision_result) -> DecisionRecord:
         confidence=decision_result.confidence,
 
         # 🔑 SOLO rationale sintetico
-        short_rationale=decision_result.short_rationale,
+        justification=decision_result.justification,
 
         key_factors=decision_result.key_factors or [],
 
         project_id=decision_result.project_id,
         tags=decision_result.tags or [],
 
-        # 🔑 report completo SOLO per UI / export
+        # 🔑 complet report HTML
         report_html=decision_result.report_html,
     )
 

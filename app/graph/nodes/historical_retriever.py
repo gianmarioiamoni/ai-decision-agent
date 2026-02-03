@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 from infrastructure.memory.historical_retriever import HistoricalDecisionRetriever
 
 
@@ -28,14 +28,14 @@ def historical_retriever_node(state: DecisionState) -> DecisionState:
 
     retriever = _get_historical_retriever()
 
-    evidences = retriever.retrieve(
+    similar_decisions = retriever.retrieve(
         query=state.user_query,
         k=3,
     )
 
     print(
-        f"[HISTORICAL_RETRIEVER] 🧠 Retrieved {len(evidences)} historical decisions"
+        f"[HISTORICAL_RETRIEVER] 🧠 Retrieved {len(similar_decisions)} historical decisions"
     )
 
-    state.historical_evidence = evidences
+    state.similar_decisions = similar_decisions
     return state

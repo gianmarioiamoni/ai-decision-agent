@@ -29,11 +29,6 @@ class DecisionState:
     # --------------------------------------------------
     plan: Optional[str] = None
 
-    # (kept for future semantic routing / Phase 1+)
-    decision_type: Optional[str] = None
-    analysis_plan: Optional[str] = None
-    required_context: Optional[str] = None
-
     # --------------------------------------------------
     # RAG
     # --------------------------------------------------
@@ -47,7 +42,6 @@ class DecisionState:
     analysis: Optional[str] = None
 
     # (kept for richer analyzers later)
-    reasoning: Optional[str] = None
     risks: List[str] = field(default_factory=list)
     assumptions: List[str] = field(default_factory=list)
     confidence_base: Optional[float] = None
@@ -57,7 +51,6 @@ class DecisionState:
     # --------------------------------------------------
     decision: Optional[str] = None
     justification: Optional[str] = None
-    short_rationale: Optional[str] = None
     confidence_final: Optional[float] = None
 
     # --------------------------------------------------
@@ -75,7 +68,6 @@ class DecisionState:
     # --------------------------------------------------
     # CONTROL
     # --------------------------------------------------
-    status: str = "INIT"
     errors: List[str] = field(default_factory=list)
     needs_retry: bool = False
 

@@ -31,7 +31,7 @@ from app.application.decision.decision_state_mapper import map_state_to_decision
 from infrastructure.memory.historical_writer import HistoricalDecisionWriter
 from infrastructure.memory.chroma_client import get_chroma_collection
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 
 
 # ==============================================================================
@@ -130,15 +130,15 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 5: ANALYSIS (TEMPORARY FALLBACK – PHASE 0)
         # --------------------------------------------------------------
-        if not state.reasoning  :
-            state.reasoning = (
-                "No dedicated analytical reasoning step was executed. "
+        if not state.analysis  :
+            state.analysis = (
+                "No dedicated analytical analysis step was executed. "
                 "The decision is based on the proposed plan, retrieved knowledge, "
                 "and historical evidence when available." # TODO: remove this fallback
             )
 
         if not state.analysis:
-            state.analysis = state.reasoning or ""
+            state.analysis = state.analysis or ""
 
         # --------------------------------------------------------------
         # PHASE 6: DECISION
@@ -158,7 +158,7 @@ def run_graph_parallel_streaming(
 
         # Load full historical evidence for UI
         full_history = load_decision_history(limit=20)
-        state.historical_evidence = full_history
+        state.similar_decisions = full_history
 
         # --------------------------------------------------------------
         # UI ASSEMBLY

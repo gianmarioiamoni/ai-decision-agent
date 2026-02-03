@@ -12,7 +12,7 @@
 from datetime import datetime, timezone
 import re
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 from .template_loader import get_template_loader
 
 
@@ -156,22 +156,22 @@ def _prepare_report_context(
         "timestamp": timestamp,
         "question": state.user_query,
         "plan": markdown_to_html(
-            state.analysis_plan or "",
+            state.plan or "",
             inline_styles=inline_styles,
         ),
         "analysis": markdown_to_html(
-            state.reasoning or "",
+            state.analysis or "",
             inline_styles=inline_styles,
         ),
         "decision": markdown_to_html(
             state.decision or "",
             inline_styles=inline_styles,
         ),
-        "confidence": _format_confidence(state.confidence_final),
-        "short_rationale": markdown_to_html(
-            "\n".join(f"- {r}" for r in state.short_rationale),
+        "justification": markdown_to_html(
+            state.justification or "",
             inline_styles=inline_styles,
         ),
+        "confidence": _format_confidence(state.confidence_final),
         "messages_html": _format_messages_html(
             state.messages,
             inline_styles=inline_styles,

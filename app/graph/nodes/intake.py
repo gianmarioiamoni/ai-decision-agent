@@ -1,6 +1,6 @@
 # app/graph/nodes/intake.py
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 from langchain_core.messages import HumanMessage
 
 def intake_node(state: DecisionState) -> DecisionState:
@@ -23,7 +23,6 @@ def intake_node(state: DecisionState) -> DecisionState:
     state.user_query = state.user_query.strip()
 
     # Initialize control flags (explicit, not implicit)
-    state.status = "INTAKE"
     state.needs_retry = False
 
     # NOTE:

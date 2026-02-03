@@ -12,8 +12,8 @@ class DecisionRecord:
     decision: str
     confidence: float
 
-    # 🔑 short rationale for memory 
-    short_rationale: str
+    # 🔑 justification for memory + UI
+    justification: str
 
     # opzionali / contesto
     key_factors: List[str]

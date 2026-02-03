@@ -1,7 +1,7 @@
 # app/graph/nodes/retriever.py
 
 from app.rag.vectorstore_manager import get_vectorstore_manager
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 
 
 def retriever_node(state: DecisionState) -> DecisionState:
@@ -27,13 +27,7 @@ def retriever_node(state: DecisionState) -> DecisionState:
         raise ValueError("Retriever node requires a valid user query")
 
     # Build retrieval query
-    if state.analysis_plan:
-        query = (
-            f"Question: {state.user_query}\n\n"
-            f"Relevant reasoning plan:\n{state.analysis_plan}"
-        )
-    else:
-        query = state.user_query
+    query = state.user_query
 
     # Perform similarity search
     docs = vectorstore.similarity_search(query, k=5)

@@ -1,6 +1,6 @@
 # app/graph/nodes/rag_node.py
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 from app.rag.vectorstore_manager import get_vectorstore_manager
 
 

@@ -8,7 +8,7 @@
 # - UI becomes a pure projection of domain state
 #
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 
 from .message_formatter import MessageFormatter
 from .historical_formatter import HistoricalFormatter
@@ -42,8 +42,8 @@ class OutputAssembler:
         # Tuple of outputs expected by Gradio UI.
         #
 
-        plan = self._to_plain_text(state.analysis_plan, "No plan generated")
-        analysis = self._to_plain_text(state.reasoning, "No analysis generated")
+        plan = self._to_plain_text(state.plan, "No plan generated")
+        analysis = self._to_plain_text(state.analysis, "No analysis generated")
         decision = self._to_plain_text(state.decision, "No decision generated")
 
         confidence = float(state.confidence_final or 0.0)
@@ -55,8 +55,8 @@ class OutputAssembler:
         report_preview, report_file_path = self._format_report(state)
 
         historical_html = self.historical_formatter.format(
-            state.historical_evidence
-        ) if state.historical_evidence else ""
+            state.similar_decisions
+        ) if state.similar_decisions else ""
 
         rag_evidence_html = format_rag_context_for_ui(
             context_docs,

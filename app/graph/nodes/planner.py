@@ -4,7 +4,7 @@
 
 from langchain_openai import ChatOpenAI
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 from app.prompts.builders import PlannerPromptBuilder
 from langchain_core.messages import AIMessage
 
@@ -17,7 +17,6 @@ def planner_node(state: DecisionState) -> DecisionState:
     # - Validate input
     # - Build planning prompt using PlannerPromptBuilder
     # - Invoke LLM
-    # - Populate analysis_plan in DecisionState
     #
     # NOTE:
 
@@ -82,8 +81,6 @@ def planner_node(state: DecisionState) -> DecisionState:
     # UPDATE STATE
     # ------------------------------------------------------------------
 
-    state.analysis_plan = plan_text
-    state.status = "PLANNED"
     state.messages.append(
         AIMessage(content=f"Proposed Plan: {plan_text}")
     )

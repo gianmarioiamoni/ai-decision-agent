@@ -2,7 +2,7 @@
 # Final summarization node and session report generation
 # STEP 0.3 compliant
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 from app.report.session_report import (
     generate_session_report,
     generate_preview_html,
@@ -39,7 +39,6 @@ def summarize_node(state: DecisionState) -> DecisionState:
     # Preview for UI (non-domain, UI-only)
     state.input_metadata["report_preview"] = preview_html
 
-    state.status = "SUMMARIZED"
 
     return state
 

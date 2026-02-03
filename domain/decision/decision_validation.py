@@ -16,8 +16,8 @@ def validate_decision_record(record: DecisionRecord) -> None:
         raise ValueError("Decision cannot be empty")
 
     # 🔑 Short rationale is mandatory (memory contract)
-    if not record.short_rationale.strip():
-        raise ValueError("Short rationale cannot be empty")
+    if not record.justification.strip():
+        raise ValueError("Justification cannot be empty")
 
     # Key factors required only for conditional decisions
     if record.decision.upper() == "CONDITIONAL" and not record.key_factors:

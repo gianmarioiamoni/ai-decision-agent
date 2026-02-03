@@ -3,7 +3,7 @@
 # This node does NOT mutate state.
 # It only decides the next transition label.
 
-from domain.decision.decision_state import DecisionState
+from app.graph.state import DecisionState
 
 
 # Minimum confidence threshold for accepting a decision (0 to 1)
@@ -40,8 +40,8 @@ def should_retry(state: DecisionState) -> str:
     )
 
     # If analysis explicitly signals uncertainty, retry may help
-    if state.reasoning and any(
-        keyword in state.reasoning.lower()
+    if state.analysis and any(
+        keyword in state.analysis.lower()
         for keyword in ["assumption", "unclear", "uncertain"]
     ):
         print("   → Retry suggested due to uncertainty in analysis")
