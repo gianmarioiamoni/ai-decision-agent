@@ -35,6 +35,8 @@ from domain.decision.decision_mapper import map_decision_result_to_record
 from infrastructure.memory.historical_writer import HistoricalDecisionWriter
 from infrastructure.memory.chroma_client import get_chroma_collection
 
+from domain.decision.decision_state import DecisionState
+
 # ==============================================================================
 # GLOBAL VARIABLES
 # ==============================================================================
@@ -128,21 +130,10 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 1: INTAKE
         # --------------------------------------------------------------
-        state = {
-            "messages": [],
-            "question": question,
-            "plan": None,
-            "retrieved_docs": [],
-            "analysis": None,
-            "decision": None,
-            "confidence": None,
-            "attempts": 0,
-            "report_html": None,
-            "report_preview": None,
-            "context_docs": context_docs,
-            "rag_context": None,
-            "decision_finalized": False,
-        }
+        state = DecisionState(
+            user_query=question,
+            input_context_docs=context_docs,
+        )
 
         intake_result = intake_node(state)
         state.update(intake_result)
