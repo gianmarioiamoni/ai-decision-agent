@@ -127,6 +127,16 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         state = planner_node(state)
 
+        # --------------------------------------------------------------
+        # PHASE 5: ANALYSIS (TEMPORARY FALLBACK – PHASE 0)
+        # --------------------------------------------------------------
+        if not state.analysis:
+            state.analysis = (
+                "No dedicated analytical reasoning step was executed. "
+                "The decision is based on the proposed plan, retrieved knowledge, "
+                "and historical evidence when available."
+            )
+
 
         # --------------------------------------------------------------
         # PHASE 6: DECISION
