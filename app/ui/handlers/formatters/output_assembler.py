@@ -1,140 +1,109 @@
 # app/ui/handlers/formatters/output_assembler.py
 #
-# Coordinates all formatters to assemble complete UI output.
-# Facade pattern for formatting complexity.
+# Assembles UI output from DecisionState.
 #
+# STEP 0.4.3:
+# - Consume DecisionState directly
+# - Remove dict-based result access
+# - UI becomes a pure projection of domain state
+#
+
+from domain.decision.decision_state import DecisionState
 
 from .message_formatter import MessageFormatter
 from .historical_formatter import HistoricalFormatter
 from app.ui.utils.markdown_utils import md_to_plain_text
 from app.ui.utils.rag_formatter import format_rag_context_for_ui
+from app.ui.handlers.report_format_handler import get_initial_report_file
 
 
 class OutputAssembler:
     #
-    # Assembles formatted outputs from graph results for Gradio UI.
+    # Facade for assembling Gradio UI output from DecisionState.
     #
-    # Responsibility: Coordinate formatters and assemble final output tuple.
-    # Follows Facade pattern to hide formatting complexity.
+    # Responsibility:
+    # - Convert domain state into UI-ready artifacts
+    # - Coordinate specialized formatters
     #
-    
-    def __init__(self):
-        # Initialize all formatters
+
+    def __init__(self) -> None:
         self.message_formatter = MessageFormatter()
         self.historical_formatter = HistoricalFormatter()
-    
+
     def assemble(
         self,
-        result,
+        state: DecisionState,
         context_docs,
-        history=None
     ):
-        # Assemble complete UI output from graph result.
         #
-        # Args:
-        #     result: Graph execution result dictionary
-        #     context_docs: Context documents used in execution
-        #     full_history: Full decision history
+        # Assemble UI outputs from DecisionState.
         #
         # Returns:
-        #     Tuple of 9 outputs for Gradio UI:
-        #     - plan (str): Formatted plan text
-        #     - analysis (str): Formatted analysis text
-        #     - decision (str): Formatted decision text
-        #     - confidence (float): Confidence score (0.0-1.0)
-        #     - messages (str): HTML-formatted conversation log
-        #     - report_preview (str): HTML preview of session report
-        #     - report_file_path (str | None): Path to downloadable HTML report
-        #     - historical_html (str): HTML-formatted similar historical decisions
-        #     - rag_evidence_html (str): HTML-formatted RAG context and evidence
+        # Tuple of outputs expected by Gradio UI.
         #
 
-        # Extract and convert markdown outputs to plain text
-        plan = self._extract_and_convert(result, "plan", "No plan generated")
-        analysis = self._extract_and_convert(result, "analysis", "No analysis generated")
-        decision = self._extract_and_convert(result, "decision", "No decision generated")
-        
-        # Extract confidence score
-        confidence_val = self._extract_confidence(result)
-        
-        # Format messages using dedicated formatter
-        messages = self.message_formatter.format(result.get("messages", []))
-        
-        # Format report outputs
-        report_preview, report_file_path = self._format_report(result)
-        
-        # Format historical decisions using dedicated formatter
-        if history:
-            historical_html = self.historical_formatter.format(history)
-        else:
-            historical_html = ""
-        
-        # Format RAG evidence using existing utility
-        rag_context = result.get("rag_context", "")
-        rag_evidence_html = format_rag_context_for_ui(context_docs, rag_context)
-        
+        plan = self._to_plain_text(state.analysis_plan, "No plan generated")
+        analysis = self._to_plain_text(state.reasoning, "No analysis generated")
+        decision = self._to_plain_text(state.decision, "No decision generated")
+
+        confidence = float(state.confidence_final or 0.0)
+
+        messages_html = self.message_formatter.format(
+            getattr(state, "messages", [])
+        )
+
+        report_preview, report_file_path = self._format_report(state)
+
+        historical_html = self.historical_formatter.format(
+            state.historical_evidence
+        ) if state.historical_evidence else ""
+
+        rag_evidence_html = format_rag_context_for_ui(
+            context_docs,
+            state.authoritative_context,
+        )
+
         return (
             plan,
             analysis,
             decision,
-            confidence_val,
-            messages,
+            confidence,
+            messages_html,
             report_preview,
             report_file_path,
             historical_html,
-            rag_evidence_html
+            rag_evidence_html,
         )
-    
-    def _extract_and_convert(
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _to_plain_text(
         self,
-        result,
-        key,
-        default
-    ):
-        # Extract markdown field and convert to plain text.
-        #
-        # Args:
-        #     result: Result dictionary
-        #     key: Field key to extract
-        #     default: Default value if key not found
-        #
-        # Returns:
-        #     Plain text version of markdown content
-        #
-        
-        markdown = result.get(key) or default
+        value: str | None,
+        default: str,
+    ) -> str:
+        markdown = value or default
         return md_to_plain_text(markdown)
-    
-    def _extract_confidence(self, result):
-        # Extract and validate confidence score.
+
+    def _format_report(self, state: DecisionState):
         #
-        # Args:
-        #     result: Result dictionary
+        # Generate report preview and downloadable file.
         #
-        # Returns:
-        #     Confidence value as float (0.0 if not present)
-        #
-        confidence_val = result.get("confidence")
-        return float(confidence_val) if confidence_val is not None else 0.0
-    
-    def _format_report(self, result):
-        # Format report HTML and save to temporary file.
-        #
-        # Args:
-        #     result: Result dictionary
-        #
-        # Returns:
-        #     Tuple of (report_preview_html, report_file_path)
-        #
-        from app.ui.handlers.report_format_handler import get_initial_report_file
-        
-        report_html = result.get("report_html") or (
+
+        report_html = state.report_html or (
             "<p style='color: orange;'>⚠️ No report generated</p>"
         )
-        report_preview = result.get("report_preview") or report_html
-        
-        # Use the new handler that caches HTML for format changes
+
+        report_preview = getattr(
+            state,
+            "report_preview",
+            report_html,
+        )
+
         report_file_path = get_initial_report_file(report_html)
-        
+
         return report_preview, report_file_path
+
 
