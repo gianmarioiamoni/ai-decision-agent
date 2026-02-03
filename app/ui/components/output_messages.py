@@ -6,26 +6,26 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.messages import HumanMessage, AIMessage
 
 def messages_to_chatbot(messages):
-    chat = []
+    chatbot_messages = []
 
     for msg in messages:
         if isinstance(msg, HumanMessage):
-            chat.append({
+            chatbot_messages.append({
                 "role": "user",
                 "content": msg.content
             })
         elif isinstance(msg, AIMessage):
-            chat.append({
+            chatbot_messages.append({
                 "role": "assistant",
                 "content": msg.content
             })
         elif isinstance(msg, SystemMessage):
-            chat.append({
+            chatbot_messages.append({
                 "role": "system",
                 "content": msg.content
             })
 
-    return chat
+    return chatbot_messages
 
 
 def create_output_messages():

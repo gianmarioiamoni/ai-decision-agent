@@ -16,6 +16,7 @@ from app.graph.nodes.rag_node import rag_node
 from app.graph.nodes.decision import decision_node
 from app.graph.nodes.summarize import summarize_node
 from app.graph.nodes.historical_retriever import historical_retriever_node
+from app.graph.state_factory import create_initial_state
 
 from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
@@ -99,7 +100,7 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 1: INTAKE
         # --------------------------------------------------------------
-        state = DecisionState(
+        state = create_initial_state(
             user_query=question,
             input_context_docs=context_docs,
         )
