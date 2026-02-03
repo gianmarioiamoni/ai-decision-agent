@@ -159,8 +159,8 @@ def run_graph_parallel_streaming(
             print("\n" + "=" * 60)
             print("🧪 LANGGRAPH SHADOW EXECUTION")
             print("=" * 60)
-            print(f"Legacy decision:   {state["decision"]}")
-            print(f"LangGraph decision:{graph_state["decision"]}")
+            print(f"Legacy decision:   {state['decision']}")
+            print(f"LangGraph decision:{graph_state['decision']}")
             print("=" * 60 + "\n")
         except Exception as e:
             print("❌ LangGraph shadow execution failed")
