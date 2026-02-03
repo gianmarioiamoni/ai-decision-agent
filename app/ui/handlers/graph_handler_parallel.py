@@ -143,13 +143,7 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 6: DECISION
         # --------------------------------------------------------------
-        decision_result = decision_node(state)
-        state.decision = decision_result["decision"]
-        state.confidence_final = decision_result["confidence"]
-        state.short_rationale = decision_result["short_rationale"]
-
-        if "messages" in decision_result:
-            state.messages.extend(decision_result["messages"])
+        state = decision_node(state)
 
         # --------------------------------------------------------------
         # PHASE 7: SUMMARIZE / REPORT
