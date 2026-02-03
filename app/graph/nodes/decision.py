@@ -80,10 +80,10 @@ def decision_node(
     print("\n" + "=" * 60)
     print("⚖️ DECISION PHASE")
     print("=" * 60)
-    print(f"📝 Question: {state["user_query"][:100]}...")
+    print(f"📝 Question: {state['user_query'][:100]}...")
 
     if state["authoritative_context"]:
-        print(f"✅ RAG Context Available ({len(state["authoritative_context"])} chunks)")
+        print(f"✅ RAG Context Available ({len(state['authoritative_context'])} chunks)")
     else:
         print("❌ No authoritative RAG context")
 

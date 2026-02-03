@@ -47,7 +47,7 @@ def planner_node(state: DecisionState) -> DecisionState:
     print("\n" + "=" * 60)
     print("🗺️  PLANNER PHASE")
     print("=" * 60)
-    print(f"📝 Question: {state["user_query"][:100]}...")
+    print(f"📝 Question: {state['user_query'][:100]}...")
     print("=" * 60)
 
     if bundle.rag_significant:
