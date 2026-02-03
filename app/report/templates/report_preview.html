@@ -1,13 +1,29 @@
-<div style="font-family: Arial, sans-serif; line-height: 1.6; padding: 10px; color: #000000;">
+<div class="report-preview"
+     style="font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 10px;
+            background: #ffffff;">
 
-    <!-- Global hard override for Gradio -->
+    <!-- Scoped styles: ONLY for report -->
     <style>
-        p, li, strong, span, div, h1, h2, h3, h4, h5, h6 {
-            color: #000000 !important;
+        .report-preview p,
+        .report-preview li,
+        .report-preview div {
+            color: #000000;
+        }
+
+        .report-preview h1 {
+            color: #ffffff;
+        }
+
+        .report-preview h2,
+        .report-preview h3 {
+            color: #000000;
         }
     </style>
 
-    <h1 style="color: #ffffff; font-size: 1.8em; font-weight: bold;">
+    <!-- TITLE -->
+    <h1 style="font-size: 1.8em; font-weight: bold;">
         AI Decision Session Report
     </h1>
 
@@ -16,8 +32,11 @@
     </p>
 
     <!-- QUESTION -->
-    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0;
-                border-radius: 8px; border-left: 4px solid #3498db;">
+    <div style="background: #e8f4f8;
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+                border-left: 4px solid #3498db;">
         <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
             Question
         </h2>
@@ -25,42 +44,47 @@
     </div>
 
     <!-- PLAN -->
-    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0;
-                border-radius: 8px; border-left: 4px solid #3498db;">
+    <div style="background: #e8f4f8;
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+                border-left: 4px solid #3498db;">
         <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
             Plan
         </h2>
-        <div>
-            $plan
-        </div>
+        <div>$plan</div>
     </div>
 
     <!-- ANALYSIS -->
-    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0;
-                border-radius: 8px; border-left: 4px solid #3498db;">
+    <div style="background: #e8f4f8;
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+                border-left: 4px solid #3498db;">
         <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
             Analysis
         </h2>
-        <div>
-            $analysis
-        </div>
+        <div>$analysis</div>
     </div>
 
     <!-- DECISION -->
-    <div style="background: #e8f4f8; padding: 15px; margin: 15px 0;
-                border-radius: 8px; border-left: 4px solid #27ae60;">
+    <div style="background: #e8f4f8;
+                padding: 15px;
+                margin: 15px 0;
+                border-radius: 8px;
+                border-left: 4px solid #27ae60;">
         <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
             Decision
         </h2>
 
-        <div>
-            $decision
-        </div>
+        <div>$decision</div>
 
         <p>
             <strong>Confidence:</strong>
-            <span style="background: #27ae60; color: #ffffff !important;
-                         padding: 5px 15px; border-radius: 20px;
+            <span style="background: #27ae60;
+                         color: #ffffff;
+                         padding: 5px 15px;
+                         border-radius: 20px;
                          font-weight: bold;">
                 $confidence
             </span>
@@ -68,8 +92,10 @@
 
         <p>
             <strong>Attempts:</strong>
-            <span style="background: #3498db; color: #ffffff !important;
-                         padding: 5px 15px; border-radius: 20px;
+            <span style="background: #3498db;
+                         color: #ffffff;
+                         padding: 5px 15px;
+                         border-radius: 20px;
                          font-weight: bold;">
                 $attempts
             </span>
@@ -77,13 +103,16 @@
     </div>
 
     <!-- CONVERSATION -->
-    <div style="background: #f8f9fa; padding: 15px; margin: 15px 0;
+    <div style="background: #f8f9fa;
+                padding: 15px;
+                margin: 15px 0;
                 border-radius: 8px;">
         <h2 style="font-size: 1.3em; font-weight: bold; margin-top: 0;">
             Conversation Log
         </h2>
 
-        <ul style="padding-left: 30px; list-style-position: outside;
+        <ul style="padding-left: 30px;
+                   list-style-position: outside;
                    list-style-type: disc;">
             $messages_html
         </ul>
