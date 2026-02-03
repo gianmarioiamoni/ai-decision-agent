@@ -9,6 +9,13 @@ def messages_to_chatbot(messages):
     chatbot_messages = []
 
     for msg in messages:
+        # Handle dict messages (fallback)
+        if isinstance(msg, dict):
+            if "role" in msg and "content" in msg:
+                chatbot_messages.append(msg)
+            continue
+            
+        # Handle LangChain message objects
         if isinstance(msg, HumanMessage):
             chatbot_messages.append({
                 "role": "user",
