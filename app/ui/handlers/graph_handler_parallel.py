@@ -198,7 +198,13 @@ def run_graph_parallel_streaming(
             rag_evidence_html,
         ) = assembler.assemble(state, context_docs)
 
-        chat_history = messages_to_chatbot(state["messages"])
+        # Convert messages with error handling
+        try:
+            chat_history = messages_to_chatbot(state.get("messages", []))
+        except Exception as e:
+            print(f"⚠️ Error converting messages: {e}")
+            print(f"Messages: {state.get('messages', [])[:3]}")  # Show first 3
+            chat_history = []
 
         return (
             plan,
