@@ -103,7 +103,6 @@ def run_graph_parallel_streaming(
         state = DecisionState(
             user_query=question,
             input_context_docs=context_docs,
-            messages=[],
         )
 
         state = intake_node(state)
