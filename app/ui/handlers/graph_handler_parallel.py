@@ -10,7 +10,7 @@
 from langchain_core.messages import AIMessage
 
 from app.graph.nodes.intake import intake_node
-from app.graph.nodes.planner import planner_node
+from app.graph.nodes.planner_node import planner_node
 from app.graph.nodes.retriever import retriever_node
 from app.graph.nodes.rag_node import rag_node
 from app.graph.nodes.decision import decision_node
