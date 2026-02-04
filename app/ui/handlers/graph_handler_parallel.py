@@ -183,6 +183,11 @@ def run_graph_parallel_streaming(
         full_history = load_decision_history(limit=20)
         state["similar_decisions"] = full_history
 
+        # Ensure rag_context is always a string for UI
+        if isinstance(state["rag_context"], list):
+            state["rag_context"] = "\n\n".join(state["rag_context"])
+
+
         # --------------------------------------------------------------
         # UI ASSEMBLY
         # --------------------------------------------------------------
