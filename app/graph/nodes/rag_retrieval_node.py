@@ -11,7 +11,12 @@ def rag_retrieval_node(state: DecisionState) -> DecisionState:
     if vectorstore.count() == 0:
         # RAG disabled → explicit empty context
         state["authoritative_context"] = []
-        state["rag_context"] = ""
+        #state["rag_context"] = ""
+        state["rag_context"] = "\n\n".join(
+            f"[CHUNK {i+1}]\n{doc}"
+            for i, doc in enumerate(state["authoritative_context"])
+        )
+
         return state
 
     loader = ContextLoader()

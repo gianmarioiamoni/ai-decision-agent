@@ -37,5 +37,14 @@ def historical_retriever_node(state: DecisionState) -> DecisionState:
         f"[HISTORICAL_RETRIEVER] 🧠 Retrieved {len(similar_decisions)} historical decisions"
     )
 
-    state["similar_decisions"] = similar_decisions
+    #state["similar_decisions"] = similar_decisions
+    state["similar_decisions"] = [
+    {
+        "decision": e.decision,
+        "confidence": e.confidence,
+        "similarity": getattr(e, "similarity_score", None),
+    }
+    for e in state["similar_decisions"]
+]
+
     return state
