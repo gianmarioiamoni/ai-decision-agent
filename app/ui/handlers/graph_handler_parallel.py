@@ -110,8 +110,8 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 2: RAG (optional)
         # --------------------------------------------------------------
-        if rag_enabled:
-            state = rag_node(state)
+        #if rag_enabled:
+        #    state = rag_node(state)
 
         # --------------------------------------------------------------
         # PHASE 3a: TECHNICAL RETRIEVER
