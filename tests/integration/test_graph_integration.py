@@ -13,6 +13,8 @@ from langgraph.graph import StateGraph, END
 from app.graph.state import DecisionState
 from app.graph.router import decision_router
 
+from tests.fakes.fake_planner_node import fake_planner_node
+
 
 # --------------------------------------------------
 # Fake nodes (test-only)

@@ -8,6 +8,7 @@
 # - No behavior change
 #
 
+from typing import Callable
 from langgraph.graph import StateGraph, END
 
 from app.graph.state import DecisionState
@@ -24,19 +25,32 @@ from app.graph.nodes.persist_history_node import PersistHistoryNode
 from app.graph.router import decision_router
 
 from infrastructure.memory.chroma_client import get_chroma_collection
-from domain.history.history_repository import ChromaHistoryRepository
+from domain.history.history_repository import ChromaHistoryRepository, HistoryRepository
 
 
-def build_graph():
+def build_graph(history_repository: HistoryRepository | None = None,
+    planner: Callable[[DecisionState], DecisionState] | None = None,
+    analyzer: Callable[[DecisionState], DecisionState] | None = None,
+    decision: Callable[[DecisionState], DecisionState] | None = None,
+):
     # ==================================================
     # Composition root – Infrastructure
     # ==================================================
 
-    collection = get_chroma_collection()
+    if history_repository is None:
+        collection = get_chroma_collection()
+        history_repository = ChromaHistoryRepository(
+            collection=collection
+        )
+    
+    if planner is None:
+        planner = planner_node
 
-    history_repository = ChromaHistoryRepository(
-        collection=collection
-    )
+    if analyzer is None:
+        analyzer = analyzer_node
+
+    if decision is None:
+        decision = decision_node
 
     # ==================================================
     # Graph
@@ -47,9 +61,11 @@ def build_graph():
     # --------------------------------------------------
     # Nodes
     # --------------------------------------------------
-    graph.add_node("planner", planner_node)
+    #graph.add_node("planner", planner_node)
+    graph.add_node("planner", planner)
     graph.add_node("rag", rag_retrieval_node)
-    graph.add_node("analyzer", analyzer_node)
+    #graph.add_node("analyzer", analyzer_node)
+    graph.add_node("analyzer", analyzer)
 
     # 🔑 FASE 4 – History nodes
     graph.add_node(
@@ -57,7 +73,8 @@ def build_graph():
         HistoryLookupNode(history_repository)
     )
 
-    graph.add_node("decision", decision_node)
+    #graph.add_node("decision", decision_node)
+    graph.add_node("decision", decision)
 
     graph.add_node(
         "persist_history",

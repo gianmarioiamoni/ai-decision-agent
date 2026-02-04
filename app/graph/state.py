@@ -22,6 +22,7 @@ class DecisionState(TypedDict):
     user_query: str
     input_context_docs: List[str]
     input_metadata: Dict[str, Any]
+    context_hash: str
 
     # ==================================================
     # PLANNING

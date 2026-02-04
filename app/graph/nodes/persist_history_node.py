@@ -9,9 +9,9 @@ class PersistHistoryNode:
 
     def __call__(self, state: DecisionState) -> DecisionState:
         self._history_repository.persist_if_absent(
-            context_hash=state.context_hash,
-            decision=state.decision,
-            confidence=state.effective_confidence
+            context_hash=state["context_hash"],
+            decision=state["decision"],
+            confidence=state["confidence_final"]
         )
         return state
 
