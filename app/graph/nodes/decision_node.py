@@ -57,6 +57,8 @@ def decision_node(state: DecisionState) -> DecisionState:
     bundle = DecisionPromptBuilder.build(
         question=state["user_query"],
         analysis=state["analysis"],
+        rag_context=state["rag_context"],
+        similar_decisions=state["similar_decisions"],
     )
 
     # ------------------------------------------------------------------
