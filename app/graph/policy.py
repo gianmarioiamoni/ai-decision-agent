@@ -21,8 +21,14 @@ class DecisionPolicy:
     # Hook per estensioni future (FASE 4)
     # ----------------------------------------------
     def compute_effective_confidence(self, state: DecisionState) -> float | None:
-        # FASE 3: usa solo confidence_base
-        return state.get("confidence_base")
+        base = state.get("confidence_base")
+        if base is None:
+            return None
+
+        historical_factor = state.get("historical_confidence_factor", 1.0)
+
+        return base * historical_factor
+
 
     # ----------------------------------------------
     # Policy evaluation
