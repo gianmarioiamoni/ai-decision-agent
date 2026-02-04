@@ -17,19 +17,29 @@ class DecisionPolicy:
     min_confidence: float = 0.70
     max_attempts: int = 3
 
+    # ----------------------------------------------
+    # Hook per estensioni future (FASE 4)
+    # ----------------------------------------------
+    def compute_effective_confidence(self, state: DecisionState) -> float | None:
+        # FASE 3: usa solo confidence_base
+        return state.get("confidence_base")
+
+    # ----------------------------------------------
+    # Policy evaluation
+    # ----------------------------------------------
     def evaluate(self, state: DecisionState) -> DecisionOutcome:
         # 1. Decision already finalized
         if state.get("decision_finalized"):
             return "end"
 
-        # 2. Explicit retry request
+        # 2. Explicit retry requested
         if state.get("needs_retry"):
             if state["attempts"] < self.max_attempts:
                 return "retry"
             return "fallback"
 
-        # 3. Low confidence
-        confidence = state.get("confidence_base")
+        # 3. Confidence-based retry
+        confidence = self.compute_effective_confidence(state)
         if confidence is not None and confidence < self.min_confidence:
             if state["attempts"] < self.max_attempts:
                 return "retry"
