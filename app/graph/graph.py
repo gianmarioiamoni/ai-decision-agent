@@ -18,7 +18,7 @@ from app.graph.state import DecisionState
 from app.graph.nodes.planner_node import planner_node
 from app.graph.nodes.analyzer_node import analyzer_node
 from app.graph.nodes.decision_node import decision_node
-
+from app.graph.nodes.rag_retrieval_node import rag_retrieval_node
 
 def build_graph():
     #
@@ -37,6 +37,7 @@ def build_graph():
     # Nodes
     # --------------------------------------------------
     graph.add_node("planner", planner_node)
+    graph.add_node("rag", rag_retrieval_node)
     graph.add_node("analyzer", analyzer_node)
     graph.add_node("decision", decision_node)
 
@@ -44,7 +45,8 @@ def build_graph():
     # Linear edges (NO conditional routing)
     # --------------------------------------------------
     graph.set_entry_point("planner")
-    graph.add_edge("planner", "analyzer")
+    graph.add_edge("planner", "rag")
+    graph.add_edge("rag", "analyzer")
     graph.add_edge("analyzer", "decision")
     graph.add_edge("decision", END)
 

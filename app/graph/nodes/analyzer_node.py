@@ -19,13 +19,6 @@ from app.prompts.historical_context_formatter import format_historical_context
 
 
 def analyzer_node(state: DecisionState) -> DecisionState:
-    # --------------------------------------------------
-    # FASE 1 SHADOW MODE:
-    # If analysis already exists (legacy fallback),
-    # DO NOT recompute it.
-    # --------------------------------------------------
-    if state["analysis"]:
-        return state
 
     # ------------------------------------------------------------------
     # VALIDATION
