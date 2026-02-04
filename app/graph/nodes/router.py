@@ -1,53 +1,42 @@
-# app/graph/nodes/router.py
-# Routing logic for decision flow (STEP 0.3 compliant)
-# This node does NOT mutate state.
-# It only decides the next transition label.
+# app/graph/router.py
 
+from typing import Literal
 from app.graph.state import DecisionState
 
+Route = Literal[
+    "retry",
+    "continue",
+    "fallback",
+    "end"
+]
 
-# Minimum confidence threshold for accepting a decision (0 to 1)
 MIN_CONFIDENCE = 0.70
+MAX_ATTEMPTS = 3
 
 
-def should_retry(state: DecisionState) -> str:
-    """
-    Determines whether the workflow should retry analysis/retrieval
-    or proceed to finalization.
-
-    Returns:
-    - "retry" → graph should loop back (retrieval / analysis)
-    - "end"   → graph should proceed to finalization
-    """
-
-    if state["confidence_final"] is None:
-        # No confidence computed yet → retry
-        print("⚠️ No confidence score available - retrying")
-        return "retry"
-
-    if state["confidence_final"] >= MIN_CONFIDENCE:
-        # Sufficient confidence → finalize
-        print(
-            f"✅ Confidence {state["confidence_final"]:.2f} "
-            f">= threshold {MIN_CONFIDENCE:.2f} - finalizing"
-        )
+def decision_router(state: DecisionState) -> Route:
+    # 1. Decision already finalized
+    if state.get("decision_finalized"):
         return "end"
 
-    # Low confidence case
-    print(
-        f"🔄 Low confidence ({state["confidence_final"]:.2f}) "
-        f"< threshold {MIN_CONFIDENCE:.2f}"
-    )
+    # 2. Explicit retry requested by analysis
+    if state.get("needs_retry"):
+        if state["attempts"] < MAX_ATTEMPTS:
+            return "retry"
+        return "fallback"
 
-    # If analysis explicitly signals uncertainty, retry may help
-    if state["analysis"] and any(
-        keyword in state["analysis"].lower()
-        for keyword in ["assumption", "unclear", "uncertain"]
-    ):
-        print("   → Retry suggested due to uncertainty in analysis")
-        return "retry"
+    # 3. Low base confidence
+    confidence = state.get("confidence_base")
+    if confidence is not None and confidence < MIN_CONFIDENCE:
+        if state["attempts"] < MAX_ATTEMPTS:
+            return "retry"
+        return "fallback"
 
-    # Default: accept low-confidence decision to avoid infinite loops
-    print("   → End: accepting low-confidence decision")
-    return "end"
+    # 4. Analysis completed → proceed
+    if state.get("analysis"):
+        return "continue"
+
+    # 5. Safe default
+    return "continue"
+
 
