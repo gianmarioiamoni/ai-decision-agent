@@ -9,13 +9,13 @@ class HistoryLookupNode:
         self._history_repository = history_repository
 
     def __call__(self, state: DecisionState) -> DecisionState:
-        history = self._history_repository.lookup(state.context_hash)
+        history = self._history_repository.lookup(state["context_hash"])
 
         factor = compute_historical_confidence_factor(
-            current_decision=state.decision,
+            current_decision=state["decision"],
             history=history
         )
 
-        state.historical_confidence_factor = factor
+        state["historical_confidence_factor"] = factor
         return state
 

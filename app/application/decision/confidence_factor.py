@@ -1,10 +1,34 @@
 # app/application/decision/confidence_factor.py
 
-from app.application.decision.historical_evidence import HistoricalDecisionEvidence
+from domain.history.history_repository import HistoricalDecision
+from infrastructure.memory.historical_retriever import HistoricalDecisionEvidence
+
+
 
 SIMILARITY_THRESHOLD = 0.7
 CONFIDENCE_BONUS = 0.1
 MAX_CONFIDENCE_BONUS = 0.2
+
+def compute_historical_confidence_factor(
+    current_decision: str,
+    history: list[HistoricalDecision],
+) -> float:
+    # FASE 4 – deterministic history
+
+    if not history:
+        return 1.0
+
+    matches = [
+        h for h in history
+        if h.decision == current_decision
+    ]
+
+    if not matches:
+        return 1.0
+
+    # Simple deterministic reinforcement
+    return 1.0 + min(0.1 * len(matches), 0.3)
+
 
 
 def historical_confidence_factor(
