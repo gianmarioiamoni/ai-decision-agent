@@ -1,15 +1,21 @@
 # domain/metrics/confidence_drift.py
+#
+# Domain metric: confidence drift
+# Measures deviation of current confidence from historical average
+#
 
 from typing import List
 
-def confidence_drift(
+
+def compute_confidence_drift(
     history: List[float],
     current: float,
-    window: int = 5
 ) -> float:
+    #
+    # No history → no drift
+    #
     if not history:
         return 0.0
 
-    recent = history[-window:]
-    avg = sum(recent) / len(recent)
-    return abs(current - avg)
+    average = sum(history) / len(history)
+    return current - average

@@ -2,12 +2,12 @@
 # Decision node – LangGraph compliant, confidence-aware
 # Responsibilities:
 # - Generate final decision
-# - Compute final confidence using precomputed factors
+# - Apply deterministic historical confidence bonus
 # - Emit final messages
 #
-# NO domain logic
-# NO historical computation
 # NO routing
+# NO retries
+# NO persistence
 
 import re
 from typing import List
@@ -67,11 +67,11 @@ def decision_node(
 
     similar_decisions = [
         {
-            "decision": e.get("decision"),
-            "confidence": e.get("confidence"),
-            "similarity": e.get("similarity"),
+            "decision": d.get("decision"),
+            "confidence": d.get("confidence"),
+            "similarity": d.get("similarity"),
         }
-        for e in state.get("similar_decisions", [])
+        for d in state.get("similar_decisions", [])
     ]
 
     bundle = DecisionPromptBuilder.build(
@@ -120,13 +120,26 @@ def decision_node(
         confidence_base = float(confidence_match.group(1))
 
     # ------------------------------------------------------------------
-    # CONFIDENCE COMPUTATION (ORCHESTRATION ONLY)
+    # HISTORICAL CONFIDENCE BONUS (DETERMINISTIC)
     # ------------------------------------------------------------------
 
-    historical_factor = state.get("historical_confidence_factor", 1.0)
+    historical_bonus = 0.0
+
+    for d in state.get("similar_decisions", []):
+        similarity = d.get("similarity_score") or 0.0
+        confidence = d.get("confidence") or 0.0
+
+        if similarity >= 0.75 and confidence > 0:
+            historical_bonus += 0.05
+
+    historical_bonus = min(historical_bonus, 0.2)
+
+    # ------------------------------------------------------------------
+    # FINAL CONFIDENCE
+    # ------------------------------------------------------------------
 
     if confidence_base is not None:
-        confidence_final = min(confidence_base * historical_factor, 1.0)
+        confidence_final = min(confidence_base + historical_bonus, 1.0)
     else:
         confidence_final = None
 
@@ -136,7 +149,13 @@ def decision_node(
 
     state["decision"] = decision_text
     state["confidence_base"] = confidence_base
+    state["historical_confidence_factor"] = historical_bonus
     state["confidence_final"] = confidence_final
+    state["confidence_breakdown"] = {
+        "base": confidence_base or 0.0,
+        "historical": historical_bonus,
+        "final": confidence_final or 0.0,
+    }
 
     state["messages"].append(AIMessage(content=decision_text))
 

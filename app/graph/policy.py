@@ -13,6 +13,7 @@ DecisionOutcome = Literal[
     "end",
 ]
 
+SIMILARITY_THRESHOLD = 0.75
 
 @dataclass(frozen=True)
 class DecisionPolicy:

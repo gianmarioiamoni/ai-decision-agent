@@ -1,17 +1,8 @@
 # app/ui/handlers/graph_handler_parallel.py
 #
 # Graph execution handler (DecisionState-based).
-# STEP 0.4.x FIX:
-# - Remove dict-based state handling
-# - Remove update() and [] access
-# - Operate ONLY on DecisionState
-# - Disable streaming temporarily for stability
+# Deterministic, testable, UI-boundary safe.
 #
-# NOTE:
-# This handler is a temporary adapter.
-# Full orchestration will be delegated to LangGraph
-# once all decision phases are migrated.
-
 
 from langchain_core.messages import AIMessage
 
@@ -21,8 +12,9 @@ from app.graph.nodes.retriever import retriever_node
 from app.graph.nodes.rag_node import rag_node
 from app.graph.nodes.decision import decision_node
 from app.graph.nodes.summarize import summarize_node
-from app.graph.nodes.historical_retriever import historical_retriever_node
+
 from app.graph.state_factory import create_initial_state
+from app.graph.state import DecisionState
 
 from app.rag.file_manager import get_file_manager
 from app.rag.vectorstore_manager import get_vectorstore_manager
@@ -32,13 +24,9 @@ from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.handlers.loaders.context_logger import ContextLogger
 from app.ui.components.output_messages import messages_to_chatbot
 
-from app.application.decision.history_reader import load_decision_history
-from app.application.decision.decision_state_mapper import map_state_to_decision_record
-
 from infrastructure.memory.historical_writer import HistoricalDecisionWriter
 from infrastructure.memory.chroma_client import get_chroma_collection
-
-from app.graph.state import DecisionState
+from infrastructure.memory.historical_retriever import HistoricalDecisionRetriever
 
 
 # ==============================================================================
@@ -47,6 +35,7 @@ from app.graph.state import DecisionState
 
 _chroma_collection = get_chroma_collection()
 historical_writer = HistoricalDecisionWriter(_chroma_collection)
+historical_retriever = HistoricalDecisionRetriever(_chroma_collection)
 
 
 # ==============================================================================
@@ -154,9 +143,15 @@ def run_graph_parallel_streaming(
         state = retriever_node(state)
 
         # --------------------------------------------------------------
-        # PHASE 3b: HISTORICAL RETRIEVER
+        # PHASE 3b: HISTORICAL CONTEXT (OUTSIDE GRAPH)
         # --------------------------------------------------------------
-        state = historical_retriever_node(state)
+        historical_evidence = historical_retriever.retrieve(
+            query=state["user_query"],
+            limit=5,
+        )
+
+        state["similar_decisions"] = historical_evidence
+        state["history_used"] = bool(historical_evidence)
 
         # --------------------------------------------------------------
         # PHASE 4: PLANNING
@@ -164,12 +159,12 @@ def run_graph_parallel_streaming(
         state = planner_node(state)
 
         # --------------------------------------------------------------
-        # PHASE 5: ANALYSIS (TEMPORARY FALLBACK – PHASE 0)
+        # PHASE 5: ANALYSIS (temporary fallback)
         # --------------------------------------------------------------
         if not state.get("analysis"):
             state["analysis"] = (
-                "No dedicated analytical analysis step was executed. "
-                "The decision is based on the proposed plan, retrieved knowledge, "
+                "No dedicated analytical step was executed. "
+                "Decision is based on plan, retrieved knowledge "
                 "and historical evidence when available."
             )
 
@@ -179,27 +174,6 @@ def run_graph_parallel_streaming(
         state = decision_node(state)
 
         # --------------------------------------------------------------
-        # SHADOW MODE: LANGGRAPH (FASE 1)
-        # --------------------------------------------------------------
-        from app.graph.graph import build_graph
-        try:
-            graph = build_graph()
-
-            # IMPORTANT:
-            # We invoke LangGraph on a COPY of the state
-            graph_state = graph.invoke(state.copy())  # type: ignore
-
-            print("\n" + "=" * 60)
-            print("🧪 LANGGRAPH SHADOW EXECUTION")
-            print("=" * 60)
-            print(f"Legacy decision:   {state.get('decision')}")
-            print(f"LangGraph decision:{graph_state.get('decision')}")
-            print("=" * 60 + "\n")
-        except Exception as e:
-            print("❌ LangGraph shadow execution failed")
-            print(e)
-
-        # --------------------------------------------------------------
         # PHASE 7: SUMMARIZE / REPORT
         # --------------------------------------------------------------
         state = summarize_node(state)
@@ -207,12 +181,7 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 8: PERSIST HISTORY
         # --------------------------------------------------------------
-        record = map_state_to_decision_record(state)
-        historical_writer.persist(record)
-
-        # Load full historical evidence for UI
-        full_history = load_decision_history(limit=20)
-        state["similar_decisions"] = full_history
+        historical_writer.persist_from_state(state)
 
         # Ensure rag_context is always a string for UI
         if isinstance(state.get("rag_context"), list):
@@ -233,7 +202,6 @@ def run_graph_parallel_streaming(
             rag_evidence_html,
         ) = assembler.assemble(state, context_docs)
 
-        # Convert messages to chatbot format
         try:
             chat_history = messages_to_chatbot(state.get("messages", []))
         except Exception as e:
@@ -241,7 +209,7 @@ def run_graph_parallel_streaming(
             chat_history = []
 
         # --------------------------------------------------------------
-        # UI BOUNDARY (explicit mapping)
+        # UI BOUNDARY
         # --------------------------------------------------------------
         return _map_state_to_ui_outputs(
             state=state,

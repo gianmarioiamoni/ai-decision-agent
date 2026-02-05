@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from app.prompts.policy import DECISION_SUPPORT_POLICY
 from app.prompts.schemas import PromptBundle
 from app.prompts.builders.base_prompt_builder import BasePromptBuilder
-
+from app.graph.policy import SIMILARITY_THRESHOLD
 
 class DecisionPromptBuilder(BasePromptBuilder):
     
@@ -84,7 +84,11 @@ Based on the provided analysis, produce:
         if similar_decisions:
             similar_texts = ""
             for sim in similar_decisions:
-                if sim.get("similarity", 0) >= 0.75:  # SIMILARITY_THRESHOLD
+                similarity = sim.get("similarity_score") or 0.0
+                if similarity >= SIMILARITY_THRESHOLD:
+                    # NOTE:
+                    # similarity_score is the canonical field.
+                    # Legacy inputs may not provide it → default to 0.0
                     similar_texts += f"- Decision #{sim['decision_id']} (similarity {sim['similarity']:.2f}): {sim['content'][:200]}...\n"
             
             if similar_texts:
@@ -130,7 +134,11 @@ If no authoritative context was provided, state "No specific organizational cont
 """
         
         # Format with historical consistency check if similar decisions exist
-        if similar_decisions and any(sim.get("similarity", 0) >= 0.75 for sim in similar_decisions):
+        #if similar_decisions and any(sim.get("similarity", 0) >= 0.75 for sim in similar_decisions):
+        if similar_decisions and any(
+            (sim.get("similarity_score") or 0.0) >= SIMILARITY_THRESHOLD
+            for sim in similar_decisions
+        ):
             system_prompt += """
 
 Respond in the following format:
