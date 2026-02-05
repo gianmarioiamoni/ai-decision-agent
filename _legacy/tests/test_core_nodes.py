@@ -5,9 +5,9 @@ import pytest
 from unittest.mock import MagicMock, patch, Mock
 from app.graph.state import DecisionState
 from app.graph.nodes.intake import intake_node
-from app.graph.nodes.router import confidence_router, should_retry
 from app.graph.nodes.retriever import retriever_node
 from app.graph.nodes.decision import decision_node
+from app.graph.router import confidence_router, should_retry
 
 
 # ============================================================================
