@@ -85,4 +85,6 @@ tmp/
 Thumbs.db
 .DS_Store
 
+# Gradio
 .gradio/
+
