@@ -1,0 +1,29 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	planner(planner)
+	rag(rag)
+	analyzer(analyzer)
+	history_lookup(history_lookup)
+	decision(decision)
+	persist_history(persist_history)
+	fallback(fallback)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> planner;
+	analyzer --> history_lookup;
+	decision --> persist_history;
+	history_lookup -. &nbsp;end&nbsp; .-> __end__;
+	history_lookup -. &nbsp;continue&nbsp; .-> decision;
+	history_lookup -.-> fallback;
+	history_lookup -. &nbsp;retry&nbsp; .-> rag;
+	planner --> rag;
+	rag --> analyzer;
+	fallback --> __end__;
+	persist_history --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

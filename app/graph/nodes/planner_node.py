@@ -6,7 +6,10 @@ from app.graph.state import DecisionState
 from app.prompts.builders import PlannerPromptBuilder
 from langchain_core.messages import AIMessage
 
+from infrastructure.logging.node_logger import log_node
 
+
+@log_node("planner")
 def planner_node(state: DecisionState) -> DecisionState:
     #
     # Planner node.

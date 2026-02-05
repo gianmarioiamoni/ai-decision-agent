@@ -4,7 +4,10 @@ from app.graph.state import DecisionState
 from app.rag.vectorstore_manager import get_vectorstore_manager
 from app.rag.context_loader import ContextLoader
 
+from infrastructure.logging.node_logger import log_node
 
+
+@log_node("rag_retrieval")
 def rag_retrieval_node(state: DecisionState) -> DecisionState:
     vectorstore = get_vectorstore_manager()
 

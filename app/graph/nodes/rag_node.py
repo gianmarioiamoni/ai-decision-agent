@@ -3,7 +3,10 @@
 from app.graph.state import DecisionState
 from app.rag.vectorstore_manager import get_vectorstore_manager
 
+from infrastructure.logging.node_logger import log_node
 
+
+@log_node("rag")
 def rag_node(state: DecisionState) -> DecisionState:
     #
     # Retrieve relevant information from persistent vectorstore for Hybrid RAG.

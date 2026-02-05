@@ -17,7 +17,10 @@ from app.graph.state import DecisionState
 from app.prompts.builders import AnalyzerIndependentPromptBuilder
 from app.prompts.historical_context_formatter import format_historical_context
 
+from infrastructure.logging.node_logger import log_node
 
+
+@log_node("analyzer")
 def analyzer_node(state: DecisionState) -> DecisionState:
 
     # ------------------------------------------------------------------

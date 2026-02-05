@@ -22,7 +22,10 @@ from app.application.decision.confidence_factor import (
 )
 from app.prompts.builders import DecisionPromptBuilder
 
+from infrastructure.logging.node_logger import log_node
 
+
+@log_node("decision")
 def decision_node(state: DecisionState) -> DecisionState:
     # ------------------------------------------------------------------
     # VALIDATION

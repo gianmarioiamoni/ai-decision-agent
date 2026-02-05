@@ -3,6 +3,10 @@
 from app.graph.state import DecisionState
 from langchain_core.messages import HumanMessage
 
+from infrastructure.logging.node_logger import log_node
+
+
+@log_node("intake")
 def intake_node(state: DecisionState) -> DecisionState:
     # 
     # Intake node.

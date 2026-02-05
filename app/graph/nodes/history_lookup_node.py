@@ -3,7 +3,10 @@ from app.graph.state import DecisionState
 from domain.history.history_repository import HistoryRepository
 from app.application.decision.confidence_factor import compute_historical_confidence_factor
 
+from infrastructure.logging.node_logger import log_node
 
+
+@log_node("history_lookup")
 class HistoryLookupNode:
     def __init__(self, history_repository: HistoryRepository):
         self._history_repository = history_repository

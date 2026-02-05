@@ -2,7 +2,10 @@
 
 from app.graph.state import DecisionState
 
+from infrastructure.logging.node_logger import log_node
 
+
+@log_node("fallback")
 def fallback_node(state: DecisionState) -> DecisionState:
     # Fallback node invoked when the system cannot reach
     # a confident decision within allowed attempts.
