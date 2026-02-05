@@ -6,7 +6,7 @@ from domain.metrics.confidence_drift import compute_confidence_drift
 
 
 @log_node("update_confidence_metrics")
-def update_confidence_metrics(state: DecisionState) -> DecisionState:
+def update_confidence_metrics_node(state: DecisionState) -> DecisionState:
     confidence = state.get("confidence_final")
 
     if confidence is None:

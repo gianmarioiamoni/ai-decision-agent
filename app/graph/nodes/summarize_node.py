@@ -1,6 +1,5 @@
-# app/graph/nodes/summarize.py
+# app/graph/nodes/summarize_node.py
 # Final summarization node and session report generation
-# STEP 0.3 compliant
 
 from app.graph.state import DecisionState
 from app.report.session_report import (
