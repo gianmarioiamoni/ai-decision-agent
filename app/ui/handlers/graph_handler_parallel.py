@@ -6,6 +6,12 @@
 # - Remove update() and [] access
 # - Operate ONLY on DecisionState
 # - Disable streaming temporarily for stability
+#
+# NOTE:
+# This handler is a temporary adapter.
+# Full orchestration will be delegated to LangGraph
+# once all decision phases are migrated.
+
 
 from langchain_core.messages import AIMessage
 
@@ -64,6 +70,35 @@ def _format_error_output(error_message: str):
 
 
 # ==============================================================================
+# UI mapping (explicit boundary)
+# ==============================================================================
+
+def _map_state_to_ui_outputs(
+    state: DecisionState,
+    chat_history,
+    report_preview: str | None,
+    report_file_path: str | None,
+    historical_html: str | None,
+    rag_evidence_html: str | None,
+):
+    #
+    # Explicit UI contract.
+    # UI must never access DecisionState directly.
+    #
+    return (
+        state.get("plan"),
+        state.get("analysis"),
+        state.get("decision"),
+        state.get("confidence_final"),
+        chat_history,
+        report_preview,
+        report_file_path,
+        historical_html,
+        rag_evidence_html,
+    )
+
+
+# ==============================================================================
 # Main entrypoint
 # ==============================================================================
 
@@ -110,8 +145,8 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 2: RAG (optional)
         # --------------------------------------------------------------
-        #if rag_enabled:
-        #    state = rag_node(state)
+        # if rag_enabled:
+        #     state = rag_node(state)
 
         # --------------------------------------------------------------
         # PHASE 3a: TECHNICAL RETRIEVER
@@ -131,15 +166,12 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # PHASE 5: ANALYSIS (TEMPORARY FALLBACK – PHASE 0)
         # --------------------------------------------------------------
-        if not state["analysis"]  :
+        if not state.get("analysis"):
             state["analysis"] = (
                 "No dedicated analytical analysis step was executed. "
                 "The decision is based on the proposed plan, retrieved knowledge, "
-                "and historical evidence when available." # TODO: remove this fallback
+                "and historical evidence when available."
             )
-
-        if not state["analysis"]:
-            state["analysis"] = state["analysis"] or ""
 
         # --------------------------------------------------------------
         # PHASE 6: DECISION
@@ -155,18 +187,17 @@ def run_graph_parallel_streaming(
 
             # IMPORTANT:
             # We invoke LangGraph on a COPY of the state
-            graph_state = graph.invoke(state.copy()) # type: ignore
+            graph_state = graph.invoke(state.copy())  # type: ignore
 
             print("\n" + "=" * 60)
             print("🧪 LANGGRAPH SHADOW EXECUTION")
             print("=" * 60)
-            print(f"Legacy decision:   {state['decision']}")
-            print(f"LangGraph decision:{graph_state['decision']}")
+            print(f"Legacy decision:   {state.get('decision')}")
+            print(f"LangGraph decision:{graph_state.get('decision')}")
             print("=" * 60 + "\n")
         except Exception as e:
             print("❌ LangGraph shadow execution failed")
             print(e)
-
 
         # --------------------------------------------------------------
         # PHASE 7: SUMMARIZE / REPORT
@@ -184,12 +215,11 @@ def run_graph_parallel_streaming(
         state["similar_decisions"] = full_history
 
         # Ensure rag_context is always a string for UI
-        if isinstance(state["rag_context"], list):
+        if isinstance(state.get("rag_context"), list):
             state["rag_context"] = "\n\n".join(state["rag_context"])
 
-
         # --------------------------------------------------------------
-        # UI ASSEMBLY
+        # UI FORMATTING (no state access beyond this point)
         # --------------------------------------------------------------
         (
             plan,
@@ -203,28 +233,26 @@ def run_graph_parallel_streaming(
             rag_evidence_html,
         ) = assembler.assemble(state, context_docs)
 
-        # Convert messages with error handling
+        # Convert messages to chatbot format
         try:
             chat_history = messages_to_chatbot(state.get("messages", []))
         except Exception as e:
             print(f"⚠️ Error converting messages: {e}")
-            print(f"Messages: {state.get('messages', [])[:3]}")  # Show first 3
             chat_history = []
 
-        return (
-            plan,
-            analysis,
-            decision,
-            confidence,
-            chat_history,
-            report_preview,
-            report_file_path,
-            historical_html,
-            rag_evidence_html,
+        # --------------------------------------------------------------
+        # UI BOUNDARY (explicit mapping)
+        # --------------------------------------------------------------
+        return _map_state_to_ui_outputs(
+            state=state,
+            chat_history=chat_history,
+            report_preview=report_preview,
+            report_file_path=report_file_path,
+            historical_html=historical_html,
+            rag_evidence_html=rag_evidence_html,
         )
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         return _format_error_output(str(e))
-

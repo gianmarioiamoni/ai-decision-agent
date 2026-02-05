@@ -84,4 +84,26 @@ class DecisionState(TypedDict):
 
     errors: List[str]
 
+    # ==================================================
+    # IDENTITY / AUDIT
+    # ==================================================
+
+    decision_id: str
+    timestamp: str  # ISO 8601, UI-friendly
+
+    # ==================================================
+    # UI SEMANTICS
+    # ==================================================
+
+    history_used: bool
+
+    confidence_breakdown: Dict[str, float]
+    # example:
+    # {
+    #   "base": 0.72,
+    #   "historical": 0.08,
+    #   "final": 0.80
+    # }
+
+
 
