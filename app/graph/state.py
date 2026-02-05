@@ -9,10 +9,11 @@ from langchain_core.messages import BaseMessage
 
 class DecisionState(TypedDict):
     # ==================================================
-    # CONVERSATION STATE (UI / CHAT ONLY)
+    # CONVERSATION / OBSERVABILITY
     # ==================================================
-
-    # User ↔ Assistant messages (final output only)
+    # Full conversational transcript (user + assistant).
+    # Used for UI projection and debugging only.
+    # NEVER used for routing or decision logic.
     messages: Annotated[List[BaseMessage], add_messages]
 
     # ==================================================
