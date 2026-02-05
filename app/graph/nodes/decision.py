@@ -1,8 +1,13 @@
 # app/graph/nodes/decision.py
-# Decision node – confidence-aware, history-consumer only
-# Generates:
-# - final decision + confidence
-# - concise short_rationale for historical memory
+# Decision node – LangGraph compliant, confidence-aware
+# Responsibilities:
+# - Generate final decision
+# - Compute final confidence using precomputed factors
+# - Emit final messages
+#
+# NO domain logic
+# NO historical computation
+# NO routing
 
 import re
 from typing import List
@@ -12,9 +17,6 @@ from langchain_openai import ChatOpenAI
 
 from app.graph.state import DecisionState
 from app.prompts.builders import DecisionPromptBuilder
-from app.application.decision.confidence_factor import (
-    historical_confidence_factor,
-)
 
 
 # ------------------------------------------------------------------
@@ -33,30 +35,16 @@ def _get_llm() -> ChatOpenAI:
 # ------------------------------------------------------------------
 
 def _parse_bullets(text: str) -> List[str]:
-    #
-    # Normalize bullet output to a clean list of bullet strings.
-    #
-    # Args:
-    #     text: The text to parse
-    #
-    # Returns:
-    #     A list of bullet strings
-    #
-
     lines = [
         line.strip().lstrip("-• ").strip()
         for line in text.splitlines()
         if line.strip().startswith(("-", "•"))
     ]
-
-    if not lines:
-        return [text.strip()]
-
-    return lines
+    return lines or [text.strip()]
 
 
 # ------------------------------------------------------------------
-# MAIN NODE (STEP 0.3 COMPLIANT)
+# MAIN NODE
 # ------------------------------------------------------------------
 
 def decision_node(
@@ -67,59 +55,34 @@ def decision_node(
     # VALIDATION
     # ------------------------------------------------------------------
 
-    if not state["user_query"]:
-        raise ValueError("Decision node requires a valid user_query")
+    if not state.get("user_query"):
+        raise ValueError("Decision node requires user_query")
 
-    if not state["analysis"]:
+    if not state.get("analysis"):
         raise ValueError("Decision node requires analysis")
 
     # ------------------------------------------------------------------
-    # DEBUG LOGGING
-    # ------------------------------------------------------------------
-
-    print("\n" + "=" * 60)
-    print("⚖️ DECISION PHASE")
-    print("=" * 60)
-    print(f"📝 Question: {state['user_query'][:100]}...")
-
-    if state["authoritative_context"]:
-        print(f"✅ RAG Context Available ({len(state['authoritative_context'])} chunks)")
-    else:
-        print("❌ No authoritative RAG context")
-
-
-    # ------------------------------------------------------------------
-    # FORMAT HISTORICAL EVIDENCE (FOR PROMPT ONLY)
+    # BUILD PROMPT
     # ------------------------------------------------------------------
 
     similar_decisions = [
         {
-            "decision": e.decision,
-            "confidence": e.confidence,
-            "similarity": getattr(e, "similarity_score", None),
+            "decision": e.get("decision"),
+            "confidence": e.get("confidence"),
+            "similarity": e.get("similarity"),
         }
-        for e in state["similar_decisions"]
+        for e in state.get("similar_decisions", [])
     ]
-
-    # ------------------------------------------------------------------
-    # BUILD DECISION PROMPT
-    # ------------------------------------------------------------------
 
     bundle = DecisionPromptBuilder.build(
         question=state["user_query"],
         analysis=state["analysis"],
-        rag_context="\n\n".join(state["authoritative_context"]),
+        rag_context="\n\n".join(state.get("authoritative_context", [])),
         similar_decisions=similar_decisions,
     )
 
-    print("\n📤 System Prompt (first 400 chars):")
-    print(bundle.system_message.content[:400] + "...")
-    print("\n📤 Human Prompt (first 400 chars):")
-    print(bundle.human_message.content[:400] + "...")
-    print("=" * 60 + "\n")
-
     # ------------------------------------------------------------------
-    # LLM INVOCATION (DECISION)
+    # LLM INVOCATION
     # ------------------------------------------------------------------
 
     llm = llm or _get_llm()
@@ -134,11 +97,11 @@ def decision_node(
     content = response.content.strip()
 
     # ------------------------------------------------------------------
-    # PARSE DECISION RESPONSE
+    # PARSE RESPONSE
     # ------------------------------------------------------------------
 
-    decision_text = ""
-    confidence_value: float | None = None
+    decision_text = content
+    confidence_base: float | None = None
 
     decision_match = re.search(
         r"Decision[:\s]+(.+?)(?=Confidence:|$)",
@@ -147,8 +110,6 @@ def decision_node(
     )
     if decision_match:
         decision_text = decision_match.group(1).strip()
-    else:
-        decision_text = content
 
     confidence_match = re.search(
         r"Confidence[:\s]+([\d.]+)",
@@ -156,34 +117,32 @@ def decision_node(
         re.IGNORECASE,
     )
     if confidence_match:
-        confidence_value = float(confidence_match.group(1))
+        confidence_base = float(confidence_match.group(1))
+
+    # ------------------------------------------------------------------
+    # CONFIDENCE COMPUTATION (ORCHESTRATION ONLY)
+    # ------------------------------------------------------------------
+
+    historical_factor = state.get("historical_confidence_factor", 1.0)
+
+    if confidence_base is not None:
+        confidence_final = min(confidence_base * historical_factor, 1.0)
     else:
-        confidence_value = 0.75
+        confidence_final = None
 
     # ------------------------------------------------------------------
-    # CONFIDENCE ADJUSTMENT (HISTORICAL ONLY)
-    # ------------------------------------------------------------------
-
-    history_factor = historical_confidence_factor(state["similar_decisions"])
-    final_confidence = min(confidence_value + history_factor, 1.0)
-
-    print(f"📊 Base Confidence: {confidence_value:.2f}")
-    print(f"📊 Historical Factor: {history_factor:.2f}")
-    print(f"📊 Final Confidence: {final_confidence:.2f}")
-
-    # ------------------------------------------------------------------
-    # UPDATE STATE (NO DICT RETURN)
+    # UPDATE STATE
     # ------------------------------------------------------------------
 
     state["decision"] = decision_text
-    state["confidence_base"] = confidence_value
-    state["confidence_final"] = final_confidence
-    state["messages"].append(
-        AIMessage(content=decision_text)
-    )
-    state["messages"].append(
-        AIMessage(content=f"Confidence: {final_confidence:.2f}")
-    )
+    state["confidence_base"] = confidence_base
+    state["confidence_final"] = confidence_final
+
+    state["messages"].append(AIMessage(content=decision_text))
+
+    if confidence_final is not None:
+        state["messages"].append(
+            AIMessage(content=f"Confidence: {confidence_final:.2f}")
+        )
 
     return state
-
