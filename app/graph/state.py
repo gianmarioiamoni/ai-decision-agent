@@ -64,6 +64,16 @@ class DecisionState(TypedDict):
     historical_confidence_factor: Optional[float]
 
     # ==================================================
+    # CONFIDENCE METRICS (Phase 6)
+    # ==================================================
+
+    # History of final confidence values across decisions
+    confidence_final_history: List[float]
+
+    # Drift of the current confidence compared to recent history
+    confidence_drift: Optional[float]
+
+    # ==================================================
     # CONTROL / ROUTING
     # ==================================================
 
@@ -104,6 +114,3 @@ class DecisionState(TypedDict):
     #   "historical": 0.08,
     #   "final": 0.80
     # }
-
-
-

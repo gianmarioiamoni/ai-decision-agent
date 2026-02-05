@@ -18,7 +18,7 @@ from app.graph.nodes.analyzer_node import analyzer_node
 from app.graph.nodes.decision_node import decision_node
 from app.graph.nodes.rag_retrieval_node import rag_retrieval_node
 from app.graph.nodes.fallback_node import fallback_node
-
+from app.graph.nodes.update_confidence_metrics_node import update_confidence_metrics_node
 from app.graph.nodes.history_lookup_node import HistoryLookupNode
 from app.graph.nodes.persist_history_node import PersistHistoryNode
 
@@ -83,6 +83,8 @@ def build_graph(history_repository: HistoryRepository | None = None,
 
     graph.add_node("fallback", fallback_node)
 
+    graph.add_node("update_confidence_metrics", update_confidence_metrics_node)
+
     # --------------------------------------------------
     # Entry point
     # --------------------------------------------------
@@ -116,7 +118,8 @@ def build_graph(history_repository: HistoryRepository | None = None,
     # --------------------------------------------------
     graph.add_edge("decision", "persist_history")
     graph.add_edge("persist_history", END)
-
+    graph.add_edge("decision", "update_confidence_metrics")
+    graph.add_edge("update_confidence_metrics", END)
     graph.add_edge("fallback", END)
 
     return graph.compile()
