@@ -1,53 +1,46 @@
 # infrastructure/memory/historical_retriever.py
+#
+# Infrastructure-level historical decision retriever.
+# - NO dependency on app.*
+# - NO business logic
+# - Returns plain dicts (DTOs)
+#
 
-from typing import TYPE_CHECKING, List
-
-from app.application.decision.historical_evidence import (
-    HistoricalDecisionEvidence,
-)
-
-if TYPE_CHECKING:
-    from chromadb.api.models.Collection import Collection
+from typing import List, Dict, Any
 
 
 class HistoricalDecisionRetriever:
-    def __init__(self, collection: "Collection") -> None:
+    def __init__(self, collection):
         self._collection = collection
 
     def retrieve(
         self,
         query: str,
-        k: int = 3,
-    ) -> List[HistoricalDecisionEvidence]:
-
+        limit: int = 5,
+    ) -> List[Dict[str, Any]]:
+        #
+        # Raw retrieval from vector store.
+        # Interpretation and business logic are OUTSIDE this layer.
+        #
         results = self._collection.query(
             query_texts=[query],
-            n_results=k,
-            where={"context_type": "historical"},  # 🔑 FONDAMENTALE
+            n_results=limit,
         )
 
-        evidences: List[HistoricalDecisionEvidence] = []
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        distances = results.get("distances", [[]])[0]
 
-        if not results.get("ids"):
-            return evidences
+        evidences: List[Dict[str, Any]] = []
 
-        for i in range(len(results["ids"][0])):
-            metadata = results["metadatas"][0][i]
-            document = results["documents"][0][i]
-            distance = results["distances"][0][i]
-
+        for doc, meta, distance in zip(documents, metadatas, distances):
             evidences.append(
-                HistoricalDecisionEvidence(
-                    decision_id=metadata.get("decision_id", ""),
-                    decision=metadata.get("decision", ""),
-                    confidence=float(metadata.get("confidence", 0.0)),
-
-                    # 🔑 QUI IL SENSO CAMBIA
-                    rationale=document.strip(),
-
-                    similarity_score=max(0.0, 1.0 - distance),
-                )
+                {
+                    "decision": meta.get("decision"),
+                    "confidence": meta.get("confidence"),
+                    # Convert distance → similarity
+                    "similarity_score": 1.0 - float(distance),
+                }
             )
 
         return evidences
-
