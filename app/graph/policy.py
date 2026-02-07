@@ -38,15 +38,7 @@ class DecisionPolicy:
         if state.get("decision_finalized"):
             return "end"
 
-        # 2. Explicit retry requested
-        if state.get("needs_retry"):
-            return (
-                "retry"
-                if state.get("attempts", 0) < self.max_attempts
-                else "fallback"
-            )
-
-        # 3. Confidence-based routing (FINAL confidence)
+        # 2. Confidence-based routing 
         effective_confidence = self.compute_effective_confidence(state)
         if (
             effective_confidence is not None
@@ -59,9 +51,6 @@ class DecisionPolicy:
             )
 
         # 4. Default forward
-        if state.get("analysis"):
-            return "continue"
-
         return "continue"
 
 

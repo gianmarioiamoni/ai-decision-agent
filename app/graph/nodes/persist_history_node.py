@@ -16,34 +16,34 @@ class PersistHistoryNode:
         self._history_repository = history_repository
 
     def __call__(self, state: DecisionState) -> DecisionState:
-        # --------------------------------------------------
-        # Guard: persist exactly once
-        # --------------------------------------------------
-        if state.get("history_persisted", False):
+        # -------------------------------------------
+        # Graph-phase guard: only after summarize
+        # -------------------------------------------
+        if state.get("justification") is None:
             return state
 
-        # --------------------------------------------------
-        # Required domain fields (semantic contract)
-        # --------------------------------------------------
+        # -------------------------------------------
+        # Idempetency guard 
+        # -------------------------------------------
+        if state.get("history_persisted"):
+            return state
+
         context_hash = state.get("context_hash")
         decision = state.get("decision")
         confidence = state.get("confidence_final")
 
         if context_hash is None or decision is None or confidence is None:
-            # Upstream state not semantically complete → do nothing
             return state
 
-        # --------------------------------------------------
-        # Persist (idempotent by repository contract)
-        # --------------------------------------------------
         self._history_repository.persist_if_absent(
             context_hash=context_hash,
             decision=decision,
             confidence=confidence,
         )
 
+        # -------------------------------------------
+        # Graph-level semantic: execution finalized
+        # -------------------------------------------
         state["history_persisted"] = True
+
         return state
-
-
-
