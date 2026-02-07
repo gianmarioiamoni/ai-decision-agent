@@ -29,11 +29,10 @@ from .components.report_preview_section import create_report_preview_section
 from .components.report_download_section import create_report_download_section
 
 from app.rag.bootstrap import bootstrap_rag
-from app.ui.handlers.graph_handler_parallel import run_graph_parallel_streaming
+from app.ui.handlers.graph_adapter import run_graph
 
 
 # Import handlers
-from .handlers.graph_handler_parallel import run_graph_parallel_streaming
 from .handlers.report_format_handler import handle_format_change
 from .handlers.rag_handlers import (
     init_ui_on_load,
@@ -150,7 +149,7 @@ def launch_real_ui():
         )
 
         submit_button.click(
-            fn=run_graph_parallel_streaming,
+            fn=run_graph,
             inputs=[question_input, rag_input],
             outputs=[
                 plan_output,

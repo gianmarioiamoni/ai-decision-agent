@@ -11,6 +11,7 @@ from app.graph.state import DecisionState
 from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.components.output_messages import messages_to_chatbot
 
+GRAPH = build_graph()
 
 # ==============================================================================
 # Helper formatters
@@ -65,7 +66,7 @@ def _map_state_to_ui_outputs(
 # Main entrypoint (UI → Graph → UI)
 # ==============================================================================
 
-def run_graph_parallel_streaming(
+def run_graph(
     question: str,
     rag_files=None,
 ):
@@ -84,8 +85,7 @@ def run_graph_parallel_streaming(
         # --------------------------------------------------------------
         # GRAPH EXECUTION
         # --------------------------------------------------------------
-        graph = build_graph()
-        final_state = graph.invoke(initial_state)
+        final_state = GRAPH.invoke(initial_state)
 
         # --------------------------------------------------------------
         # UI FORMATTING (BOUNDARY)
@@ -93,11 +93,11 @@ def run_graph_parallel_streaming(
         assembler = OutputAssembler()
 
         (
-            plan,
-            analysis,
-            decision,
-            confidence,
-            messages_html,
+            _plan,
+            _analysis,
+            _decision,
+            _confidence,
+            _messages_html,
             report_preview,
             report_file_path,
             historical_html,
