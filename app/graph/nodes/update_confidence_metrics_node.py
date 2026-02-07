@@ -18,4 +18,17 @@ def update_confidence_metrics_node(state: DecisionState) -> DecisionState:
     state["confidence_final_history"] = history + [confidence]
     state["confidence_drift"] = drift
 
+    # --------------------------------------------------
+    # CONVERGENCE GUARANTEE (DOMAIN OWNED)
+    # --------------------------------------------------
+    state.setdefault("attempts", 0)
+    state.setdefault("decision_finalized", False)
+
+    state["attempts"] += 1
+
+    MAX_ATTEMPTS = 2
+
+    if state["attempts"] >= MAX_ATTEMPTS:
+        state["decision_finalized"] = True
+
     return state
