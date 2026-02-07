@@ -10,12 +10,11 @@ def policy_router(state: DecisionState) -> DecisionOutcome:
     state.setdefault("used_fallback", False)
 
     # ------------------------------------
-    # TERMINATION HAS PRIORITY
+    # FALLBACK HAS PRIORITY
     # ------------------------------------
     if state.get("decision_finalized"):
-        if state.get("used_fallback"):
-            return "fallback"
-        return "continue"
+        state["used_fallback"] = True
+        return "fallback"
 
     # ------------------------------------
     # RETRY PATH
