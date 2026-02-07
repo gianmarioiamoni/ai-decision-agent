@@ -165,7 +165,7 @@ def launch_real_ui():
         )
 
         question_input.submit(
-            fn=run_graph_parallel_streaming,
+            fn=run_graph,
             inputs=[question_input, rag_input],
             outputs=[
                 plan_output,
