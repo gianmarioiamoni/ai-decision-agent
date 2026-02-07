@@ -26,7 +26,7 @@ from infrastructure.memory.chroma_client import get_chroma_collection
 
 def build_graph(history_repository: HistoryRepository | None = None):
     # --------------------------------------------------------------
-    # Infrastructure wiring (graph-local)
+    # Infrastructure wiring
     # --------------------------------------------------------------
     if history_repository is None:
         chroma_memory = get_chroma_collection()
@@ -39,14 +39,14 @@ def build_graph(history_repository: HistoryRepository | None = None):
     # --- Nodes ---
     graph.add_node("intake", intake_node)
     graph.add_node("rag_retrieval", rag_retrieval_node)
-    graph.add_node("planner", planner_node)
     graph.add_node("analyzer", analyzer_node)
+    graph.add_node("planner", planner_node)
     graph.add_node("decision", decision_node)
     graph.add_node("update_confidence_metrics", update_confidence_metrics_node)
+    graph.add_node("retry_accounting", retry_accounting_node)
+    graph.add_node("fallback", fallback_node)
     graph.add_node("summarize", summarize_node)
     graph.add_node("persist_history", persist_history_node)
-    graph.add_node("fallback", fallback_node)
-    graph.add_node("retry_accounting", retry_accounting_node)
 
     # --- Edges ---
     graph.set_entry_point("intake")
@@ -57,7 +57,7 @@ def build_graph(history_repository: HistoryRepository | None = None):
     graph.add_edge("planner", "decision")
     graph.add_edge("decision", "update_confidence_metrics")
 
-    # --- Router ---
+    # --- Router (CRITICAL FIX HERE) ---
     graph.add_conditional_edges(
         "update_confidence_metrics",
         policy_router,
@@ -65,7 +65,7 @@ def build_graph(history_repository: HistoryRepository | None = None):
             "retry": "retry_accounting",
             "continue": "summarize",
             "fallback": "fallback",
-            "end": END,
+            "end": "summarize",   # 🔑 FIX
         },
     )
 

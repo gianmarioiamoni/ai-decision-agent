@@ -21,26 +21,26 @@ class DecisionPolicy:
     # Confidence evaluation (FINAL, NOT BASE)
     # ----------------------------------------------
     def compute_effective_confidence(self, state: DecisionState) -> float | None:
-        # We reason ONLY on final confidence
         confidence_final = state.get("confidence_final")
         if confidence_final is None:
             return None
-
         return confidence_final
 
     # ----------------------------------------------
-    # Policy evaluation (PURE)
+    # Policy evaluation (PURE, TOTAL)
     # ----------------------------------------------
     def evaluate(self, state: DecisionState) -> DecisionOutcome:
-        # 0. Hard override
+        # 0. Hard override (tests / emergency)
         if state.get("force_fallback"):
             return "fallback"
 
+        # 1. Finalized decisions MUST continue to finalization
+        #    (summarize → persist_history)
         if state.get("decision_finalized"):
             return "continue"
 
-        # 1. Confidence-based routing (PRIORITY)
-        effective_confidence = self.compute_effective_confidence(state)
+        # 2. Confidence-based retry (priority rule)
+        effective_confidence = state.get("confidence_base")
         if (
             effective_confidence is not None
             and effective_confidence < self.min_confidence
@@ -51,17 +51,19 @@ class DecisionPolicy:
                 else "fallback"
             )
 
-        # 1.5 Low confidence → retry
+        # 3. Low-confidence signal (derived metric)
         if state.get("low_confidence"):
             return (
-                "retry" 
-                if state.get("attempts", 0) < self.max_attempts 
+                "retry"
+                if state.get("attempts", 0) < self.max_attempts
                 else "fallback"
             )
 
-        # 2. No context at all → fallback
+        # 4. No context at all → fallback
         if not state.get("authoritative_context", []) and not state.get("similar_decisions", []):
             return "fallback"
 
-        # 3. Default forward
+        # 5. DEFAULT SAFE PATH (MANDATORY)
+        #    Guarantees totality of the policy
         return "continue"
+

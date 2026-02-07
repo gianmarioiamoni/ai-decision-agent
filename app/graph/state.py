@@ -113,6 +113,11 @@ class DecisionState(TypedDict):
 
     history_used: bool
 
+    # --------------------------------------------------
+    # PERSISTENCE / FINALIZATION 
+    # --------------------------------------------------
+    history_persisted: bool
+
     confidence_breakdown: Dict[str, float]
     # example:
     # {
