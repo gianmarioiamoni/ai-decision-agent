@@ -1,7 +1,5 @@
 from typing import List
-from app.application.decision.historical_evidence import (
-    HistoricalDecisionEvidence,
-)
+from domain.decision.historical_decision_evidence import HistoricalDecisionEvidence
 
 
 def format_historical_context(
