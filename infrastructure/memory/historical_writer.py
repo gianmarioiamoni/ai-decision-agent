@@ -1,43 +1,84 @@
 # infrastructure/memory/historical_writer.py
+
 from typing import TYPE_CHECKING
+from datetime import datetime
 
 if TYPE_CHECKING:
     from chromadb.api.models.Collection import Collection
 
-from domain.decision.decision_record import DecisionRecord
 
-
-class HistoricalDecisionWriter:
+class HistoricalWriter:
+    #
+    # Low-level persistence adapter for historical decisions.
+    # Accepts normalized primitives, not domain objects.
+    #
     def __init__(self, collection: "Collection") -> None:
         self._collection = collection
 
-    def persist(self, record: DecisionRecord) -> None:
-        document = self._build_document(record)
-        metadata = self._build_metadata(record)
+    def write(
+        self,
+        *,
+        context_hash: str,
+        decision: str,
+        confidence: float,
+        justification: str | None = None,
+        project_id: str | None = None,
+        tags: list[str] | None = None,
+        timestamp: datetime | None = None,
+    ) -> None:
+        #
+        # Persist a historical decision snapshot.
+        #
+        document = self._build_document(justification)
+        metadata = self._build_metadata(
+            context_hash=context_hash,
+            decision=decision,
+            confidence=confidence,
+            project_id=project_id,
+            tags=tags,
+            timestamp=timestamp,
+        )
 
         self._collection.add(
-            ids=[record.decision_id],
+            ids=[context_hash],
             documents=[document],
             metadatas=[metadata],
         )
 
-    def _build_document(self, record: DecisionRecord) -> str:
-        return record.justification.strip()
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
 
-    def _build_metadata(self, record: DecisionRecord) -> dict:
+    def _build_document(self, justification: str | None) -> str:
+        return (justification or "").strip()
+
+    def _build_metadata(
+        self,
+        *,
+        context_hash: str,
+        decision: str,
+        confidence: float,
+        project_id: str | None,
+        tags: list[str] | None,
+        timestamp: datetime | None,
+    ) -> dict:
         metadata = {
-            "decision_id": record.decision_id,
-            "decision": record.decision,
-            "confidence": float(record.confidence),
-            "timestamp": record.timestamp.isoformat(),
+            "context_hash": context_hash,
+            "decision": decision,
+            "confidence": float(confidence),
+            "timestamp": (
+                timestamp.isoformat()
+                if timestamp is not None
+                else datetime.utcnow().isoformat()
+            ),
             "context_type": "historical",
         }
 
-        # Optional fields 
-        if record.project_id:
-            metadata["project_id"] = record.project_id
+        if project_id:
+            metadata["project_id"] = project_id
 
-        if record.tags:
-            metadata["tags"] = ",".join(record.tags)
+        if tags:
+            metadata["tags"] = ",".join(tags)
 
-        return metadata 
+        return metadata
+

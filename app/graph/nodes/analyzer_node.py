@@ -10,12 +10,11 @@
 # Deterministic, non-streaming version for graph execution.
 #
 
-from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser
 
 from app.graph.state import DecisionState
 from app.prompts.builders import AnalyzerIndependentPromptBuilder
-from app.prompts.historical_context_formatter import format_historical_context
+from app.graph.utils.historical_context_formatter import format_historical_context
+from app.llm.llm_provider import get_llm
 
 from infrastructure.logging.node_logger import log_node
 
@@ -77,23 +76,16 @@ def analyzer_node(state: DecisionState) -> DecisionState:
     # LLM INVOCATION (NON-STREAMING)
     # ------------------------------------------------------------------
 
-    llm = ChatOpenAI(
-        temperature=0.3,
-        model="gpt-4o-mini",
-        streaming=False,
+    llm = get_llm()
+
+    response = llm.invoke(
+        [
+            bundle.system_message,
+            bundle.human_message,
+        ]
     )
 
-    parser = StrOutputParser()
-
-    analysis_text = parser.invoke(
-        llm.invoke(
-            [
-                bundle.system_message,
-                bundle.human_message,
-            ]
-        )
-    ).strip()
-
+    analysis_text = response.content.strip()
     # ------------------------------------------------------------------
     # UPDATE STATE
     # ------------------------------------------------------------------

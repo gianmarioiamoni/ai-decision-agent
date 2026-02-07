@@ -32,10 +32,7 @@ def summarize_node(state: DecisionState) -> DecisionState:
     # UPDATE STATE
     # --------------------------------------------------
 
-    # Full report (download / persistence)
-    state["justification"] = report_html
-
-    # Preview for UI (non-domain, UI-only)
+    state["report_html"] = report_html
     state["report_preview"] = preview_html
 
     return state

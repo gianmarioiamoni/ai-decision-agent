@@ -36,4 +36,8 @@ def fallback_node(state: DecisionState) -> DecisionState:
         "Fallback triggered due to low confidence or repeated ambiguity."
     )
 
+    state["used_fallback"] = True
+    state["decision_finalized"] = True
+
+
     return state

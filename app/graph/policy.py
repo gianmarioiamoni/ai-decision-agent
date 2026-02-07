@@ -1,10 +1,6 @@
-# app/graph/policy.py
-
 from dataclasses import dataclass
 from typing import Literal
-
 from app.graph.state import DecisionState
-
 
 DecisionOutcome = Literal[
     "retry",
@@ -13,53 +9,59 @@ DecisionOutcome = Literal[
     "end",
 ]
 
-SIMILARITY_THRESHOLD = 0.75
 
 @dataclass(frozen=True)
 class DecisionPolicy:
-    # ----------------------------------------------
-    # Policy thresholds
-    # ----------------------------------------------
     min_confidence: float = 0.70
     max_attempts: int = 3
 
     # ----------------------------------------------
-    # Confidence evaluation
+    # Confidence evaluation (FINAL, NOT BASE)
     # ----------------------------------------------
     def compute_effective_confidence(self, state: DecisionState) -> float | None:
-        base_confidence = state.get("confidence_base")
-        if base_confidence is None:
+        # We reason ONLY on final confidence
+        confidence_final = state.get("confidence_final")
+        if confidence_final is None:
             return None
 
-        historical_factor = state.get("historical_confidence_factor", 1.0)
-
-        return base_confidence * historical_factor
+        return confidence_final
 
     # ----------------------------------------------
-    # Policy evaluation
+    # Policy evaluation (PURE)
     # ----------------------------------------------
     def evaluate(self, state: DecisionState) -> DecisionOutcome:
-        # 1. Decision already finalized
+        # 0. Hard override for tests / emergency
+        if state.get("force_fallback"):
+            return "fallback"
+
+        # 1. Already finalized → stop
         if state.get("decision_finalized"):
             return "end"
 
         # 2. Explicit retry requested
         if state.get("needs_retry"):
-            if state.get("attempts", 0) < self.max_attempts:
-                return "retry"
-            return "fallback"
+            return (
+                "retry"
+                if state.get("attempts", 0) < self.max_attempts
+                else "fallback"
+            )
 
-        # 3. Confidence-based retry
+        # 3. Confidence-based routing (FINAL confidence)
         effective_confidence = self.compute_effective_confidence(state)
-        if effective_confidence is not None and effective_confidence < self.min_confidence:
-            if state.get("attempts", 0) < self.max_attempts:
-                return "retry"
-            return "fallback"
+        if (
+            effective_confidence is not None
+            and effective_confidence < self.min_confidence
+        ):
+            return (
+                "retry"
+                if state.get("attempts", 0) < self.max_attempts
+                else "fallback"
+            )
 
-        # 4. Analysis available → proceed
+        # 4. Default forward
         if state.get("analysis"):
             return "continue"
 
-        # 5. Safe default
         return "continue"
+
 

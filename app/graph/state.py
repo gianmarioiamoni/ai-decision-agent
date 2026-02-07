@@ -79,8 +79,10 @@ class DecisionState(TypedDict):
     # ==================================================
 
     attempts: int
+    retry_count: int
     needs_retry: bool
     decision_finalized: bool
+    used_fallback: bool
 
     # ==================================================
     # REPORTING / UI

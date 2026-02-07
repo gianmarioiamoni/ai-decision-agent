@@ -1,4 +1,4 @@
-# graph/build_graph.py
+# app/graph/graph.py
 
 from langgraph.graph import StateGraph, END
 
@@ -11,27 +11,27 @@ from app.graph.nodes.decision_node import decision_node
 from app.graph.nodes.update_confidence_metrics_node import update_confidence_metrics_node
 from app.graph.nodes.summarize_node import summarize_node
 from app.graph.nodes.persist_history_node import PersistHistoryNode
+from app.graph.nodes.analyzer_node import analyzer_node
+from app.graph.nodes.fallback_node import fallback_node
 
 from app.graph.router.policy_router import policy_router
 
+from domain.history.history_repository import (
+    HistoryRepository,
+    ChromaHistoryRepository,
+)
+from infrastructure.memory.chroma_client import get_chroma_collection
 
-from domain.history.history_repository import HistoryRepository
-from infrastructure.memory.historical_writer import HistoricalWriter
-from infrastructure.memory.chroma_client import get_chroma_memory
 
-def build_graph():
+def build_graph(history_repository: HistoryRepository | None = None):
     # --------------------------------------------------------------
     # Infrastructure wiring (graph-local)
     # --------------------------------------------------------------
-    chroma_memory = get_chroma_memory()
-    historical_writer = HistoricalWriter(chroma_memory)
-    history_repository = HistoryRepository(
-        writer=historical_writer,
-    )
+    if history_repository is None:
+        chroma_memory = get_chroma_collection()
+        history_repository = ChromaHistoryRepository(chroma_memory)
 
-    persist_history_node = PersistHistoryNode(
-        history_repository=history_repository,
-    )
+    persist_history_node = PersistHistoryNode(history_repository)
 
     graph = StateGraph(DecisionState)
 
@@ -39,19 +39,19 @@ def build_graph():
     graph.add_node("intake", intake_node)
     graph.add_node("rag_retrieval", rag_retrieval_node)
     graph.add_node("planner", planner_node)
+    graph.add_node("analyzer", analyzer_node)
     graph.add_node("decision", decision_node)
-    graph.add_node(
-        "update_confidence_metrics",
-        update_confidence_metrics_node,
-    )
+    graph.add_node("update_confidence_metrics", update_confidence_metrics_node)
     graph.add_node("summarize", summarize_node)
     graph.add_node("persist_history", persist_history_node)
+    graph.add_node("fallback", fallback_node)
 
-    # --- Edges (lineari) ---
+    # --- Edges ---
     graph.set_entry_point("intake")
 
     graph.add_edge("intake", "rag_retrieval")
-    graph.add_edge("rag_retrieval", "planner")
+    graph.add_edge("rag_retrieval", "analyzer")
+    graph.add_edge("analyzer", "planner")
     graph.add_edge("planner", "decision")
     graph.add_edge("decision", "update_confidence_metrics")
 
@@ -62,11 +62,12 @@ def build_graph():
         {
             "retry": "planner",
             "continue": "summarize",
-            "fallback": "summarize",
+            "fallback": "fallback",
             "end": END,
         },
     )
 
+    graph.add_edge("fallback", "summarize")
     graph.add_edge("summarize", "persist_history")
     graph.add_edge("persist_history", END)
 

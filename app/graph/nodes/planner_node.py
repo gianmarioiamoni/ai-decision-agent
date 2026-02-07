@@ -1,12 +1,13 @@
 # app/graph/nodes/planner_node.py
 
-from langchain_openai import ChatOpenAI
 
 from app.graph.state import DecisionState
 from app.prompts.builders import PlannerPromptBuilder
 from langchain_core.messages import AIMessage
 
 from infrastructure.logging.node_logger import log_node
+
+from app.llm.llm_provider import get_llm
 
 
 @log_node("planner")
@@ -64,10 +65,7 @@ def planner_node(state: DecisionState) -> DecisionState:
     # LLM INVOCATION
     # ------------------------------------------------------------------
 
-    llm = ChatOpenAI(
-        temperature=0.2,
-        model="gpt-4o-mini",
-    )
+    llm = get_llm()
 
     response = llm.invoke(
         [

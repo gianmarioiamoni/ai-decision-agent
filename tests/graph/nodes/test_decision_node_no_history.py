@@ -1,6 +1,6 @@
 # tests/graph/nodes/test_decision_node_no_history.py
 
-from app.graph.nodes.decision import decision_node
+from app.graph.nodes.decision_node import decision_node
 from app.graph.state import DecisionState
 
 
