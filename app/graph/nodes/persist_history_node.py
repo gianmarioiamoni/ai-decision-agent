@@ -2,10 +2,8 @@
 
 from domain.history.history_repository import HistoryRepository
 from app.graph.state import DecisionState
-from infrastructure.logging.node_logger import log_node
 
 
-@log_node("persist_history")
 class PersistHistoryNode:
     #
     # Persists the final decision snapshot exactly once.
@@ -16,16 +14,10 @@ class PersistHistoryNode:
         self._history_repository = history_repository
 
     def __call__(self, state: DecisionState) -> DecisionState:
-        # -------------------------------------------
-        # Graph-phase guard: only after summarize
-        # -------------------------------------------
-        if state.get("justification") is None:
-            return state
+        # Node semantic owner of this field
+        state.setdefault("history_persisted", False)
 
-        # -------------------------------------------
-        # Idempetency guard 
-        # -------------------------------------------
-        if state.get("history_persisted"):
+        if state["history_persisted"]:
             return state
 
         context_hash = state.get("context_hash")

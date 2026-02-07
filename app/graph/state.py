@@ -68,6 +68,9 @@ class DecisionState(TypedDict):
     # CONFIDENCE METRICS (Phase 6)
     # ==================================================
 
+    # Signal for policy, not direct retry
+    low_confidence: bool
+
     # History of final confidence values across decisions
     confidence_final_history: List[float]
 

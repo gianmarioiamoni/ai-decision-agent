@@ -1,3 +1,5 @@
+# app/graph/policy.py
+
 from dataclasses import dataclass
 from typing import Literal
 from app.graph.state import DecisionState
@@ -30,15 +32,14 @@ class DecisionPolicy:
     # Policy evaluation (PURE)
     # ----------------------------------------------
     def evaluate(self, state: DecisionState) -> DecisionOutcome:
-        # 0. Hard override for tests / emergency
+        # 0. Hard override
         if state.get("force_fallback"):
             return "fallback"
 
-        # 1. Already finalized → stop
         if state.get("decision_finalized"):
-            return "end"
+            return "continue"
 
-        # 2. Confidence-based routing 
+        # 1. Confidence-based routing (PRIORITY)
         effective_confidence = self.compute_effective_confidence(state)
         if (
             effective_confidence is not None
@@ -50,7 +51,17 @@ class DecisionPolicy:
                 else "fallback"
             )
 
-        # 4. Default forward
+        # 1.5 Low confidence → retry
+        if state.get("low_confidence"):
+            return (
+                "retry" 
+                if state.get("attempts", 0) < self.max_attempts 
+                else "fallback"
+            )
+
+        # 2. No context at all → fallback
+        if not state.get("authoritative_context", []) and not state.get("similar_decisions", []):
+            return "fallback"
+
+        # 3. Default forward
         return "continue"
-
-

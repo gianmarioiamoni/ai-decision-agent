@@ -13,6 +13,7 @@ from app.graph.nodes.summarize_node import summarize_node
 from app.graph.nodes.persist_history_node import PersistHistoryNode
 from app.graph.nodes.analyzer_node import analyzer_node
 from app.graph.nodes.fallback_node import fallback_node
+from app.graph.nodes.retry_accounting_node import retry_accounting_node
 
 from app.graph.router.policy_router import policy_router
 
@@ -45,6 +46,7 @@ def build_graph(history_repository: HistoryRepository | None = None):
     graph.add_node("summarize", summarize_node)
     graph.add_node("persist_history", persist_history_node)
     graph.add_node("fallback", fallback_node)
+    graph.add_node("retry_accounting", retry_accounting_node)
 
     # --- Edges ---
     graph.set_entry_point("intake")
@@ -60,13 +62,14 @@ def build_graph(history_repository: HistoryRepository | None = None):
         "update_confidence_metrics",
         policy_router,
         {
-            "retry": "planner",
+            "retry": "retry_accounting",
             "continue": "summarize",
             "fallback": "fallback",
             "end": END,
         },
     )
 
+    graph.add_edge("retry_accounting", "planner")
     graph.add_edge("fallback", "summarize")
     graph.add_edge("summarize", "persist_history")
     graph.add_edge("persist_history", END)
