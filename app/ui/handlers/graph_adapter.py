@@ -1,4 +1,4 @@
-# app/ui/handlers/graph_handler_parallel.py
+# app/ui/handlers/graph_adapter.py
 #
 # Graph execution handler (DecisionState-based).
 # Deterministic, testable, UI-boundary safe.
@@ -16,6 +16,25 @@ GRAPH = build_graph()
 # ==============================================================================
 # Helper formatters
 # ==============================================================================
+
+def _safe_chat_history(messages):
+    # Gradio Chatbot requires:
+    # List[{"role": "...", "content": "..."}]
+    if not messages:
+        return []
+
+    safe = []
+    for m in messages:
+        if isinstance(m, dict) and "role" in m and "content" in m:
+            safe.append(m)
+        else:
+            # fallback: stringify
+            safe.append({
+                "role": "assistant",
+                "content": str(m),
+            })
+    return safe
+
 
 def _format_error_output(error_message: str):
     error_msg = f"❌ Error: {error_message}"
@@ -105,9 +124,8 @@ def run_graph(
         ) = assembler.assemble(final_state)
 
         try:
-            chat_history = messages_to_chatbot(
-                final_state.get("messages", [])
-            )
+            raw_messages = final_state.get("messages", [])
+            chat_history = _safe_chat_history(messages_to_chatbot(raw_messages))
         except Exception:
             chat_history = []
 
