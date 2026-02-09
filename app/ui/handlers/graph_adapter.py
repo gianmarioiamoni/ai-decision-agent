@@ -17,6 +17,38 @@ GRAPH = build_graph()
 # Helper formatters
 # ==============================================================================
 
+def _normalize_chatbot_messages(messages):
+    # Gradio Chatbot requires:
+    # List[{"role": str, "content": str}]
+    if not messages:
+        return []
+
+    normalized = []
+
+    for m in messages:
+        if isinstance(m, dict):
+            role = m.get("role", "assistant")
+            content = m.get("content")
+            if content is not None:
+                normalized.append({
+                    "role": role,
+                    "content": str(content),
+                })
+        elif isinstance(m, (list, tuple)) and len(m) == 2:
+            # Sometimes chatbot-like tuples sneak in
+            normalized.append({
+                "role": "assistant",
+                "content": str(m[1]),
+            })
+        else:
+            normalized.append({
+                "role": "assistant",
+                "content": str(m),
+            })
+
+    return normalized
+
+
 def _safe_chat_history(messages):
     # Gradio Chatbot requires:
     # List[{"role": "...", "content": "..."}]
@@ -123,11 +155,8 @@ def run_graph(
             rag_evidence_html,
         ) = assembler.assemble(final_state)
 
-        try:
-            raw_messages = final_state.get("messages", [])
-            chat_history = _safe_chat_history(messages_to_chatbot(raw_messages))
-        except Exception:
-            chat_history = []
+        raw_messages = final_state.get("messages", [])
+        chat_history = _normalize_chatbot_messages(raw_messages)
 
         return _map_state_to_ui_outputs(
             state=final_state,
