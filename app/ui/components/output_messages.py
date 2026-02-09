@@ -53,6 +53,7 @@ def create_output_messages():
     messages_output = gr.Chatbot(
         label="Conversation History",  # No internal label - using external section title with icon
         show_label=False,
+        type="messages",
         height=400,
     )
     return messages_output
