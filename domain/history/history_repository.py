@@ -82,10 +82,9 @@ class ChromaHistoryRepository(HistoryRepository):
 
     def lookup(self, context_hash: str) -> List[HistoricalDecision]:
         results = self._collection.get(
-            where={"context_hash": context_hash}
+            where={"context_hash": {"$eq": context_hash}}
         )
 
-        documents = results.get("documents", [])
         metadatas = results.get("metadatas", [])
 
         history: List[HistoricalDecision] = []
@@ -109,8 +108,10 @@ class ChromaHistoryRepository(HistoryRepository):
     ) -> None:
         existing = self._collection.get(
             where={
-                "context_hash": context_hash,
-                "decision": decision
+                "$and": [
+                    {"context_hash": context_hash},
+                    {"decision": decision}
+                ]
             }
         )
 
@@ -118,7 +119,7 @@ class ChromaHistoryRepository(HistoryRepository):
             return
 
         self._collection.add(
-            documents=["historical decision"],
+            documents=[decision],
             metadatas=[{
                 "context_hash": context_hash,
                 "decision": decision,

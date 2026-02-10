@@ -1,3 +1,5 @@
+# scripts/reset_historical_memory.py
+
 from infrastructure.memory.chroma_client import get_chroma_collection
 
 collection = get_chroma_collection()
