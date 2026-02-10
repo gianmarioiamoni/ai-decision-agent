@@ -42,7 +42,7 @@ def _format_error_output(error_message: str):
         error_msg,
         error_msg,
         0.0,
-        error_html,
+        [],
         error_html,
         None,
         error_html,
