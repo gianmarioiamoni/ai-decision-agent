@@ -12,7 +12,10 @@ import re
 def normalize_markdown_to_text(text: str) -> str:
     if not text:
         return ""
-
+   
+    # log for debugging
+    print(f"### Starting normalization of markdown to text")
+    
     lines = text.splitlines()
     normalized_lines = []
 
@@ -41,6 +44,12 @@ def normalize_markdown_to_text(text: str) -> str:
         # Bold (**text**)
         line = re.sub(r"\*\*(.*?)\*\*", r"\1", line)
 
+        # log for debugging
+        print(f"### Normalized line: {line}")
+
         normalized_lines.append(line)
+
+    # log for debugging
+    print(f"### Final normalized text: {'\n'.join(normalized_lines)}")
 
     return "\n".join(normalized_lines)
