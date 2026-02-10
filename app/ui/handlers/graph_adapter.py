@@ -43,44 +43,42 @@ def run_graph_streaming(
     rag_files=None,
 ):
     try:
-        # --------------------------------------------------------------
-        # INIT STATE
-        # --------------------------------------------------------------
         initial_state: DecisionState = create_initial_state(
             user_query=question,
         )
 
         last_state: DecisionState | None = None
+        phase_text = "⏳ Starting workflow..."
 
-        # --------------------------------------------------------------
-        # STREAM GRAPH EVENTS
-        # --------------------------------------------------------------
         for event in GRAPH.stream(initial_state):
-            for node_name, state in event.items():
-                if not state:
-                    continue
+            event_type = event.get("event")
+            node_name = event.get("name")
+            state = event.get("state")
 
+            if event_type == "node_start":
+                phase_text = f"▶ **{node_name.upper()}** running…"
+
+            elif event_type == "node_end":
+                phase_text = f"✔ **{node_name.upper()}** completed"
+
+            if state:
                 last_state = state
 
-                # SAFE partial reads (NO assembler here)
-                plan = md_to_plain_text(state.get("plan", ""))
-                analysis = md_to_plain_text(state.get("analysis", ""))
+                plan = md_to_plain_text(state.get("plan") or "")
+                analysis = md_to_plain_text(state.get("analysis") or "")
 
                 yield (
                     plan,
                     analysis,
-                    "",     # decision not ready
+                    "",        # decision not ready
                     0.0,
-                    [],     # messages
-                    "",     # report preview
-                    None,   # report file
-                    "",     # historical
-                    "",     # rag evidence
+                    [],        # messages
+                    phase_text,
+                    None,
+                    "",
+                    "",
                 )
 
-        # --------------------------------------------------------------
-        # FINAL ASSEMBLY (STATE IS COMPLETE)
-        # --------------------------------------------------------------
         if not last_state:
             raise RuntimeError("Graph did not produce a final state")
 
@@ -91,7 +89,7 @@ def run_graph_streaming(
             analysis,
             decision,
             confidence,
-            _messages_html,
+            messages_html,
             report_preview,
             report_file_path,
             historical_html,
@@ -107,7 +105,7 @@ def run_graph_streaming(
             decision,
             confidence,
             chat_history,
-            report_preview,
+            "✅ **Workflow completed**",
             report_file_path,
             historical_html,
             rag_evidence_html,

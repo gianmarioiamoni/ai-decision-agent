@@ -95,6 +95,11 @@ def launch_real_ui():
 
         gr.Markdown("---")
 
+        # Phase indicator
+        phase_indicator = gr.Markdown("⏳ Waiting for input...")
+        phase_indicator.render()
+
+
         with gr.Tabs():
             with gr.Tab("📊 Planning & Analysis"):
                 with gr.Row():
@@ -157,6 +162,7 @@ def launch_real_ui():
                 decision_output,
                 confidence_output,
                 messages_output,
+                phase_indicator,
                 report_output,
                 report_download_output,
                 historical_output,
