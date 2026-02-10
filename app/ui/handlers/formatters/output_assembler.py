@@ -15,6 +15,7 @@ from .historical_formatter import HistoricalFormatter
 from app.ui.utils.markdown_utils import md_to_plain_text
 from app.ui.utils.rag_formatter import format_rag_context_for_ui
 from app.ui.handlers.report_format_handler import get_initial_report_file
+from app.ui.handlers.formatters.text_normalizer import normalize_text
 
 
 class OutputAssembler:
@@ -42,8 +43,8 @@ class OutputAssembler:
         # Tuple of outputs expected by Gradio UI.
         #
 
-        plan = self._to_plain_text(state["plan"], "No plan generated")
-        analysis = self._to_plain_text(state["analysis"], "No analysis generated")
+        plan = normalize_text(state["plan"], "No plan generated")
+        analysis = normalize_text(state["analysis"], "No analysis generated")
         decision = self._to_plain_text(state["decision"], "No decision generated")
 
         confidence = float(state["confidence_final"] or 0.0)
