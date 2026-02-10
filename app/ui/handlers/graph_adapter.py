@@ -119,7 +119,7 @@ def run_graph(
             report_file_path,
             historical_html,
             rag_evidence_html,
-        ) = assembler.assemble(final_state)
+        ) = assembler.assemble(final_state, rag_files)
 
         raw_messages = final_state.get("messages", [])
         chat_history = _to_gradio_chatbot_messages(raw_messages)
