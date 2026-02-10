@@ -12,6 +12,17 @@ from app.prompts.constants import (
     DEFAULT_CONFIDENCE_WITH_HISTORY,
 )
 
+def _extract_decision_summary(text: str) -> str:
+    # Heuristic: first non-empty line that is not a header
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.lower().startswith(("decision:", "confidence:", "contextual")):
+            continue
+        return line
+    return "A decision has been reached based on the available analysis."
+
 
 @log_node("decision")
 def decision_node(
@@ -95,8 +106,11 @@ def decision_node(
     # -------------------------------------------------
     # USER-FACING CHAT MESSAGE (SINGLE, CLEAN)
     # -------------------------------------------------
+    
+    decision_summary = _extract_decision_summary(decision_text)
+
     chat_message = (
-        f"{decision_text}\n\n"
+        f"{decision_summary}\n\n"
         "If you’d like, you can provide additional context, "
         "ask for alternatives, or request a deeper analysis."
     )
