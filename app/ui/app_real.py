@@ -97,8 +97,6 @@ def launch_real_ui():
 
         # Phase indicator
         phase_indicator = gr.Markdown("⏳ Waiting for input...")
-        phase_indicator.render()
-
 
         with gr.Tabs():
             with gr.Tab("📊 Planning & Analysis"):
