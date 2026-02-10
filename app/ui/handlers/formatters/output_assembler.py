@@ -41,9 +41,12 @@ class OutputAssembler:
         # Returns:
         # Tuple of outputs expected by Gradio UI.
         #
+        plan = f"[NORMALIZED]\n{normalize_markdown_to_text(state['plan'])}"
+        analysis = f"[NORMALIZED]\n{normalize_markdown_to_text(state['analysis'])}"
 
-        plan = normalize_markdown_to_text(state["plan"] or "No plan generated")
-        analysis = normalize_markdown_to_text(state["analysis"] or "No analysis generated")
+
+        #plan = normalize_markdown_to_text(state["plan"] or "No plan generated")
+        #analysis = normalize_markdown_to_text(state["analysis"] or "No analysis generated")
         decision = self._to_plain_text(state["decision"], "No decision generated")
 
         confidence = float(state["confidence_final"] or 0.0)
