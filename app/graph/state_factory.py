@@ -5,8 +5,11 @@ from app.graph.state import DecisionState
 
 def create_initial_state(
     user_query: str,
-    input_context_docs: list,
+    input_context_docs: list | None = None,
 ) -> DecisionState:
+
+    if input_context_docs is None:
+        input_context_docs = []
 
     return {
         # --------------------------------------------------
