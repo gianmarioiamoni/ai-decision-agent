@@ -51,38 +51,41 @@ def run_graph_streaming(
         last_state: DecisionState | None = None
         phase_text = "⏳ Starting workflow..."
 
-        for event in GRAPH.stream(initial_state):
-            event_type = event.get("event")
-            node_name = event.get("name")
-            state = event.get("state")
+        # 🔑 QUESTO È IL FIX CHIAVE
+        for state in GRAPH.stream(
+            initial_state,
+            stream_mode="values"
+        ):
+            last_state = state
 
-            if event_type == "node_start":
-                phase_text = f"▶ {node_name.upper()} running…"
+            # Phase inference (semplice e robusta)
+            if state.get("analysis") and not state.get("plan"):
+                phase_text = "🔍 Analyzer running…"
+            elif state.get("plan") and not state.get("decision"):
+                phase_text = "🗺️ Planner running…"
+            elif state.get("decision"):
+                phase_text = "✅ Decision completed"
 
-            elif event_type == "node_end":
-                phase_text = f"✔ {node_name.upper()} completed"
+            plan = md_to_plain_text(state.get("plan") or "")
+            analysis = md_to_plain_text(state.get("analysis") or "")
 
-            if state:
-                last_state = state
-
-                plan = md_to_plain_text(state.get("plan") or "")
-                analysis = md_to_plain_text(state.get("analysis") or "")
-
-                yield (
-                    plan,          # plan
-                    analysis,      # analysis
-                    "",             # decision
-                    0.0,            # confidence
-                    [],             # messages
-                    phase_text,     # phase indicator ✅
-                    "",             # report preview
-                    None,           # report file
-                    "",             # historical
-                    "",             # rag evidence
-                )
+            yield (
+                plan,          # plan
+                analysis,      # analysis
+                "",             # decision
+                0.0,            # confidence
+                [],             # messages
+                phase_text,     # phase indicator
+                "",             # report preview
+                None,           # report file
+                "",             # historical
+                "",             # rag evidence
+            )
 
         if not last_state:
             raise RuntimeError("Graph did not produce a final state")
+
+        # ---------------- FINAL ASSEMBLY ----------------
 
         assembler = OutputAssembler()
 
@@ -91,7 +94,7 @@ def run_graph_streaming(
             analysis,
             decision,
             confidence,
-            _messages_html,
+            messages_html,
             report_preview,
             report_file_path,
             historical_html,
@@ -117,4 +120,3 @@ def run_graph_streaming(
 
     except Exception as e:
         yield _format_error_output(str(e))
-
