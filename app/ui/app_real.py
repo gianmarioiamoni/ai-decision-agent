@@ -96,14 +96,18 @@ def launch_real_ui():
         gr.Markdown("---")
 
         # phase badge and progress bar 
-        phase_badge = gr.Markdown("⏳ Waiting for input…")
+        phase_badge = gr.Markdown(
+            value = "⏳ Waiting for input…",
+            elem_id="phase_badge"
+        )
         progress_bar = gr.HTML(
-            """
+            value="""
                 <div style="width:100%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
                 <div style="width:0%; height:12px;"></div>
                 </div>
-            """
-) 
+            """,
+            elem_id="progess_bar"
+        ) 
 
         with gr.Tabs():
             with gr.Tab("📊 Planning & Analysis"):
@@ -200,7 +204,10 @@ def launch_real_ui():
             outputs=[report_download_output]
         )
 
-    demo.queue(default_concurrency_limit=1, max_size=32)
+    demo.queue(
+        default_concurrency_limit=1, 
+        max_size=32,
+        show_progress=False)
 
     demo.launch(
         theme=theme,
