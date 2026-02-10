@@ -33,34 +33,6 @@ def _format_error_output(error_message: str):
     )
 
 
-# ==============================================================================
-# UI mapping (explicit boundary)
-# ==============================================================================
-
-def _map_state_to_ui_outputs(
-    state: DecisionState,
-    chat_history,
-    report_preview: str | None,
-    report_file_path: str | None,
-    historical_html: str | None,
-    rag_evidence_html: str | None,
-):
-    #
-    # Explicit UI contract.
-    # UI must never access DecisionState directly.
-    #
-    return (
-        state.get("plan"),
-        state.get("analysis"),
-        state.get("decision"),
-        state.get("confidence_final"),
-        chat_history,
-        report_preview,
-        report_file_path,
-        historical_html,
-        rag_evidence_html,
-    )
-
 
 # ==============================================================================
 # Main entrypoint (UI → Graph → UI)
@@ -93,11 +65,11 @@ def run_graph(
         assembler = OutputAssembler()
 
         (
-            _plan,
-            _analysis,
-            _decision,
-            _confidence,
-            _messages_html,
+            plan,
+            analysis,
+            decision,
+            confidence,
+            messages_html,
             report_preview,
             report_file_path,
             historical_html,
@@ -107,25 +79,18 @@ def run_graph(
         raw_messages = final_state.get("messages", [])
         chat_history = messages_to_chatbot(raw_messages)
 
-        #return _map_state_to_ui_outputs(
-        #    state=final_state,
-        #    chat_history=chat_history,
-        #    report_preview=report_preview,
-        #    report_file_path=report_file_path,
-        #    historical_html=historical_html,
-        #    rag_evidence_html=rag_evidence_html,
-        #)
         return (
-        "PLAN TEST",
-        "ANALYSIS TEST",
-        "DECISION TEST",
-        0.42,
-        [],
-        report_preview,
-        report_file_path,
-        historical_html,
-        rag_evidence_html,
+            plan,
+            analysis,
+            decision,
+            confidence,
+            chat_history,
+            report_preview,
+            report_file_path,
+            historical_html,
+            rag_evidence_html,
         )
+
     except Exception as e:
         return _format_error_output(str(e))
 
