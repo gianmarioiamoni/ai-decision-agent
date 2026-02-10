@@ -81,9 +81,6 @@ def planner_node(state: DecisionState) -> DecisionState:
     # ------------------------------------------------------------------
     state["plan"] = plan_text
 
-    state["messages"].append(
-        AIMessage(content=f"Proposed Plan:\n{plan_text}")
-    )
 
     return state
 

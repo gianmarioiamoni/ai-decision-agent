@@ -6,6 +6,7 @@ from app.graph.state import DecisionState
 from app.prompts.builders import DecisionPromptBuilder
 from app.llm.llm_provider import get_llm
 from infrastructure.logging.node_logger import log_node
+from domain.decision.chat_response_builder import ChatDecisionResponseBuilder
 
 from app.prompts.constants import (
     DEFAULT_CONFIDENCE_NO_HISTORY,
@@ -96,16 +97,18 @@ def decision_node(
     # -------------------------------------------------
     # MESSAGES (tests expect >= 2)
     # -------------------------------------------------
+    chat_response = ChatDecisionResponseBuilder.build(
+        decision = decision_text,
+        confidence = confidence_base,
+        retionale = []
+    )
     state["messages"].append(
         AIMessage(content="Decision rationale completed.")
     )
 
     state["messages"].append(
         AIMessage(
-            content=(
-                f"Final Decision:\n{decision_text}\n"
-                f"Confidence: {confidence_final:.2f}"
-            )
+            content=(chat_response.text)
         )
     )
 
