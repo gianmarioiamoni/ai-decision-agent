@@ -34,6 +34,19 @@ def _format_error_output(error_message: str):
         error_html,  # rag evidence
     )
 
+# ===============================================================================
+# Helper Functions - Phase badge and Progress bar
+# ===============================================================================
+
+def _phase_from_state(state: DecisionState) -> tuple[str, int]:
+    if state.get("decision"):
+        return "🟢 **Decision** completed", 3
+    if state.get("plan"):
+        return "🟣 **Planner** running…", 2
+    if state.get("analysis"):
+        return "🔵 **Analyzer** running…", 1
+    return "⏳ Waiting…", 0
+
 
 # ==============================================================================
 # STREAMING ENTRYPOINT (CORRECT & SAFE)
@@ -44,51 +57,35 @@ def run_graph_streaming(
     rag_files=None,
 ):
     try:
-        initial_state: DecisionState = create_initial_state(
-            user_query=question,
-        )
+        initial_state = create_initial_state(user_query=question)
+        last_state = None
 
-        last_state: DecisionState | None = None
-        phase_text = "⏳ Starting workflow..."
-
-        # 🔑 QUESTO È IL FIX CHIAVE
         for state in GRAPH.stream(
             initial_state,
             stream_mode="values"
         ):
             last_state = state
 
-            # Phase inference (semplice e robusta)
-            if state.get("analysis") and not state.get("plan"):
-                phase_text = "🔍 Analyzer running…"
-            elif state.get("plan") and not state.get("decision"):
-                phase_text = "🗺️ Planner running…"
-            elif state.get("decision"):
-                phase_text = "✅ Decision completed"
-
-            plan = md_to_plain_text(state.get("plan") or "")
-            analysis = md_to_plain_text(state.get("analysis") or "")
+            phase_text, progress = _phase_from_state(state)
 
             yield (
-                plan,          # plan
-                analysis,      # analysis
-                "",             # decision
-                0.0,            # confidence
-                [],             # messages
-                phase_text,     # phase indicator
-                "",             # report preview
-                None,           # report file
-                "",             # historical
-                "",             # rag evidence
+                md_to_plain_text(state.get("plan") or ""),
+                md_to_plain_text(state.get("analysis") or ""),
+                "",
+                0.0,
+                [],
+                phase_text,
+                progress,
+                "",
+                None,
+                "",
+                "",
             )
 
         if not last_state:
             raise RuntimeError("Graph did not produce a final state")
 
-        # ---------------- FINAL ASSEMBLY ----------------
-
         assembler = OutputAssembler()
-
         (
             plan,
             analysis,
@@ -101,17 +98,14 @@ def run_graph_streaming(
             rag_evidence_html,
         ) = assembler.assemble(last_state, rag_files)
 
-        chat_history = messages_to_chatbot(
-            last_state.get("messages", [])
-        )
-
         yield (
             plan,
             analysis,
             decision,
             confidence,
-            chat_history,
-            "✅ Workflow completed",
+            messages_to_chatbot(last_state.get("messages", [])),
+            "✅ **Workflow completed**",
+            3,
             report_preview,
             report_file_path,
             historical_html,
