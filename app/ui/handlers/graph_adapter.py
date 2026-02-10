@@ -1,6 +1,6 @@
 # app/ui/handlers/graph_adapter.py
 #
-# LangGraph streaming adapter – FINAL & CORRECT
+# LangGraph streaming adapter – FINAL & COHERENT
 #
 
 from app.graph.graph import build_graph
@@ -56,20 +56,27 @@ PHASES = {
 
 
 # ==============================================================================
-# Error output (MUST match outputs exactly)
+# Error output
 # ==============================================================================
 
 def _error_output(msg: str):
     return (
-        msg, msg, msg, 0.0, [],
+        msg,
+        msg,
+        msg,
+        {"score": 0.0, "label": "Error"},
+        [],
         msg,
         render_progress_bar("0%", "#ef4444"),
-        "", None, "", ""
+        "",
+        None,
+        "",
+        "",
     )
 
 
 # ==============================================================================
-# STREAMING ENTRYPOINT (CORRECT)
+# STREAMING ENTRYPOINT
 # ==============================================================================
 
 def run_graph_streaming(question: str, rag_files=None):
@@ -80,9 +87,12 @@ def run_graph_streaming(question: str, rag_files=None):
         phase_badge = "⏳ Waiting…"
         progress_html = render_progress_bar("0%", "#9ca3af")
 
+        # ----------------------------
+        # STREAM (UX only)
+        # ----------------------------
         for state in GRAPH.stream(
             initial_state,
-            stream_mode="values"
+            stream_mode="values",
         ):
             last_state = state
 
@@ -101,7 +111,7 @@ def run_graph_streaming(question: str, rag_files=None):
                 md_to_plain_text(state.get("plan") or ""),
                 md_to_plain_text(state.get("analysis") or ""),
                 "",
-                0.0,
+                {"score": 0.0, "label": ""},
                 [],
                 phase_badge,
                 progress_html,
@@ -114,13 +124,16 @@ def run_graph_streaming(question: str, rag_files=None):
         if not last_state:
             raise RuntimeError("No final state produced")
 
+        # ----------------------------
+        # FINAL ASSEMBLY
+        # ----------------------------
         assembler = OutputAssembler()
         (
             plan,
             analysis,
             decision,
             confidence,
-            _,
+            _messages_html,
             report_preview,
             report_file_path,
             historical_html,
@@ -131,7 +144,7 @@ def run_graph_streaming(question: str, rag_files=None):
             plan,
             analysis,
             decision,
-            confidence,
+            confidence,  # ⬅️ STRUCTURED
             messages_to_chatbot(last_state.get("messages", [])),
             PHASES["done"][0],
             render_progress_bar("100%", "#22c55e"),

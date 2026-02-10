@@ -4,8 +4,12 @@ from langchain_core.messages import AIMessage
 from app.graph.state import DecisionState
 from app.prompts.builders import DecisionPromptBuilder
 from app.llm.llm_provider import get_llm
+
 from infrastructure.logging.node_logger import log_node
-from app.domain.decision.decision_summary import extract_decision_summary
+
+from domain.decision.decision_summary import extract_decision_summary
+from domain.confidence.confidence_mapper import map_confidence_label
+
 
 from app.prompts.constants import (
     DEFAULT_CONFIDENCE_NO_HISTORY,
@@ -84,9 +88,11 @@ def decision_node(
     )
 
     confidence_final = confidence_base * state["historical_confidence_factor"]
+    confidence_label = map_confidence_label(confidence_final)
 
     state["confidence_base"] = confidence_base
     state["confidence_final"] = confidence_final
+    state["confidence_label"] = confidence_label
 
     # -------------------------------------------------
     # USER-FACING MESSAGE (SUMMARY ONLY)

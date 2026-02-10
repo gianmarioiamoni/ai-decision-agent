@@ -56,6 +56,7 @@ class DecisionState(TypedDict):
     decision: Optional[str]
     justification: Optional[str]
     confidence_final: Optional[float]
+    confidence_label: Optional[str]
 
     # ==================================================
     # HISTORICAL (Phase 4)
