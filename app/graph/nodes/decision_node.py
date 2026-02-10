@@ -6,7 +6,6 @@ from app.graph.state import DecisionState
 from app.prompts.builders import DecisionPromptBuilder
 from app.llm.llm_provider import get_llm
 from infrastructure.logging.node_logger import log_node
-from domain.decision.chat_response_builder import ChatDecisionResponseBuilder
 
 from app.prompts.constants import (
     DEFAULT_CONFIDENCE_NO_HISTORY,
@@ -20,7 +19,7 @@ def decision_node(
     llm=None,
 ) -> DecisionState:
     # -------------------------------------------------
-    # SAFE INITIALIZATION (node-standalone)
+    # SAFE INITIALIZATION
     # -------------------------------------------------
     state.setdefault("messages", [])
 
@@ -31,7 +30,7 @@ def decision_node(
         raise ValueError("Decision node requires analysis")
 
     # -------------------------------------------------
-    # INPUT ADAPTATION (PromptBuilder contract)
+    # INPUT ADAPTATION
     # -------------------------------------------------
     rag_context = state.get("rag_context") or ""
 
@@ -49,7 +48,7 @@ def decision_node(
     has_history = len(adapted_similar) > 0
 
     # -------------------------------------------------
-    # DOMAIN: historical confidence factor (OWNER)
+    # HISTORICAL CONFIDENCE FACTOR (OWNER)
     # -------------------------------------------------
     state["historical_confidence_factor"] = 1.1 if has_history else 1.0
 
@@ -71,13 +70,12 @@ def decision_node(
     decision_text = response.content.strip()
 
     # -------------------------------------------------
-    # JUSTIFICATION (decision_node = owner)
+    # JUSTIFICATION (DOMAIN, NOT CHAT)
     # -------------------------------------------------
-    state["justification"] = decision_text 
-
+    state["justification"] = decision_text
 
     # -------------------------------------------------
-    # CONFIDENCE (decision_node = owner)
+    # CONFIDENCE (DOMAIN)
     # -------------------------------------------------
     confidence_base = (
         DEFAULT_CONFIDENCE_WITH_HISTORY
@@ -88,28 +86,24 @@ def decision_node(
     confidence_final = confidence_base * state["historical_confidence_factor"]
 
     # -------------------------------------------------
-    # UPDATE STATE (NO routing flags here)
+    # UPDATE STATE
     # -------------------------------------------------
     state["decision"] = decision_text
     state["confidence_base"] = confidence_base
     state["confidence_final"] = confidence_final
 
     # -------------------------------------------------
-    # MESSAGES (tests expect >= 2)
+    # USER-FACING CHAT MESSAGE (SINGLE, CLEAN)
     # -------------------------------------------------
-    chat_response = ChatDecisionResponseBuilder.build(
-        decision = decision_text,
-        confidence = confidence_base,
-        rationale = []
-    )
-    state["messages"].append(
-        AIMessage(content="Decision rationale completed.")
+    chat_message = (
+        f"{decision_text}\n\n"
+        "If you’d like, you can provide additional context, "
+        "ask for alternatives, or request a deeper analysis."
     )
 
     state["messages"].append(
-        AIMessage(
-            content=(chat_response.text)
-        )
+        AIMessage(content=chat_message)
     )
 
     return state
+
