@@ -123,7 +123,7 @@ def launch_real_ui():
                 <div style="width:0%; height:12px;"></div>
                 </div>
             """,
-            elem_id="progess_bar"
+            elem_id="progress_bar"
         ) 
 
         with gr.Tabs():
