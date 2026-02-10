@@ -47,7 +47,7 @@ class OutputAssembler:
         analysis = normalize_markdown_to_text(state["analysis"] or "No analysis generated")
         decision = normalize_markdown_to_text(state["decision"] or "No decision generated")
 
-        confidence = float(state["confidence_final"] or 0.0)
+        confidence = float(state["confidence_base"] or 0.0)
 
         messages_html = self.message_formatter.format(
             state["messages"]
