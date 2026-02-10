@@ -79,6 +79,23 @@ def launch_real_ui():
     with gr.Blocks() as demo:
         demo.api_mode = False
 
+        gr.HTML("""
+            <style>
+            /* Hide Gradio global progress spinner */
+            .gradio-container .progress-bar,
+            .gradio-container .loading,
+            .gradio-container .wrap.svelte-1ipelgc {
+               display: none !important;
+            }
+
+            /* Hide processing time badge */
+            .gradio-container .eta-bar {
+               display: none !important;
+            }
+            </style>
+        """)
+
+
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
 
         (
@@ -207,7 +224,7 @@ def launch_real_ui():
     demo.queue(
         default_concurrency_limit=1, 
         max_size=32,
-        show_progress=False)
+    )
 
     demo.launch(
         theme=theme,
