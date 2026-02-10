@@ -29,7 +29,7 @@ from .components.report_preview_section import create_report_preview_section
 from .components.report_download_section import create_report_download_section
 
 from app.rag.bootstrap import bootstrap_rag
-from app.ui.handlers.graph_adapter import run_graph
+from app.ui.handlers.graph_adapter import run_graph_streaming
 
 
 # Import handlers
@@ -149,7 +149,7 @@ def launch_real_ui():
         )
 
         submit_button.click(
-            fn=run_graph,
+            fn=run_graph_streaming,
             inputs=[question_input, rag_input],
             outputs=[
                 plan_output,
@@ -165,7 +165,7 @@ def launch_real_ui():
         )
 
         question_input.submit(
-            fn=run_graph,
+            fn=run_graph_streaming,
             inputs=[question_input, rag_input],
             outputs=[
                 plan_output,

@@ -118,6 +118,13 @@ class DecisionState(TypedDict):
     # --------------------------------------------------
     history_persisted: bool
 
+    # ==================================================
+    # STREAMING
+    # ==================================================
+
+    plan_stream: str | None
+    analysis_stream: str | None
+
     confidence_breakdown: Dict[str, float]
     # example:
     # {

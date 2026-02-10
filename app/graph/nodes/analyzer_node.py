@@ -1,15 +1,15 @@
 # app/graph/nodes/analyzer_node.py
 #
-# Analyzer node – LangGraph compatible (FASE 1)
+# Analyzer node.
 #
-# Independent from planner:
-# - NO plan dependency
-# - Uses authoritative RAG context
-# - Uses historical decisions (if present)
+# Responsibilities:
+# - Validate input
+# - Build prompt using AnalyzerIndependentPromptBuilder
+# - Invoke LLM
 #
-# Deterministic, non-streaming version for graph execution.
-#
-
+# NOTE:
+# - Analyzer operates independently of the planner.
+# - Analyzer does not depend on the plan.
 
 from app.graph.state import DecisionState
 from app.prompts.builders import AnalyzerIndependentPromptBuilder
@@ -21,18 +21,15 @@ from infrastructure.logging.node_logger import log_node
 
 @log_node("analyzer")
 def analyzer_node(state: DecisionState) -> DecisionState:
-
     # ------------------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------------------
-
     if not state["user_query"]:
         raise ValueError("Analyzer node requires a valid user_query")
 
     # ------------------------------------------------------------------
     # INPUT EXTRACTION
     # ------------------------------------------------------------------
-
     question = state["user_query"]
     rag_context = state["rag_context"] or ""
     retrieved_docs = state["authoritative_context"]
@@ -43,28 +40,18 @@ def analyzer_node(state: DecisionState) -> DecisionState:
     # ------------------------------------------------------------------
     # DEBUG LOGGING
     # ------------------------------------------------------------------
-
     print("\n" + "=" * 60)
     print("🔍 ANALYZER PHASE (GRAPH MODE)")
     print("=" * 60)
     print(f"📝 Question: {question[:100]}...")
 
-    if rag_context:
-        print(f"✅ RAG Context Available ({len(rag_context)} chars)")
-    else:
-        print("❌ NO RAG Context")
-
-    if historical_context:
-        print(f"✅ Historical Context Available ({len(historical_context)} chars)")
-    else:
-        print("❌ NO Historical Context")
-
+    print("✅ RAG Context Available" if rag_context else "❌ NO RAG Context")
+    print("✅ Historical Context Available" if historical_context else "❌ NO Historical Context")
     print("=" * 60 + "\n")
 
     # ------------------------------------------------------------------
-    # BUILD PROMPT (NO PLAN DEPENDENCY)
+    # BUILD PROMPT
     # ------------------------------------------------------------------
-
     bundle = AnalyzerIndependentPromptBuilder.build(
         question=question,
         rag_context=rag_context,
@@ -73,27 +60,29 @@ def analyzer_node(state: DecisionState) -> DecisionState:
     )
 
     # ------------------------------------------------------------------
-    # LLM INVOCATION (NON-STREAMING)
+    # LLM INVOCATION (STREAMING)
     # ------------------------------------------------------------------
-
     llm = get_llm()
 
-    response = llm.invoke(
+    buffer: list[str] = []
+
+    for chunk in llm.stream(
         [
             bundle.system_message,
             bundle.human_message,
         ]
-    )
+    ):
+        token = chunk.content or ""
+        buffer.append(token)
 
-    analysis_text = response.content.strip()
+        # 🔴 STREAMING FIELD (progressive)
+        state["analysis_stream"] = "".join(buffer)
+
     # ------------------------------------------------------------------
-    # UPDATE STATE
+    # FINAL COMMIT (DETERMINISTIC)
     # ------------------------------------------------------------------
-
-    state["analysis"] = analysis_text
-
-    # NOTE:
-    # confidence_base is computed downstream (decision node)
-    # or left None if analyzer does not compute it
+    final_text = state.get("analysis_stream", "").strip()
+    state["analysis"] = final_text
 
     return state
+

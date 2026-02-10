@@ -1,4 +1,7 @@
 # app/graph/nodes/planner_node.py
+#
+# Planner node (streaming-capable).
+#
 
 
 from app.graph.state import DecisionState
@@ -6,29 +9,24 @@ from app.prompts.builders import PlannerPromptBuilder
 from langchain_core.messages import AIMessage
 
 from infrastructure.logging.node_logger import log_node
-
 from app.llm.llm_provider import get_llm
 
 
 @log_node("planner")
 def planner_node(state: DecisionState) -> DecisionState:
     #
-    # Planner node.
+    # Planner node (streaming-capable).
     #
     # Responsibilities:
     # - Validate input
-    # - Build planning prompt using PlannerPromptBuilder
-    # - Invoke LLM
+    # - Build planning prompt
+    # - Stream plan generation
+    # - Commit final deterministic plan
     #
-    # NOTE:
-
-    if not state["user_query"]:
-        raise ValueError("Planner node requires a valid user_query")
 
     # ------------------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------------------
-
     if not state["user_query"]:
         raise ValueError("Planner node requires a valid user_query")
 
@@ -38,7 +36,6 @@ def planner_node(state: DecisionState) -> DecisionState:
     # ------------------------------------------------------------------
     # BUILD PROMPT
     # ------------------------------------------------------------------
-
     bundle = PlannerPromptBuilder.build(
         question=state["user_query"],
         context_docs=context_docs,
@@ -47,7 +44,6 @@ def planner_node(state: DecisionState) -> DecisionState:
     # ------------------------------------------------------------------
     # DEBUG LOGGING
     # ------------------------------------------------------------------
-
     print("\n" + "=" * 60)
     print("🗺️  PLANNER PHASE")
     print("=" * 60)
@@ -62,23 +58,28 @@ def planner_node(state: DecisionState) -> DecisionState:
     print("=" * 60 + "\n")
 
     # ------------------------------------------------------------------
-    # LLM INVOCATION
+    # LLM INVOCATION (STREAMING)
     # ------------------------------------------------------------------
-
     llm = get_llm()
 
-    response = llm.invoke(
+    buffer: list[str] = []
+
+    for chunk in llm.stream(
         [
             bundle.system_message,
             bundle.human_message,
         ]
-    )
+    ):
+        token = chunk.content or ""
+        buffer.append(token)
 
-    plan_text = response.content.strip()
+        # 🔴 Streaming-only field (UI can read this)
+        state["plan_stream"] = "".join(buffer)
 
     # ------------------------------------------------------------------
-    # UPDATE STATE
+    # FINAL COMMIT (DETERMINISTIC)
     # ------------------------------------------------------------------
+    plan_text = state.get("plan_stream", "").strip()
     state["plan"] = plan_text
 
     state["messages"].append(
