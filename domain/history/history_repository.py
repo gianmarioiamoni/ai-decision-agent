@@ -27,7 +27,6 @@ class HistoryRepository(ABC):
     @abstractmethod
     def lookup(self, context_hash: str) -> List[HistoricalDecision]:
         pass
-
     # Persist decision only if not already present (idempotent)
     @abstractmethod
     def persist_if_absent(
@@ -117,8 +116,11 @@ class ChromaHistoryRepository(HistoryRepository):
 
         if existing.get("ids"):
             return
-
+        
+        record_id = f"{context_hash}:{hash(decision)}"
+        
         self._collection.add(
+            ids=[record_id],
             documents=[decision],
             metadatas=[{
                 "context_hash": context_hash,
