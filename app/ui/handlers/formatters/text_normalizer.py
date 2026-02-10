@@ -9,52 +9,37 @@
 import re
 
 
-def normalize_markdown_to_text(text: str) -> str:
-    if not text:
+def normalize_markdown_to_text(md: str) -> str:
+    if not md:
         return ""
 
-    lines = text.splitlines()
-    normalized_lines = []
+    text = md
 
-    for raw_line in lines:
-        line = raw_line.strip()
+    # Remove code blocks
+    text = re.sub(r"```[\s\S]*?```", "", text)
 
-        if not line:
-            normalized_lines.append("")
-            continue
+    # Inline code
+    text = re.sub(r"`([^`]*)`", r"\1", text)
 
-        # Remove bold (**text**) FIRST
-        line = re.sub(r"\*\*(.*?)\*\*", r"\1", line)
+    # Remove ALL bold / italic markers
+    text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+    text = re.sub(r"\*(.*?)\*", r"\1", text)
+    text = re.sub(r"__(.*?)__", r"\1", text)
+    text = re.sub(r"_(.*?)_", r"\1", text)
 
-        # Headings (###, ##, #)
-        if line.startswith("###"):
-            normalized_lines.append(line.replace("###", "").strip().upper())
-            normalized_lines.append("")
-            continue
+    # Remove ALL markdown headers
+    text = re.sub(r"^\s{0,3}#+\s*", "", text, flags=re.MULTILINE)
 
-        if line.startswith("##"):
-            normalized_lines.append(line.replace("##", "").strip().upper())
-            continue
+    # Lists → bullets
+    text = re.sub(r"^(\s*)[-*+]\s+", r"\1• ", text, flags=re.MULTILINE)
 
-        if line.startswith("#"):
-            normalized_lines.append(line.replace("#", "").strip().upper())
-            continue
+    # Remove markdown links
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
 
-        # Bullet points
-        if line.startswith("- "):
-            normalized_lines.append(f"• {line[2:].strip()}")
-            continue
+    # Kill leftover markdown-ish patterns
+    text = text.replace("**", "").replace("__", "")
 
-        if line.startswith("•"):
-            normalized_lines.append(line)
-            continue
+    # Normalize spacing
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
-        # Numbered lists: "1. text"
-        if re.match(r"^\d+\.\s+", line):
-            normalized_lines.append(line)
-            continue
-
-        normalized_lines.append(line)
-
-    return "\n".join(normalized_lines)
-
+    return text.strip()
