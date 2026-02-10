@@ -50,6 +50,7 @@ def normalize_markdown_to_text(text: str) -> str:
         normalized_lines.append(line)
 
     # log for debugging
-    print(f"### Final normalized text: {'\n'.join(normalized_lines)}")
+    return_text = "\n".join(normalized_lines)
+    print(f"### Final normalized text: {return_text}")
 
-    return "\n".join(normalized_lines)
+    return return_text
