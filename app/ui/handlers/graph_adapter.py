@@ -27,6 +27,7 @@ def _format_error_output(error_message: str):
         error_msg,   # decision
         0.0,         # confidence
         [],          # messages
+        f"❌ {error_message}",  # phase_indicator 
         error_html,  # report preview
         None,        # report file
         error_html,  # historical
@@ -56,10 +57,10 @@ def run_graph_streaming(
             state = event.get("state")
 
             if event_type == "node_start":
-                phase_text = f"▶ **{node_name.upper()}** running…"
+                phase_text = f"▶ {node_name.upper()} running…"
 
             elif event_type == "node_end":
-                phase_text = f"✔ **{node_name.upper()}** completed"
+                phase_text = f"✔ {node_name.upper()} completed"
 
             if state:
                 last_state = state
@@ -68,15 +69,16 @@ def run_graph_streaming(
                 analysis = md_to_plain_text(state.get("analysis") or "")
 
                 yield (
-                    plan,
-                    analysis,
-                    "",        # decision not ready
-                    0.0,
-                    [],        # messages
-                    phase_text,
-                    None,
-                    "",
-                    "",
+                    plan,          # plan
+                    analysis,      # analysis
+                    "",             # decision
+                    0.0,            # confidence
+                    [],             # messages
+                    phase_text,     # phase indicator ✅
+                    "",             # report preview
+                    None,           # report file
+                    "",             # historical
+                    "",             # rag evidence
                 )
 
         if not last_state:
@@ -89,15 +91,16 @@ def run_graph_streaming(
             analysis,
             decision,
             confidence,
-            messages_html,
+            _messages_html,
             report_preview,
             report_file_path,
             historical_html,
             rag_evidence_html,
         ) = assembler.assemble(last_state, rag_files)
 
-        raw_messages = last_state.get("messages", [])
-        chat_history = messages_to_chatbot(raw_messages)
+        chat_history = messages_to_chatbot(
+            last_state.get("messages", [])
+        )
 
         yield (
             plan,
@@ -105,7 +108,8 @@ def run_graph_streaming(
             decision,
             confidence,
             chat_history,
-            "✅ **Workflow completed**",
+            "✅ Workflow completed",
+            report_preview,
             report_file_path,
             historical_html,
             rag_evidence_html,
@@ -113,3 +117,4 @@ def run_graph_streaming(
 
     except Exception as e:
         yield _format_error_output(str(e))
+
