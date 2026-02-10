@@ -77,7 +77,11 @@ You are now producing the final decision.
 Based on the provided analysis, produce:
 1) A clear decision
 2) A brief justification grounded in the context
-3) A confidence score between 0 and 1
+IMPORTANT:
+- Do NOT include any numeric confidence values (percentages or decimals).
+- Confidence scoring is handled externally by the system.
+- You may express confidence only qualitatively (e.g. high, moderate, low).
+
 """
         
         # Add similar decisions context with EXPLICIT consistency check requirement
