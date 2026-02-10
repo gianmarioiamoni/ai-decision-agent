@@ -118,11 +118,7 @@ def launch_real_ui():
             elem_id="phase_badge"
         )
         progress_bar = gr.HTML(
-            value="""
-                <div style="width:100%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
-                <div style="width:0%; height:12px;"></div>
-                </div>
-            """,
+            value="",
             elem_id="progress_bar"
         ) 
 

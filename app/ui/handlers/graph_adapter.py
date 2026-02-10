@@ -1,6 +1,6 @@
 # app/ui/handlers/graph_adapter.py
 #
-# LangGraph streaming adapter – FINAL WORKING VERSION
+# LangGraph streaming adapter – FINAL & CORRECT
 #
 
 from app.graph.graph import build_graph
@@ -13,16 +13,10 @@ from app.ui.utils.markdown_utils import md_to_plain_text
 
 GRAPH = build_graph()
 
-# ------------------------------------------------------------------------------
-# Helpers: badge + progress bar
-# ------------------------------------------------------------------------------
 
-PHASE_STYLES = {
-    "analyzer": ("🔵 **Analyzer** running…", "33%", "#3b82f6"),
-    "planner":  ("🟣 **Planner** running…",  "66%", "#8b5cf6"),
-    "decision": ("🟢 **Decision** running…", "100%", "#22c55e"),
-    "done":     ("✅ **Workflow completed**", "100%", "#22c55e"),
-}
+# ==============================================================================
+# Progress bar rendering
+# ==============================================================================
 
 def render_progress_bar(width: str, color: str) -> str:
     return f"""
@@ -36,65 +30,90 @@ def render_progress_bar(width: str, color: str) -> str:
     </div>
     """
 
-# ------------------------------------------------------------------------------
-# Error output (11 values EXACTLY)
-# ------------------------------------------------------------------------------
 
-def _format_error_output(msg: str):
+PHASES = {
+    "analyzer": (
+        '<span class="phase-badge phase-analyzer">🔵 Analyzer running…</span>',
+        "33%",
+        "#3b82f6",
+    ),
+    "planner": (
+        '<span class="phase-badge phase-planner">🟣 Planner running…</span>',
+        "66%",
+        "#8b5cf6",
+    ),
+    "decision": (
+        '<span class="phase-badge phase-decision">🟢 Decision running…</span>',
+        "100%",
+        "#22c55e",
+    ),
+    "done": (
+        '<span class="phase-badge phase-done">✅ Workflow completed</span>',
+        "100%",
+        "#22c55e",
+    ),
+}
+
+
+# ==============================================================================
+# Error output (MUST match outputs exactly)
+# ==============================================================================
+
+def _error_output(msg: str):
     return (
         msg, msg, msg, 0.0, [],
-        f"❌ {msg}",
-        render_progress_bar("100%", "#ef4444"),
-        "",
-        None,
-        "",
-        "",
+        msg,
+        render_progress_bar("0%", "#ef4444"),
+        "", None, "", ""
     )
 
-# ------------------------------------------------------------------------------
-# STREAMING ENTRYPOINT
-# ------------------------------------------------------------------------------
+
+# ==============================================================================
+# STREAMING ENTRYPOINT (CORRECT)
+# ==============================================================================
 
 def run_graph_streaming(question: str, rag_files=None):
     try:
         initial_state = create_initial_state(user_query=question)
 
+        last_state: DecisionState | None = None
         phase_badge = "⏳ Waiting…"
         progress_html = render_progress_bar("0%", "#9ca3af")
 
-        last_state: DecisionState | None = None
+        for state in GRAPH.stream(
+            initial_state,
+            stream_mode="values"
+        ):
+            last_state = state
 
-        # 🔥 IMPORTANT: stream_mode="events"
-        for event in GRAPH.stream(initial_state, stream_mode="events"):
-            event_type = event["event"]
-            node_name = event.get("name")
-            state = event.get("state")
+            if state.get("analysis") and not state.get("plan"):
+                phase_badge, w, c = PHASES["analyzer"]
+            elif state.get("plan") and not state.get("decision"):
+                phase_badge, w, c = PHASES["planner"]
+            elif state.get("decision"):
+                phase_badge, w, c = PHASES["decision"]
+            else:
+                phase_badge, w, c = "⏳ Waiting…", "5%", "#9ca3af"
 
-            if event_type == "node_start" and node_name in PHASE_STYLES:
-                phase_badge, width, color = PHASE_STYLES[node_name]
-                progress_html = render_progress_bar(width, color)
+            progress_html = render_progress_bar(w, c)
 
-            if state:
-                last_state = state
-
-                yield (
-                    md_to_plain_text(state.get("plan") or ""),
-                    md_to_plain_text(state.get("analysis") or ""),
-                    "",
-                    0.0,
-                    [],
-                    phase_badge,
-                    progress_html,
-                    "",
-                    None,
-                    "",
-                    "",
-                )
+            yield (
+                md_to_plain_text(state.get("plan") or ""),
+                md_to_plain_text(state.get("analysis") or ""),
+                "",
+                0.0,
+                [],
+                phase_badge,
+                progress_html,
+                "",
+                None,
+                "",
+                "",
+            )
 
         if not last_state:
-            raise RuntimeError("Graph did not produce a final state")
+            raise RuntimeError("No final state produced")
 
-        # ---------------- FINAL OUTPUT ----------------
         assembler = OutputAssembler()
         (
             plan,
@@ -108,19 +127,14 @@ def run_graph_streaming(question: str, rag_files=None):
             rag_evidence_html,
         ) = assembler.assemble(last_state, rag_files)
 
-        chat_history = messages_to_chatbot(last_state.get("messages", []))
-
-        phase_badge, width, color = PHASE_STYLES["done"]
-        progress_html = render_progress_bar(width, color)
-
         yield (
             plan,
             analysis,
             decision,
             confidence,
-            chat_history,
-            phase_badge,
-            progress_html,
+            messages_to_chatbot(last_state.get("messages", [])),
+            PHASES["done"][0],
+            render_progress_bar("100%", "#22c55e"),
             report_preview,
             report_file_path,
             historical_html,
@@ -128,4 +142,4 @@ def run_graph_streaming(question: str, rag_files=None):
         )
 
     except Exception as e:
-        yield _format_error_output(str(e))
+        yield _error_output(f"❌ {e}")
