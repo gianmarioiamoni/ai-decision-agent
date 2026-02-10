@@ -97,11 +97,13 @@ def launch_real_ui():
 
         # phase badge and progress bar 
         phase_badge = gr.Markdown("⏳ Waiting for input…")
-        progress_bar = gr.Slider(
-            0, 3, step=1, value=0,
-            label="Workflow Progress",
-            interactive=False
-        )
+        progress_bar = gr.HTML(
+            """
+                <div style="width:100%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
+                <div style="width:0%; height:12px;"></div>
+                </div>
+            """
+) 
 
         with gr.Tabs():
             with gr.Tab("📊 Planning & Analysis"):
@@ -183,6 +185,8 @@ def launch_real_ui():
                 decision_output,
                 confidence_output,
                 messages_output,
+                phase_badge,
+                progress_bar,
                 report_output,
                 report_download_output,
                 historical_output,
