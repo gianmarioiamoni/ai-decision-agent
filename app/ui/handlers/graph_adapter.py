@@ -17,23 +17,6 @@ GRAPH = build_graph()
 # Helper formatters
 # ==============================================================================
 
-def _to_gradio_chatbot_messages(messages):
-    # Gradio legacy Chatbot format:
-    # List[tuple[user_message | None, bot_message | None]]
-    if not messages:
-        return []
-
-    chatbot_messages = []
-
-    for m in messages:
-        if isinstance(m, dict) and "content" in m:
-            chatbot_messages.append((None, str(m["content"])))
-        else:
-            chatbot_messages.append((None, str(m)))
-
-    return chatbot_messages
-
-
 def _format_error_output(error_message: str):
     error_msg = f"❌ Error: {error_message}"
     error_html = f"<p style='color: red;'>{error_msg}</p>"
@@ -122,7 +105,7 @@ def run_graph(
         ) = assembler.assemble(final_state, rag_files)
 
         raw_messages = final_state.get("messages", [])
-        chat_history = _to_gradio_chatbot_messages(raw_messages)
+        chat_history = messages_to_chatbot(raw_messages)
 
         return _map_state_to_ui_outputs(
             state=final_state,
