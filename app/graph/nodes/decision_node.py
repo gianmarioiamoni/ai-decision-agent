@@ -100,7 +100,7 @@ def decision_node(
     chat_response = ChatDecisionResponseBuilder.build(
         decision = decision_text,
         confidence = confidence_base,
-        retionale = []
+        rationale = []
     )
     state["messages"].append(
         AIMessage(content="Decision rationale completed.")
