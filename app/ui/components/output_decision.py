@@ -16,7 +16,6 @@ def create_output_decision():
         show_label=False,
     )
 
-
     confidence_badge = gr.HTML(
         value="",
         show_label=False,
