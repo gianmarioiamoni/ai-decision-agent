@@ -16,6 +16,20 @@ from app.prompts.constants import (
     DEFAULT_CONFIDENCE_WITH_HISTORY,
 )
 
+
+def _strip_decision_prefix(text: str) -> str:
+    if not text:
+        return ""
+
+    stripped = text.strip()
+
+    for prefix in ("Decision:", "Final Decision:", "Decision Rationale:"):
+        if stripped.lower().startswith(prefix.lower()):
+            return stripped[len(prefix):].strip()
+
+    return stripped
+
+
 @log_node("decision")
 def decision_node(
     state: DecisionState,
@@ -97,7 +111,8 @@ def decision_node(
     # -------------------------------------------------
     # USER-FACING MESSAGE (SUMMARY ONLY)
     # -------------------------------------------------
-    summary = extract_decision_summary(decision_text)
+    clean_decision_text = _strip_decision_prefix(decision_text)
+    summary = extract_decision_summary(clean_decision_text)
 
     if summary:
         state["messages"].append(
