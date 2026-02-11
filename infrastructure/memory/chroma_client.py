@@ -7,6 +7,7 @@
 import chromadb
 from chromadb.config import Settings
 from chromadb.api.models.Collection import Collection
+from chromadb.utils import embedding_functions
 
 
 def get_chroma_collection() -> Collection:
@@ -17,7 +18,11 @@ def get_chroma_collection() -> Collection:
         )
     )
 
+    embedding_function = embedding_functions.DefaultEmbeddingFunction()
+
     return client.get_or_create_collection(
-        name="historical_decisions",
+        name="historical_decisions_v2",
+        embedding_function=embedding_function,
         metadata={"hnsw:space": "cosine"},
     )
+

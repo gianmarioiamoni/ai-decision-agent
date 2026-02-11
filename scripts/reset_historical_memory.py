@@ -1,8 +1,16 @@
 # scripts/reset_historical_memory.py
 
-from infrastructure.memory.chroma_client import get_chroma_collection
+import chromadb
+from chromadb.config import Settings
 
-collection = get_chroma_collection()
+client = chromadb.Client(
+    Settings(
+        persist_directory=".chroma",
+        anonymized_telemetry=False,
+    )
+)
 
-deleted = collection.delete(where={"context_type": "historical"})
-print("Historical decisions deleted")
+client.delete_collection("historical_decisions")
+
+print("Collection historical_decisions deleted.")
+
