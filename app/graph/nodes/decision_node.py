@@ -125,4 +125,7 @@ def decision_node(
             )
         )
 
+    print("SIMILAR DECISIONS:", state.get("similar_decisions"))
+
+
     return state
