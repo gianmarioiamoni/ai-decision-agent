@@ -40,7 +40,6 @@ def _error_output(msg: str):
         msg,                     # plan
         msg,                     # analysis
         msg,                     # decision
-        "0.00 (Error)",          # confidence text
         "",                      # confidence badge html
         [],                      # messages
         msg,                     # phase badge
@@ -83,7 +82,6 @@ def run_graph_streaming(question: str, rag_files=None):
             yield (
                 md_to_plain_text(state.get("plan") or ""),
                 md_to_plain_text(state.get("analysis") or ""),
-                "",
                 "",
                 "",
                 [],
