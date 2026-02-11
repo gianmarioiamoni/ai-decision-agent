@@ -1,21 +1,16 @@
-# app/ui/handlers/graph_adapter.py
-#
-# LangGraph streaming adapter – FINAL & COHERENT
-#
-
 from app.graph.graph import build_graph
 from app.graph.state_factory import create_initial_state
 from app.graph.state import DecisionState
 
-from app.ui.handlers.formatters.output_assembler import OutputAssembler, _confidence_badge_html
+from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.components.output_messages import messages_to_chatbot
+from app.ui.components.output_decision import _confidence_badge_html
 from app.ui.utils.markdown_utils import md_to_plain_text
 
 GRAPH = build_graph()
 
-
 # ==============================================================================
-# Progress bar rendering
+# Progress bar
 # ==============================================================================
 
 def render_progress_bar(width: str, color: str) -> str:
@@ -30,50 +25,32 @@ def render_progress_bar(width: str, color: str) -> str:
     </div>
     """
 
-
 PHASES = {
-    "analyzer": (
-        '<span class="phase-badge phase-analyzer">🔵 Analyzer running…</span>',
-        "33%",
-        "#3b82f6",
-    ),
-    "planner": (
-        '<span class="phase-badge phase-planner">🟣 Planner running…</span>',
-        "66%",
-        "#8b5cf6",
-    ),
-    "decision": (
-        '<span class="phase-badge phase-decision">🟢 Decision running…</span>',
-        "100%",
-        "#22c55e",
-    ),
-    "done": (
-        '<span class="phase-badge phase-done">✅ Workflow completed</span>',
-        "100%",
-        "#22c55e",
-    ),
+    "analyzer": ("🔵 Analyzer running…", "33%", "#3b82f6"),
+    "planner":  ("🟣 Planner running…",  "66%", "#8b5cf6"),
+    "decision": ("🟢 Decision running…", "100%", "#22c55e"),
+    "done":     ("✅ Workflow completed", "100%", "#22c55e"),
 }
 
-
 # ==============================================================================
-# Error output
+# Error output — MUST RETURN 12 STRINGS
 # ==============================================================================
 
 def _error_output(msg: str):
     return (
-        msg,
-        msg,
-        msg,
-        {"score": 0.0, "label": "Error"},
-        [],
-        msg,
+        msg,                     # plan
+        msg,                     # analysis
+        msg,                     # decision
+        "0.00 (Error)",          # confidence text
+        "",                      # confidence badge html
+        [],                      # messages
+        msg,                     # phase badge
         render_progress_bar("0%", "#ef4444"),
-        "",
-        None,
-        "",
-        "",
+        "",                      # report preview
+        None,                    # report file
+        "",                      # historical
+        "",                      # rag evidence
     )
-
 
 # ==============================================================================
 # STREAMING ENTRYPOINT
@@ -85,15 +62,12 @@ def run_graph_streaming(question: str, rag_files=None):
 
         last_state: DecisionState | None = None
         phase_badge = "⏳ Waiting…"
-        progress_html = render_progress_bar("0%", "#9ca3af")
+        progress_html = render_progress_bar("5%", "#9ca3af")
 
-        # ----------------------------
-        # STREAM (UX only)
-        # ----------------------------
-        for state in GRAPH.stream(
-            initial_state,
-            stream_mode="values",
-        ):
+        # --------------------------------------------------
+        # STREAMING (UX only)
+        # --------------------------------------------------
+        for state in GRAPH.stream(initial_state, stream_mode="values"):
             last_state = state
 
             if state.get("analysis") and not state.get("plan"):
@@ -110,31 +84,30 @@ def run_graph_streaming(question: str, rag_files=None):
             yield (
                 md_to_plain_text(state.get("plan") or ""),
                 md_to_plain_text(state.get("analysis") or ""),
-                "",         # decision
-                "",         # confidence_text
-                "",         # confidence_badge_html
+                "",
+                "",
+                "",
                 [],
                 phase_badge,
                 progress_html,
-                "",         # report preview
-                None,       # report file
-                "",         # historical
-                "",         # rag evidence
+                "",
+                None,
+                "",
+                "",
             )
 
         if not last_state:
             raise RuntimeError("No final state produced")
 
-        # ----------------------------
+        # --------------------------------------------------
         # FINAL ASSEMBLY
-        # ----------------------------
+        # --------------------------------------------------
         assembler = OutputAssembler()
         (
             plan,
             analysis,
             decision,
-            confidence_text,
-            _confidence_badge_html,
+            confidence_value,     # float
             _messages_html,
             report_preview,
             report_file_path,
@@ -143,14 +116,16 @@ def run_graph_streaming(question: str, rag_files=None):
         ) = assembler.assemble(last_state, rag_files)
 
         confidence_score = float(last_state.get("confidence_final", 0.0))
-        label = last_state.get("confidence_label") 
-        confidence_badge = _confidence_badge_html(confidence_score, label)
+        confidence_label = last_state.get("confidence_label", "Low")
+
+        confidence_text = f"{confidence_score:.2f} ({confidence_label})"
+        confidence_badge = _confidence_badge_html(confidence_score, confidence_label)
 
         yield (
             plan,
             analysis,
             decision,
-            confidence_text,  
+            confidence_text,
             confidence_badge,
             messages_to_chatbot(last_state.get("messages", [])),
             PHASES["done"][0],
@@ -163,3 +138,4 @@ def run_graph_streaming(question: str, rag_files=None):
 
     except Exception as e:
         yield _error_output(f"❌ {e}")
+
