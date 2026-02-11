@@ -10,7 +10,7 @@ def create_output_analysis():
         placeholder="Analysis will appear here",
         interactive=False,
         lines=20,  # Increased lines for better readability
-        max_lines=30,  # Allow expansion up to 30 lines
+        max_lines=20,  # Allow expansion up to 30 lines
         show_label=False
     )
     return analysis_output
