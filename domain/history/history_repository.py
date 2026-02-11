@@ -16,6 +16,7 @@ class HistoricalDecision:
     context_hash: str
     decision: str
     confidence: float
+    similarity: float | None = None
 
 
 # =========================
@@ -35,6 +36,14 @@ class HistoryRepository(ABC):
         decision: str,
         confidence: float
     ) -> None:
+        pass
+
+    @abstractmethod
+    def lookup_similar(
+        self,
+        query_text: str,
+        top_k: int = 3,
+    ) -> List[HistoricalDecision]:
         pass
 
 
@@ -127,4 +136,36 @@ class ChromaHistoryRepository(HistoryRepository):
                 "decision": decision,
                 "confidence": confidence
             }]
+        )    
+    
+    def lookup_similar(
+        self,
+        query_text: str,
+        top_k: int = 3,
+    ) -> List[HistoricalDecision]:
+
+        results = self._collection.query(
+            query_texts=[query_text],
+            n_results=top_k,
         )
+
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        distances = results.get("distances", [[]])[0]
+
+        history: List[HistoricalDecision] = []
+
+        for doc, metadata, distance in zip(documents, metadatas, distances):
+            similarity = 1 - distance  # cosine distance → similarity
+
+            history.append(
+                HistoricalDecision(
+                    context_hash=metadata["context_hash"],
+                    decision=doc,
+                    confidence=float(metadata["confidence"]),
+                    similarity=similarity,
+                )
+            )
+
+        return history
+    

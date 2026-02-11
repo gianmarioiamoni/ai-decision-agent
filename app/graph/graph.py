@@ -14,6 +14,8 @@ from app.graph.nodes.persist_history_node import PersistHistoryNode
 from app.graph.nodes.analyzer_node import analyzer_node
 from app.graph.nodes.fallback_node import fallback_node
 from app.graph.nodes.retry_accounting_node import retry_accounting_node
+from app.graph.nodes.history_lookup_node import HistoryLookupNode
+
 
 from app.graph.router.policy_router import policy_router
 
@@ -33,6 +35,8 @@ def build_graph(history_repository: HistoryRepository | None = None):
         history_repository = ChromaHistoryRepository(chroma_memory)
 
     persist_history_node = PersistHistoryNode(history_repository)
+    history_lookup_node = HistoryLookupNode(history_repository)
+
 
     graph = StateGraph(DecisionState)
 
@@ -47,11 +51,14 @@ def build_graph(history_repository: HistoryRepository | None = None):
     graph.add_node("fallback", fallback_node)
     graph.add_node("summarize", summarize_node)
     graph.add_node("persist_history", persist_history_node)
+    graph.add_node("history_lookup", history_lookup_node)
+
 
     # --- Edges ---
     graph.set_entry_point("intake")
 
-    graph.add_edge("intake", "rag_retrieval")
+    graph.add_edge("intake", "history_lookup")
+    graph.add_edge("history_lookup", "rag_retrieval")
     graph.add_edge("rag_retrieval", "analyzer")
     graph.add_edge("analyzer", "planner")
     graph.add_edge("planner", "decision")

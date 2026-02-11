@@ -67,7 +67,15 @@ def decision_node(
     # -------------------------------------------------
     # HISTORICAL CONFIDENCE FACTOR (DOMAIN OWNER)
     # -------------------------------------------------
-    state["historical_confidence_factor"] = 1.1 if has_history else 1.0
+    #state["historical_confidence_factor"] = 1.1 if has_history else 1.0
+    if adapted_similar:
+        max_similarity = max(
+            d.get("similarity", 0.0)
+            for d in adapted_similar
+        )
+        state["historical_confidence_factor"] = 1.0 + (0.2 * max_similarity)
+    else:
+        state["historical_confidence_factor"] = 1.0
 
     # -------------------------------------------------
     # PROMPT
