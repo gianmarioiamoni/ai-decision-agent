@@ -133,6 +133,7 @@ def launch_real_ui():
             with gr.Tab("✅ Decision"):
                 decision_output.render()
                 confidence_output.render()
+                confidence_badge.render()
 
             with gr.Tab("💬 Messages"):
                 messages_output.render()

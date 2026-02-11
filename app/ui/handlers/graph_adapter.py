@@ -115,10 +115,6 @@ def run_graph_streaming(question: str, rag_files=None):
             rag_evidence_html,
         ) = assembler.assemble(last_state, rag_files)
 
-        confidence_score = float(last_state.get("confidence_final", 0.0))
-        confidence_label = last_state.get("confidence_label", "Low")
-
-        confidence_text = f"{confidence_score:.2f} ({confidence_label})"
         #confidence_badge = confidence_badge_html(confidence_score, confidence_label)
 
         yield (
