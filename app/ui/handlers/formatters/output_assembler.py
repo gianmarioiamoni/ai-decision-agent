@@ -45,6 +45,7 @@ class OutputAssembler:
         # ----------------------------
         confidence_score = float(state.get("confidence_final") or 0.0)
         confidence_label = state.get("confidence_label") or "Unknown"
+        confidence_text = f"{confidence_score:.2f} ({confidence_label})"
 
         confidence = {
             "score": confidence_score,
@@ -81,7 +82,7 @@ class OutputAssembler:
             plan,
             analysis,
             decision,
-            confidence,          # ⬅️ STRUCTURED
+            confidence_text,          
             messages_html,
             report_preview,
             report_file_path,

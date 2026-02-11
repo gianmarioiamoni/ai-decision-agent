@@ -1,30 +1,50 @@
 # app/domain/decision/decision_summary.py
 
+import re
+
+
+_DECISION_PATTERNS = [
+    r"\bshould not\b",
+    r"\bshould\b",
+    r"\brecommend\b",
+    r"\bthe decision\b",
+    r"\bit is advised\b",
+]
+
+
 def extract_decision_summary(decision_text: str) -> str:
     #
     # Extract a concise, conversational summary from a decision text.
     #
     # Rules:
-    # - Max 1–2 sentences
+    # - 1 sentence (max 2 if strictly needed)
     # - No confidence numbers
     # - No bullet points
     # - No markdown
+    # - Focus on the actual decision, not context
     #
 
     if not decision_text:
         return ""
 
-    lines = [
-        line.strip()
-        for line in decision_text.splitlines()
-        if line.strip()
-    ]
+    # Normalize whitespace
+    text = " ".join(decision_text.split())
 
-    # Heuristic 1: first non-empty paragraph is almost always the core decision
-    first_block = lines[0]
+    # Split into sentences (simple but robust enough here)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
 
-    # Safety: trim overly long outputs
-    if len(first_block) > 300:
-        return first_block[:297] + "…"
+    # 1. Try to find a strong decision sentence
+    for sentence in sentences:
+        lowered = sentence.lower()
+        if any(re.search(p, lowered) for p in _DECISION_PATTERNS):
+            return _truncate(sentence)
 
-    return first_block
+    # 2. Fallback: first sentence
+    return _truncate(sentences[0])
+
+
+def _truncate(sentence: str, max_len: int = 240) -> str:
+    if len(sentence) <= max_len:
+        return sentence
+    return sentence[: max_len - 1] + "…"
+

@@ -99,14 +99,15 @@ def decision_node(
     # -------------------------------------------------
     summary = extract_decision_summary(decision_text)
 
-    state["messages"].append(
-        AIMessage(
-            content=(
-                f"{summary}\n\n"
-                "If you’d like, you can provide additional context, "
-                "ask for alternatives, or request a deeper analysis."
+    if summary:
+        state["messages"].append(
+            AIMessage(
+                content=(
+                    f"{summary}\n\n"
+                    "If you’d like, you can provide additional context, "
+                    "ask for alternatives, or request a deeper analysis."
+                )
             )
         )
-    )
 
     return state
