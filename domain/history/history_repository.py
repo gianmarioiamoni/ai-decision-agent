@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
+import hashlib
 
 
 # =========================
@@ -77,6 +78,8 @@ class InMemoryHistoryRepository(HistoryRepository):
         )
 
         self._storage.setdefault(context_hash, []).append(record)
+        print("COLLECTION COUNT AFTER INSERT (InMemoryHistoryRepository):", self._collection.count())
+
 
 
 # =========================
@@ -126,7 +129,8 @@ class ChromaHistoryRepository(HistoryRepository):
         if existing.get("ids"):
             return
         
-        record_id = f"{context_hash}:{hash(decision)}"
+        stable_hash = hashlib.sha256(decision.encode()).hexdigest()
+        record_id = f"{context_hash}:{hash(stable_hash)}"
         
         self._collection.add(
             ids=[record_id],
@@ -137,6 +141,8 @@ class ChromaHistoryRepository(HistoryRepository):
                 "confidence": confidence
             }]
         )    
+        print("COLLECTION COUNT AFTER INSERT (ChromaHistoryRepository):", self._collection.count())
+
     
     def lookup_similar(
         self,
@@ -166,6 +172,9 @@ class ChromaHistoryRepository(HistoryRepository):
                     similarity=similarity,
                 )
             )
+
+
+        print("LOOKUP COLLECTION COUNT:", self._collection.count())
 
         return history
     

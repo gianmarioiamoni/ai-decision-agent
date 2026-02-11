@@ -42,5 +42,8 @@ class PersistHistoryNode:
         # -------------------------------------------
         state["history_persisted"] = True
 
+        print("PERSISTING:", context_hash, decision[:60], confidence)
+
+
         return state
 
