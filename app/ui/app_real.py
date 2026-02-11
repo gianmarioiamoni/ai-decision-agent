@@ -59,7 +59,7 @@ def launch_real_ui():
     # Outputs
     plan_output = create_output_plan()
     analysis_output = create_output_analysis()
-    decision_output, confidence_output = create_output_decision()
+    decision_output, confidence_output, confidence_badge = create_output_decision()
     messages_output = create_output_messages()
     report_output, format_selector, report_download_output = create_output_report()
 
@@ -183,6 +183,7 @@ def launch_real_ui():
                 analysis_output,
                 decision_output,
                 confidence_output,
+                confidence_badge,
                 messages_output,
                 phase_badge,
                 progress_bar,
@@ -201,6 +202,7 @@ def launch_real_ui():
                 analysis_output,
                 decision_output,
                 confidence_output,
+                confidence_badge,
                 messages_output,
                 phase_badge,
                 progress_bar,

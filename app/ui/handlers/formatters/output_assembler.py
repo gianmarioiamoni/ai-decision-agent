@@ -8,6 +8,48 @@ from app.ui.utils.rag_formatter import format_rag_context_for_ui
 from app.ui.handlers.formatters.text_normalizer import normalize_markdown_to_text
 
 
+def _confidence_label(score: float) -> str:
+    if score >= 0.8:
+        return "High"
+    elif score >= 0.6:
+        return "Medium"
+    return "Low"
+
+def _confidence_badge_html(
+    score: float,
+    label: str,
+) -> str:
+    color_map = {
+        "High": "#22c55e",    # green
+        "Medium": "#f59e0b",  # orange
+        "Low": "#ef4444",     # red
+    }
+
+    color = color_map.get(label, "#9ca3af")  # fallback gray
+
+    return f"""
+    <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    ">
+        <span style="
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background-color: {color};
+            color: white;
+            font-weight: 600;
+        ">
+            {label}
+        </span>
+        <span style="color: #6b7280;">
+            {score:.2f}
+        </span>
+    </div>
+    """
+
+
 class OutputAssembler:
     #
     # Facade for assembling Gradio UI output from DecisionState.
@@ -47,10 +89,10 @@ class OutputAssembler:
         confidence_label = state.get("confidence_label") or "Unknown"
         confidence_text = f"{confidence_score:.2f} ({confidence_label})"
 
-        confidence = {
-            "score": confidence_score,
-            "label": confidence_label,
-        }
+        confidence_badge_html = _confidence_badge_html(
+            score=confidence_score,
+            label=confidence_label,
+        )
 
         # ----------------------------
         # Messages
@@ -82,7 +124,8 @@ class OutputAssembler:
             plan,
             analysis,
             decision,
-            confidence_text,          
+            confidence_text,
+            confidence_badge_html,          
             messages_html,
             report_preview,
             report_file_path,
