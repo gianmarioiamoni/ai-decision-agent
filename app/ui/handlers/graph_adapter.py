@@ -7,7 +7,7 @@ from app.graph.graph import build_graph
 from app.graph.state_factory import create_initial_state
 from app.graph.state import DecisionState
 
-from app.ui.handlers.formatters.output_assembler import OutputAssembler
+from app.ui.handlers.formatters.output_assembler import OutputAssembler, _confidence_badge_html
 from app.ui.components.output_messages import messages_to_chatbot
 from app.ui.utils.markdown_utils import md_to_plain_text
 
@@ -110,15 +110,16 @@ def run_graph_streaming(question: str, rag_files=None):
             yield (
                 md_to_plain_text(state.get("plan") or ""),
                 md_to_plain_text(state.get("analysis") or ""),
-                "",
-                {"score": 0.0, "label": ""},
+                "",         # decision
+                "",         # confidence_text
+                "",         # confidence_badge_html
                 [],
                 phase_badge,
                 progress_html,
-                "",
-                None,
-                "",
-                "",
+                "",         # report preview
+                None,       # report file
+                "",         # historical
+                "",         # rag evidence
             )
 
         if not last_state:
@@ -132,7 +133,8 @@ def run_graph_streaming(question: str, rag_files=None):
             plan,
             analysis,
             decision,
-            confidence,
+            confidence_text,
+            _confidence_badge_html,
             _messages_html,
             report_preview,
             report_file_path,
@@ -140,11 +142,16 @@ def run_graph_streaming(question: str, rag_files=None):
             rag_evidence_html,
         ) = assembler.assemble(last_state, rag_files)
 
+        confidence_score = float(last_state.get("confidence_final", 0.0))
+        label = last_state.get("confidence_label") 
+        confidence_badge = _confidence_badge_html(confidence_score, label)
+
         yield (
             plan,
             analysis,
             decision,
-            confidence,  # ⬅️ STRUCTURED
+            confidence_text,  
+            confidence_badge,
             messages_to_chatbot(last_state.get("messages", [])),
             PHASES["done"][0],
             render_progress_bar("100%", "#22c55e"),
