@@ -4,7 +4,6 @@ from app.graph.state import DecisionState
 
 from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.components.output_messages import messages_to_chatbot
-from app.ui.components.output_decision import _confidence_badge_html
 from app.ui.utils.markdown_utils import md_to_plain_text
 
 GRAPH = build_graph()
@@ -107,7 +106,8 @@ def run_graph_streaming(question: str, rag_files=None):
             plan,
             analysis,
             decision,
-            confidence_value,     # float
+            confidence_text,
+            confidence_badge_html,     # float
             _messages_html,
             report_preview,
             report_file_path,
@@ -119,14 +119,14 @@ def run_graph_streaming(question: str, rag_files=None):
         confidence_label = last_state.get("confidence_label", "Low")
 
         confidence_text = f"{confidence_score:.2f} ({confidence_label})"
-        confidence_badge = _confidence_badge_html(confidence_score, confidence_label)
+        #confidence_badge = confidence_badge_html(confidence_score, confidence_label)
 
         yield (
             plan,
             analysis,
             decision,
             confidence_text,
-            confidence_badge,
+            confidence_badge_html,
             messages_to_chatbot(last_state.get("messages", [])),
             PHASES["done"][0],
             render_progress_bar("100%", "#22c55e"),
