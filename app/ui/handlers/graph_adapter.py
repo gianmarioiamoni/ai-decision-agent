@@ -106,7 +106,7 @@ def run_graph_streaming(question: str, rag_files=None):
             plan,
             analysis,
             decision,
-            confidence_text,
+            _confidence_text,
             confidence_badge_html,     # float
             _messages_html,
             report_preview,
@@ -115,13 +115,11 @@ def run_graph_streaming(question: str, rag_files=None):
             rag_evidence_html,
         ) = assembler.assemble(last_state, rag_files)
 
-        #confidence_badge = confidence_badge_html(confidence_score, confidence_label)
 
         yield (
             plan,
             analysis,
             decision,
-            confidence_text,
             confidence_badge_html,
             messages_to_chatbot(last_state.get("messages", [])),
             PHASES["done"][0],

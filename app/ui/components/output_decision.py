@@ -16,16 +16,10 @@ def create_output_decision():
         show_label=False,
     )
 
-    # Confidence badge rendered as HTML
-    confidence_output = gr.HTML(
-        value="",
-        label="Confidence",
-        show_label=False,
-    )
 
     confidence_badge = gr.HTML(
         value="",
         show_label=False,
     )
 
-    return decision_output, confidence_output, confidence_badge
+    return decision_output, confidence_badge
