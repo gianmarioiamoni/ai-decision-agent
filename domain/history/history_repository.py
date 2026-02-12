@@ -79,7 +79,6 @@ class InMemoryHistoryRepository(HistoryRepository):
         )
 
         self._storage.setdefault(context_hash, []).append(record)
-        print("COLLECTION COUNT AFTER INSERT (InMemoryHistoryRepository):", self._collection.count())
 
 
 

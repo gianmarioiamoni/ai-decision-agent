@@ -5,7 +5,7 @@
 #
 
 from .base_formatter import BaseFormatter
-from domain.decision.historical_decision_evidence import HistoricalDecisionEvidence
+
 
 class HistoricalFormatter(BaseFormatter):
     # Format historical decisions into HTML cards.
@@ -33,9 +33,9 @@ class HistoricalFormatter(BaseFormatter):
         return "".join(cards)
     
     def _create_decision_card(self, decision: dict) -> str:
-        decision_text = decision.decision
-        confidence = decision.confidence
-        similarity = decision.similarity_score
+        decision_text = decision.get("decision", "N/A")
+        confidence = decision.get("confidence", 0.0)
+        similarity = decision.get("similarity", 0.0)
 
         return f"""
             <div class="decision-card">

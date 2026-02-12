@@ -32,8 +32,8 @@ class HistoryLookupNode:
             {
                 "context_hash": item.context_hash,
                 "decision": item.decision,
-                "confidence": item.confidence,
-                "similarity": item.similarity,   # ← ora è reale
+                "confidence": float(item.confidence),
+                "similarity": float(item.similarity or 0.0),   # ← ora è reale
             }
             for item in history
         ]

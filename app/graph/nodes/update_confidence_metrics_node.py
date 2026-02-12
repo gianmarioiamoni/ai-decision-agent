@@ -13,7 +13,7 @@ def update_confidence_metrics_node(state: DecisionState) -> DecisionState:
     weighted_confidence_boost = 1.0
 
     if raw_similar:
-        avg_similarity = sum(d.similarity for d in raw_similar if d.similarity) / len(raw_similar)
+        avg_similarity = sum(d.get("similarity", 0.0) for d in raw_similar if d.get("similarity", 0.0)) / len(raw_similar)
         weighted_confidence_boost = 1 + (avg_similarity * 0.2) 
 
     if confidence is None:
