@@ -8,7 +8,7 @@ from typing import List
 import hashlib
 from datetime import datetime, timezone
 
-from app.prompts.constants import SIMILARITY_THRESHOLD
+from app.prompts.constants import SIMILARITY_THRESHOLD, HISTORICAL_TOP_K
 
 
 # =========================
@@ -48,7 +48,7 @@ class HistoryRepository(ABC):
     def lookup_similar(
         self,
         query_text: str,
-        top_k: int = 3,
+        top_k: int = HISTORICAL_TOP_K,
     ) -> List[HistoricalDecision]:
         pass
 
@@ -153,13 +153,16 @@ class ChromaHistoryRepository(HistoryRepository):
     def lookup_similar(
         self,
         query_text: str,
-        top_k: int = 3,
+        top_k: int = HISTORICAL_TOP_K,
     ) -> List[HistoricalDecision]:
 
         results = self._collection.query(
             query_texts=[query_text],
             n_results=top_k,
         )
+
+        print("COLLECTION COUNT:", self._collection.count())
+        print("RAW QUERY RESULTS:", results)
 
         metadatas = results.get("metadatas", [[]])[0]
         distances = results.get("distances", [[]])[0]
