@@ -32,12 +32,10 @@ class HistoricalFormatter(BaseFormatter):
         
         return "".join(cards)
     
-    def _create_decision_card(self, decision: HistoricalDecisionEvidence) -> str:
+    def _create_decision_card(self, decision: dict) -> str:
         decision_text = decision.decision
         confidence = decision.confidence
-        rationale = decision.rationale
         similarity = decision.similarity_score
-        timestamp = decision.timestamp.strftime("%Y-%m-%d %H:%M") if decision.timestamp else "N/A"
 
         return f"""
             <div class="decision-card">
@@ -45,11 +43,6 @@ class HistoricalFormatter(BaseFormatter):
                 <p><strong>Outcome:</strong> {decision_text}</p>
                 <p><strong>Confidence:</strong> {confidence:.2f}</p>
                 <p><strong>Similarity:</strong> {similarity:.2f}</p>
-                <p><strong>Timestamp:</strong> {timestamp}</p>
-                <details>
-                    <summary>Rationale</summary>
-                    <pre>{rationale}</pre>
-                </details>
             </div>
         """
 

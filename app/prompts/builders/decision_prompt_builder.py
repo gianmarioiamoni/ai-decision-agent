@@ -88,7 +88,7 @@ IMPORTANT:
         if similar_decisions:
             similar_texts = ""
             for sim in similar_decisions:
-                similarity = sim.get("similarity_score") or 0.0
+                similarity = sim.get("similarity") or 0.0
                 if similarity >= SIMILARITY_THRESHOLD:
                     # NOTE:
                     # similarity_score is the canonical field.
@@ -140,7 +140,7 @@ If no authoritative context was provided, state "No specific organizational cont
         # Format with historical consistency check if similar decisions exist
         #if similar_decisions and any(sim.get("similarity", 0) >= 0.75 for sim in similar_decisions):
         if similar_decisions and any(
-            (sim.get("similarity_score") or 0.0) >= SIMILARITY_THRESHOLD
+            (sim.get("similarity") or 0.0) >= SIMILARITY_THRESHOLD
             for sim in similar_decisions
         ):
             system_prompt += """

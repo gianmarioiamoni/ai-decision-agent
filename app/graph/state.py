@@ -62,7 +62,7 @@ class DecisionState(TypedDict):
     # HISTORICAL (Phase 4)
     # ==================================================
 
-    similar_decisions: List[Dict[str, Any]]
+    similar_decisions: List[Dict[str, Any]]     # canonical structure
     historical_confidence_factor: Optional[float]
 
     # ==================================================
