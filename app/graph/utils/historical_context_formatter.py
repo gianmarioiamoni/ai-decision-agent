@@ -1,27 +1,19 @@
 # app/graph/utils/historical_context_formatter.py
 
-from typing import Iterable
-from domain.history.history_repository import HistoricalDecision
-
-
-def format_historical_context(
-    historical_decisions: Iterable[HistoricalDecision] | None,
-) -> str:
-    #
-    # Domain-level formatter for historical decisions.
-    # Used inside LangGraph nodes (analyzer).
-    #
-    if not historical_decisions:
+def format_historical_context(similar_decisions: list[dict]) -> str:
+    if not similar_decisions:
         return ""
 
-    lines = [
-        "Previous similar decisions (historical context):"
-    ]
+    lines = []
+    for d in similar_decisions:
+        decision_text = d.get("decision", "")
+        confidence = d.get("confidence", 0.0)
+        similarity = d.get("similarity", 0.0)
 
-    for item in historical_decisions:
         lines.append(
-            f"- Decision: {item.decision} "
-            f"(confidence={item.confidence:.2f})"
+            f"- Similarity {similarity:.2f} | Confidence {confidence:.2f}\n"
+            f"  {decision_text}\n"
         )
 
     return "\n".join(lines)
+
