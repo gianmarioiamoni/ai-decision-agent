@@ -33,6 +33,7 @@ class PersistHistoryNode:
         if context_hash is not None and decision is not None and confidence is not None:
             self._history_repository.persist_if_absent(
                 context_hash=context_hash,
+                user_query=state["user_query"],
                 decision=decision,
                 confidence=confidence,
             )

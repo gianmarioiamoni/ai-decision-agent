@@ -34,6 +34,7 @@ class HistoryRepository(ABC):
     def persist_if_absent(
         self,
         context_hash: str,
+        user_query: str,
         decision: str,
         confidence: float
     ) -> None:
@@ -114,6 +115,7 @@ class ChromaHistoryRepository(HistoryRepository):
     def persist_if_absent(
         self,
         context_hash: str,
+        user_query: str,
         decision: str,
         confidence: float
     ) -> None:
@@ -134,7 +136,7 @@ class ChromaHistoryRepository(HistoryRepository):
         
         self._collection.add(
             ids=[record_id],
-            documents=[decision],
+            documents=[user_query],
             metadatas=[{
                 "context_hash": context_hash,
                 "decision": decision,
@@ -155,26 +157,23 @@ class ChromaHistoryRepository(HistoryRepository):
             n_results=top_k,
         )
 
-        documents = results.get("documents", [[]])[0]
         metadatas = results.get("metadatas", [[]])[0]
         distances = results.get("distances", [[]])[0]
 
-        history: List[HistoricalDecision] = []
+        history = []
 
-        for doc, metadata, distance in zip(documents, metadatas, distances):
+        for metadata, distance in zip(metadatas, distances):
             similarity = 1 - distance  # cosine distance → similarity
 
             history.append(
                 HistoricalDecision(
                     context_hash=metadata["context_hash"],
-                    decision=doc,
+                    decision=metadata["decision"],
                     confidence=float(metadata["confidence"]),
-                    similarity=similarity,
+                    similarity=float(similarity),
                 )
             )
 
-
-        print("LOOKUP COLLECTION COUNT:", self._collection.count())
-
         return history
+
     

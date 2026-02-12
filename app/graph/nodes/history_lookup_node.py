@@ -7,7 +7,7 @@ from infrastructure.logging.node_logger import log_node
 
 class HistoryLookupNode:
     #
-    # Retrieves similar historical decisions based on context hash.
+    # Retrieves semantically similar historical decisions.
     # Owner of `similar_decisions`.
     #
 
@@ -16,20 +16,24 @@ class HistoryLookupNode:
 
     @log_node("history_lookup")
     def __call__(self, state: DecisionState) -> DecisionState:
-        context_hash = state.get("context_hash")
 
-        if not context_hash:
+        query_text = state.get("user_query")
+
+        if not query_text:
             state["similar_decisions"] = []
             return state
 
-        history = self._history_repository.lookup(context_hash)
+        history = self._history_repository.lookup_similar(
+            query_text=query_text,
+            top_k=3,
+        )
 
         state["similar_decisions"] = [
             {
                 "context_hash": item.context_hash,
                 "decision": item.decision,
                 "confidence": item.confidence,
-                "similarity": 1.0,  # exact hash match
+                "similarity": item.similarity,   # ← ora è reale
             }
             for item in history
         ]
@@ -37,3 +41,4 @@ class HistoryLookupNode:
         print("SIMILAR DECISIONS:", state["similar_decisions"])
 
         return state
+

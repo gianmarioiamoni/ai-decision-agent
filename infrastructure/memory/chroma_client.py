@@ -18,7 +18,7 @@ def get_chroma_collection() -> Collection:
         )
     )
 
-    embedding_function = embedding_functions.DefaultEmbeddingFunction()
+    embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
 
     return client.get_or_create_collection(
         name="historical_decisions_v2",
