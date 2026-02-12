@@ -69,7 +69,7 @@ class HistoricalWriter:
             "timestamp": (
                 timestamp.isoformat()
                 if timestamp is not None
-                else datetime.utcnow().isoformat()
+                else datetime.now(datetime.timezone.utc).isoformat()
             ),
             "context_type": "historical",
         }

@@ -28,7 +28,6 @@ class PersistHistoryNode:
         context_hash = state.get("context_hash")
         decision = state.get("decision")
         confidence = state.get("confidence_final")
-        timestamp = datetime.utcnow().isoformat() 
 
         # -------------------------------------------
         # Domain guard: persistence may be skipped
