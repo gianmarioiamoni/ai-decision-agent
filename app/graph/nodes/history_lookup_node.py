@@ -1,8 +1,10 @@
 # app/graph/nodes/history_lookup_node.py
 
 from app.graph.state import DecisionState
+from app.prompts.constants import HISTORICAL_TOP_K
 from domain.history.history_repository import HistoryRepository
 from infrastructure.logging.node_logger import log_node
+
 
 
 class HistoryLookupNode:
@@ -25,7 +27,7 @@ class HistoryLookupNode:
 
         history = self._history_repository.lookup_similar(
             query_text=query_text,
-            top_k=3,
+            top_k=HISTORICAL_TOP_K,
         )
 
         state["similar_decisions"] = [
@@ -33,7 +35,8 @@ class HistoryLookupNode:
                 "context_hash": item.context_hash,
                 "decision": item.decision,
                 "confidence": float(item.confidence),
-                "similarity": float(item.similarity or 0.0),   # ← ora è reale
+                "similarity": float(item.similarity or 0.0),
+                "timestamp": item.timestamp
             }
             for item in history
         ]

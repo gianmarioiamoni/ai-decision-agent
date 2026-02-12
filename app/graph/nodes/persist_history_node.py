@@ -1,5 +1,7 @@
 # app/graph/nodes/persist_history_node.py
 
+import datetime
+
 from domain.history.history_repository import HistoryRepository
 from app.graph.state import DecisionState
 
@@ -26,6 +28,7 @@ class PersistHistoryNode:
         context_hash = state.get("context_hash")
         decision = state.get("decision")
         confidence = state.get("confidence_final")
+        timestamp = datetime.utcnow().isoformat() 
 
         # -------------------------------------------
         # Domain guard: persistence may be skipped

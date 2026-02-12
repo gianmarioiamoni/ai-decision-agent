@@ -6,6 +6,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 import hashlib
+from datetime import datetime
+
+from app.prompts.constants import SIMILARITY_THRESHOLD
 
 
 # =========================
@@ -18,6 +21,7 @@ class HistoricalDecision:
     decision: str
     confidence: float
     similarity: float | None = None
+    timestamp: datetime | None = None
 
 
 # =========================
@@ -139,7 +143,8 @@ class ChromaHistoryRepository(HistoryRepository):
             metadatas=[{
                 "context_hash": context_hash,
                 "decision": decision,
-                "confidence": confidence
+                "confidence": confidence,
+                "timestamp": datetime.now(datetime.timezone.utc).isoformat()
             }]
         )    
         print("COLLECTION COUNT AFTER INSERT (ChromaHistoryRepository):", self._collection.count())
@@ -164,14 +169,25 @@ class ChromaHistoryRepository(HistoryRepository):
         for metadata, distance in zip(metadatas, distances):
             similarity = 1 - distance  # cosine distance → similarity
 
+            if similarity < SIMILARITY_THRESHOLD:
+                continue
+                
+            timestamp = None
+            if metadata.get("timestamp"):
+                timestamp = datetime.fromisoformat(metadata["timestamp"])
+                
             history.append(
                 HistoricalDecision(
                     context_hash=metadata["context_hash"],
                     decision=metadata["decision"],
                     confidence=float(metadata["confidence"]),
                     similarity=float(similarity),
+                    timestamp=timestamp
                 )
             )
+
+        # sort for similarity DESC
+        history.sort(key=lambda x: x.similarity or 0, reverse=True)
 
         return history
 

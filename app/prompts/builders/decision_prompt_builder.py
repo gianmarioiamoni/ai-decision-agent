@@ -91,7 +91,7 @@ IMPORTANT:
                 similarity = sim.get("similarity") or 0.0
                 if similarity >= SIMILARITY_THRESHOLD:
                     # NOTE:
-                    # similarity_score is the canonical field.
+                    # similarity is the canonical field.
                     # Legacy inputs may not provide it → default to 0.0
                     similar_texts += f"- Decision #{sim['decision_id']} (similarity {sim['similarity']:.2f}): {sim['content'][:200]}...\n"
             
