@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.prompts.constants import SIMILARITY_THRESHOLD
 
@@ -144,7 +144,7 @@ class ChromaHistoryRepository(HistoryRepository):
                 "context_hash": context_hash,
                 "decision": decision,
                 "confidence": confidence,
-                "timestamp": datetime.now(datetime.timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }]
         )    
         print("COLLECTION COUNT AFTER INSERT (ChromaHistoryRepository):", self._collection.count())

@@ -1,7 +1,7 @@
 # infrastructure/memory/historical_writer.py
 
 from typing import TYPE_CHECKING
-from datetime import datetime
+from datetime import datetime, timezone
 
 if TYPE_CHECKING:
     from chromadb.api.models.Collection import Collection
@@ -69,7 +69,7 @@ class HistoricalWriter:
             "timestamp": (
                 timestamp.isoformat()
                 if timestamp is not None
-                else datetime.now(datetime.timezone.utc).isoformat()
+                else datetime.now(timezone.utc).isoformat()
             ),
             "context_type": "historical",
         }
