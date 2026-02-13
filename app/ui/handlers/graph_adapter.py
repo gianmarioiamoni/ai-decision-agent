@@ -47,6 +47,7 @@ def _error_output(message: str) -> UIOutputs:
         messages=[],
         phase_badge=message,
         progress_bar=render_progress_bar("0%", "#ef4444"),
+        token_status_badge="",
         report_preview="",
         report_file=None,
         historical_html="",
@@ -100,6 +101,7 @@ def run_graph_streaming(question: str, rag_files=None):
                 messages=[],
                 phase_badge=phase_badge,
                 progress_bar=progress_html,
+                token_status_badge="",
                 report_preview="",
                 report_file=None,
                 historical_html="",
@@ -121,7 +123,6 @@ def run_graph_streaming(question: str, rag_files=None):
         token_status_badge = render_token_status_badge(token_status)
 
         assembler = OutputAssembler()
-
         (
             plan,
             analysis,

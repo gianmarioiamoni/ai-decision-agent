@@ -20,6 +20,7 @@ class UIOutputs(NamedTuple):
     messages: List
     phase_badge: str
     progress_bar: str
+    token_status_badge: str
     report_preview: str
     report_file: Optional[str]
     historical_html: str
@@ -35,6 +36,7 @@ class UIOutputs(NamedTuple):
             self.messages,
             self.phase_badge,
             self.progress_bar,
+            self.token_status_badge,
             self.report_preview,
             self.report_file,
             self.historical_html,
