@@ -95,7 +95,6 @@ def launch_real_ui():
             </style>
         """)
 
-
         create_header(TITLE_COLOR, SUBTITLE_COLOR)
 
         (
@@ -112,7 +111,7 @@ def launch_real_ui():
 
         gr.Markdown("---")
 
-        # phase badge and progress bar 
+        # phase badge and progress bar
         phase_badge = gr.Markdown(
             value = "⏳ Waiting for input…",
             elem_id="phase_badge"
@@ -120,7 +119,12 @@ def launch_real_ui():
         progress_bar = gr.HTML(
             value="",
             elem_id="progress_bar"
-        ) 
+        )
+
+        token_status_badge = gr.HTML(
+            value="", 
+            elem_id="token_status_badge"
+        )
 
         with gr.Tabs():
             with gr.Tab("📊 Planning & Analysis"):
@@ -186,6 +190,7 @@ def launch_real_ui():
                 messages_output,
                 phase_badge,
                 progress_bar,
+                token_status_badge,
                 report_output,
                 report_download_output,
                 historical_output,
@@ -204,6 +209,7 @@ def launch_real_ui():
                 messages_output,
                 phase_badge,
                 progress_bar,
+                token_status_badge,
                 report_output,
                 report_download_output,
                 historical_output,

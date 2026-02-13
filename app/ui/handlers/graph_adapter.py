@@ -12,29 +12,18 @@ from app.graph.state import DecisionState
 from app.graph.state_validator import StateValidator
 
 from app.ui.handlers.formatters.output_assembler import OutputAssembler
+from app.ui.handlers.html.progress_bar import render_progress_bar
+from app.ui.handlers.html.tokens_status_badge import render_token_status_badge
 from app.ui.components.output_messages import messages_to_chatbot
 from app.ui.utils.markdown_utils import md_to_plain_text
 from app.ui.contracts.ui_outputs import UIOutputs
 
+from infrastructure.cost.token_budget_manager import TokenBudgetManager
+
+
 GRAPH = build_graph()
 
 
-
-# ==============================================================================
-# Progress bar renderer
-# ==============================================================================
-
-def render_progress_bar(width: str, color: str) -> str:
-    return f"""
-    <div style="width:100%; background:#e5e7eb; border-radius:8px; overflow:hidden;">
-      <div style="
-        width:{width};
-        height:12px;
-        background:{color};
-        transition: width 0.4s ease, background-color 0.4s ease;
-      "></div>
-    </div>
-    """
 
 
 PHASES = {
@@ -127,6 +116,9 @@ def run_graph_streaming(question: str, rag_files=None):
         # FINAL ASSEMBLY
         # --------------------------------------------------
         last_state = StateValidator.normalize(last_state)
+        
+        token_status = TokenBudgetManager.get_status(session_id)
+        token_status_badge = render_token_status_badge(token_status)
 
         assembler = OutputAssembler()
 
@@ -152,6 +144,7 @@ def run_graph_streaming(question: str, rag_files=None):
             ),
             phase_badge=PHASES["done"][0],
             progress_bar=render_progress_bar("100%", "#22c55e"),
+            token_status_badge=token_status_badge,
             report_preview=report_preview,
             report_file=report_file_path,
             historical_html=historical_html,

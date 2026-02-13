@@ -6,6 +6,11 @@ from datetime import datetime
 from threading import Lock
 
 
+from app.constants import (
+    DAILY_LIMIT,
+    SESSION_LIMIT,
+)
+
 class TokenBudgetExceeded(Exception):
     pass
 
@@ -14,9 +19,8 @@ class TokenBudgetManager:
     #
     # Simple file-based token tracking for demo protection.
     #
-
-    DAILY_LIMIT = 120_000
-    SESSION_LIMIT = 3_000
+    daily_limit = DAILY_LIMIT
+    session_limit = SESSION_LIMIT
 
     _lock = Lock()
     _file_path = "token_budget.json"
@@ -50,12 +54,12 @@ class TokenBudgetManager:
                 data = {"date": today, "daily_total": 0, "sessions": {}}
 
             # global check
-            if data["daily_total"] + tokens > cls.DAILY_LIMIT:
+            if data["daily_total"] + tokens > cls.daily_limit:
                 raise TokenBudgetExceeded("Daily public quota reached.")
 
             # session check
             session_tokens = data["sessions"].get(session_id, 0)
-            if session_tokens + tokens > cls.SESSION_LIMIT:
+            if session_tokens + tokens > cls.session_limit:
                 raise TokenBudgetExceeded("Session token limit reached.")
 
             # update
@@ -63,3 +67,26 @@ class TokenBudgetManager:
             data["sessions"][session_id] = session_tokens + tokens
 
             cls._save(data)
+
+    @classmethod
+    def get_status(cls, session_id: str):
+        with cls._lock:
+            data = cls._load()
+
+            today = datetime.utcnow().date().isoformat()
+
+            if data["date"] != today:
+                return {
+                    "daily_used": 0,
+                    "daily_limit": cls.daily_limit,
+                    "session_used": 0,
+                    "session_limit": cls.session_limit,
+                }
+
+            return {
+                "daily_used": data["daily_total"],
+                "daily_limit": cls.daily_limit,
+                "session_used": data["sessions"].get(session_id, 0),
+                "session_limit": cls.session_limit,
+            }
+
