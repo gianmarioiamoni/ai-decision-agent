@@ -1,7 +1,7 @@
 # app/graph/nodes/history_lookup_node.py
 
 from app.graph.state import DecisionState
-from app.prompts.constants import HISTORICAL_TOP_K
+from app.constants import HISTORICAL_TOP_K
 from domain.history.history_repository import HistoryRepository
 from infrastructure.logging.node_logger import log_node
 

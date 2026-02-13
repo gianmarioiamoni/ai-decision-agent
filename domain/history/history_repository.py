@@ -8,7 +8,10 @@ from typing import List
 import hashlib
 from datetime import datetime, timezone
 
-from app.prompts.constants import SIMILARITY_THRESHOLD, HISTORICAL_TOP_K
+from app.constants import (
+    SIMILARITY_THRESHOLD,
+    HISTORICAL_TOP_K,
+)
 
 
 # =========================

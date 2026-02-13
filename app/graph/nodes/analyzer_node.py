@@ -14,7 +14,7 @@ from app.graph.state import DecisionState
 from app.prompts.builders import AnalyzerIndependentPromptBuilder
 from app.graph.utils.historical_context_formatter import format_historical_context
 from app.llm.llm_provider import get_llm
-
+from app.constants import PUBLIC_DEMO_SESSION_ID
 from infrastructure.logging.node_logger import log_node
 
 
@@ -75,7 +75,7 @@ def analyzer_node(state: DecisionState) -> DecisionState:
     # LLM INVOCATION (NON-STREAMING)
     # ------------------------------------------------------------------
 
-    llm = get_llm()
+    llm = get_llm(state.get("session_id", PUBLIC_DEMO_SESSION_ID))
 
     response = llm.invoke(
         [

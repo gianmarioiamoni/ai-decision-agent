@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from app.prompts.policy import DECISION_SUPPORT_POLICY
 from app.prompts.schemas import PromptBundle
 from app.prompts.builders.base_prompt_builder import BasePromptBuilder
-from app.prompts.constants import SIMILARITY_THRESHOLD
+from app.constants import SIMILARITY_THRESHOLD
 
 
 class DecisionPromptBuilder(BasePromptBuilder):

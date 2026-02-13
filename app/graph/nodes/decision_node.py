@@ -10,9 +10,10 @@ from infrastructure.logging.node_logger import log_node
 from domain.decision.decision_summary import extract_decision_summary
 from domain.confidence.confidence_mapper import map_confidence_label
 
-from app.prompts.constants import (
+from app.constants import (
     DEFAULT_CONFIDENCE_NO_HISTORY,
     DEFAULT_CONFIDENCE_WITH_HISTORY,
+    PUBLIC_DEMO_SESSION_ID,
 )
 
 
@@ -78,7 +79,7 @@ def decision_node(
         similar_decisions=adapted_similar,
     )
 
-    llm = llm or get_llm()
+    llm = llm or get_llm(state.get("session_id", PUBLIC_DEMO_SESSION_ID))
 
     response = llm.invoke([bundle.system_message, bundle.human_message])
 

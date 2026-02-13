@@ -3,7 +3,8 @@
 # LangGraph streaming adapter – Enterprise Safe Version
 #
 
-from typing import NamedTuple, Optional, List
+from typing import Optional
+import uuid
 
 from app.graph.graph import build_graph
 from app.graph.state_factory import create_initial_state
@@ -16,6 +17,7 @@ from app.ui.utils.markdown_utils import md_to_plain_text
 from app.ui.contracts.ui_outputs import UIOutputs
 
 GRAPH = build_graph()
+
 
 
 # ==============================================================================
@@ -68,11 +70,14 @@ def _error_output(message: str) -> UIOutputs:
 # ==============================================================================
 
 def run_graph_streaming(question: str, rag_files=None):
+    session_id = str(uuid.uuid4())
 
     try:
         initial_state: DecisionState = create_initial_state(
             user_query=question
         )
+
+        initial_state["session_id"] = session_id
 
         last_state: Optional[DecisionState] = None
         phase_badge = "⏳ Waiting…"

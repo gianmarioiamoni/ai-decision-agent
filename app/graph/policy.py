@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Literal
 from app.graph.state import DecisionState
+from app.constants import MAX_ATTEMPTS
 
 DecisionOutcome = Literal[
     "retry",
@@ -15,7 +16,7 @@ DecisionOutcome = Literal[
 @dataclass(frozen=True)
 class DecisionPolicy:
     min_confidence: float = 0.70
-    max_attempts: int = 3
+    max_attempts: int = MAX_ATTEMPTS
 
     # ----------------------------------------------
     # Confidence evaluation (FINAL, NOT BASE)

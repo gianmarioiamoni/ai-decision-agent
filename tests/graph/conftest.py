@@ -10,6 +10,7 @@ from domain.history.history_repository import InMemoryHistoryRepository
 
 
 from tests.graph.fakes import FakeLLM
+from app.constants import PUBLIC_DEMO_SESSION_ID
 
 @pytest.fixture
 def graph():
@@ -44,7 +45,7 @@ def patch_llm(monkeypatch):
         """
     )
 
-    def fake_get_llm():
+    def fake_get_llm(session_id: str = PUBLIC_DEMO_SESSION_ID):
         return fake_llm
 
     # 🔥 PATCH NEL MODULO CHE LO USA

@@ -1,7 +1,7 @@
 # domain/metrics/confidence.py
 
 from typing import Iterable
-from app.prompts.constants import SIMILARITY_THRESHOLD
+from app.constants import SIMILARITY_THRESHOLD
 
 def compute_similarity_confidence_bonus(
     similarities: Iterable[float],

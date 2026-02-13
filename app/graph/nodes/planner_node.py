@@ -9,6 +9,7 @@ from langchain_core.messages import AIMessage
 from infrastructure.logging.node_logger import log_node
 
 from app.llm.llm_provider import get_llm
+from app.constants import PUBLIC_DEMO_SESSION_ID
 
 
 @log_node("planner")
@@ -66,7 +67,7 @@ def planner_node(state: DecisionState) -> DecisionState:
     # LLM INVOCATION
     # ------------------------------------------------------------------
 
-    llm = get_llm()
+    llm = get_llm(state.get("session_id", PUBLIC_DEMO_SESSION_ID))
     response = llm.invoke(
         [
             bundle.system_message,

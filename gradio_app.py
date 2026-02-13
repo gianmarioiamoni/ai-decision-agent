@@ -1,4 +1,4 @@
-# app.py
+# gradio_app.py
 # Entry point for Hugging Face Spaces deployment
 # This file is specifically for HF Spaces - local development uses app/ui/app_real.py
 
