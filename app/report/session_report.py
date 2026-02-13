@@ -12,6 +12,23 @@ from .template_loader import get_template_loader
 
 
 # ==========================================================
+# Safety helpers
+# ==========================================================
+
+
+def _safe_text(value) -> str:
+    """
+    Ensures the value is always a string.
+    Prevents 'expected string or bytes-like object, got list'.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, list):
+        return "\n".join(str(v) for v in value)
+    return str(value)
+
+
+# ==========================================================
 # Helpers
 # ==========================================================
 
@@ -24,11 +41,11 @@ def _format_messages_html(messages: list, inline_styles: bool) -> str:
 
     for msg in messages:
         role = getattr(msg, "type", "unknown")
-        content = getattr(msg, "content", "")
+        content = _safe_text(getattr(msg, "content", ""))
 
         if inline_styles:
             items.append(
-                f"<li style='margin-bottom: 6px; color:#000000;'>"
+                f"<li style='margin-bottom:6px; color:#000000;'>"
                 f"<strong>{role.capitalize()}:</strong> {content}"
                 f"</li>"
             )
@@ -60,6 +77,8 @@ def _describe_influence(score: float) -> str:
 
 
 def markdown_to_html(text: str, inline_styles: bool = False) -> str:
+
+    text = _safe_text(text)
 
     if not text:
         return ""
@@ -147,7 +166,7 @@ def markdown_to_html(text: str, inline_styles: bool = False) -> str:
 
 
 # ==========================================================
-# Context builder (UPDATED)
+# Context builder
 # ==========================================================
 
 
@@ -158,9 +177,6 @@ def _prepare_report_context(
 
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    # -----------------------------
-    # Historical Influence
-    # -----------------------------
     historical_influence = float(state.get("historical_influence", 0.0))
     historical_factor = float(state.get("historical_factor", 1.0))
     similar_decisions = state.get("similar_decisions", []) or []
@@ -169,14 +185,17 @@ def _prepare_report_context(
 
     return {
         "timestamp": timestamp,
-        "question": state["user_query"],
-        "plan": markdown_to_html(state["plan"] or "", inline_styles),
-        "analysis": markdown_to_html(state["analysis"] or "", inline_styles),
-        "decision": markdown_to_html(state["decision"] or "", inline_styles),
-        "justification": markdown_to_html(state["justification"] or "", inline_styles),
-        "confidence": _format_confidence(state["confidence_final"]),
-        "messages_html": _format_messages_html(state["messages"], inline_styles),
-        # 🔥 NEW FIELDS
+        "question": _safe_text(state.get("user_query")),
+        "plan": markdown_to_html(state.get("plan"), inline_styles),
+        "analysis": markdown_to_html(state.get("analysis"), inline_styles),
+        "decision": markdown_to_html(state.get("decision"), inline_styles),
+        "justification": markdown_to_html(state.get("justification"), inline_styles),
+        "confidence": _format_confidence(state.get("confidence_final")),
+        "messages_html": _format_messages_html(
+            state.get("messages", []),
+            inline_styles,
+        ),
+        # Historical influence
         "historical_influence": f"{historical_influence:.2f}",
         "historical_factor": f"{historical_factor:.2f}",
         "historical_decisions_count": len(similar_decisions),
