@@ -8,6 +8,7 @@ from typing import NamedTuple, Optional, List
 from app.graph.graph import build_graph
 from app.graph.state_factory import create_initial_state
 from app.graph.state import DecisionState
+from app.graph.state_validator import StateValidator
 
 from app.ui.handlers.formatters.output_assembler import OutputAssembler
 from app.ui.components.output_messages import messages_to_chatbot
@@ -82,6 +83,7 @@ def run_graph_streaming(question: str, rag_files=None):
         # --------------------------------------------------
         for state in GRAPH.stream(initial_state, stream_mode="values"):
 
+            state = StateValidator.normalize(state)
             last_state = state
 
             if state.get("analysis") and not state.get("plan"):
@@ -118,6 +120,8 @@ def run_graph_streaming(question: str, rag_files=None):
         # --------------------------------------------------
         # FINAL ASSEMBLY
         # --------------------------------------------------
+        last_state = StateValidator.normalize(last_state)
+
         assembler = OutputAssembler()
 
         (
