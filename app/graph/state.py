@@ -118,6 +118,7 @@ class DecisionState(TypedDict):
     # PERSISTENCE / FINALIZATION 
     # --------------------------------------------------
     history_persisted: bool
+    historical_influence: float | None
 
     # ==================================================
     # STREAMING

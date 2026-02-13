@@ -3,17 +3,17 @@
 # Generates an HTML report for a decision-making session
 # based on DecisionState.
 #
-# STEP 0.4.2:
-# - Report is now a pure view of DecisionState
-# - No dict-based state
-# - No orchestration or UI-only fields
-#
 
 from datetime import datetime, timezone
 import re
 
 from app.graph.state import DecisionState
 from .template_loader import get_template_loader
+
+
+# ==========================================================
+# Helpers
+# ==========================================================
 
 
 def _format_messages_html(messages: list, inline_styles: bool) -> str:
@@ -33,9 +33,7 @@ def _format_messages_html(messages: list, inline_styles: bool) -> str:
                 f"</li>"
             )
         else:
-            items.append(
-                f"<li><strong>{role.capitalize()}:</strong> {content}</li>"
-            )
+            items.append(f"<li><strong>{role.capitalize()}:</strong> {content}</li>")
 
     return "\n".join(items)
 
@@ -46,19 +44,29 @@ def _format_confidence(confidence: float | None) -> str:
     return f"{confidence:.2f} (scale: 0.0–1.0)"
 
 
+def _describe_influence(score: float) -> str:
+    if score >= 0.75:
+        return "Strong influence from previous decisions."
+    if score >= 0.5:
+        return "Moderate historical influence."
+    if score > 0.2:
+        return "Low historical influence."
+    return "No significant historical influence."
+
+
+# ==========================================================
+# Markdown → HTML
+# ==========================================================
+
+
 def markdown_to_html(text: str, inline_styles: bool = False) -> str:
-    # Convert basic Markdown formatting to HTML.
-    # Handles headers (###, ####), bold text, bullet lists and paragraphs.
-    # Gradio-safe when inline_styles=True.
 
     if not text:
         return ""
 
     color = "color:#000000;" if inline_styles else ""
 
-    # --------------------------------------------------
-    # HEADERS
-    # --------------------------------------------------
+    # Headers
     if inline_styles:
         text = re.sub(
             r"^####\s+(.+)$",
@@ -76,9 +84,7 @@ def markdown_to_html(text: str, inline_styles: bool = False) -> str:
         text = re.sub(r"^####\s+(.+)$", r"<h4>\1</h4>", text, flags=re.MULTILINE)
         text = re.sub(r"^###\s+(.+)$", r"<h3>\1</h3>", text, flags=re.MULTILINE)
 
-    # --------------------------------------------------
-    # BOLD
-    # --------------------------------------------------
+    # Bold
     if inline_styles:
         text = re.sub(
             r"\*\*(.+?)\*\*",
@@ -88,9 +94,7 @@ def markdown_to_html(text: str, inline_styles: bool = False) -> str:
     else:
         text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
 
-    # --------------------------------------------------
-    # BULLET POINTS
-    # --------------------------------------------------
+    # Bullet points
     if inline_styles:
         text = re.sub(
             r"^\s*[-*]\s+(.+)$",
@@ -106,9 +110,7 @@ def markdown_to_html(text: str, inline_styles: bool = False) -> str:
             flags=re.MULTILINE,
         )
 
-    # --------------------------------------------------
-    # WRAP LISTS
-    # --------------------------------------------------
+    # Wrap lists
     if inline_styles:
         text = re.sub(
             r"(<li.*?</li>\s*)+",
@@ -124,9 +126,7 @@ def markdown_to_html(text: str, inline_styles: bool = False) -> str:
             flags=re.DOTALL,
         )
 
-    # --------------------------------------------------
-    # PARAGRAPHS
-    # --------------------------------------------------
+    # Paragraphs
     paragraphs = text.split("\n\n")
     formatted = []
 
@@ -146,49 +146,56 @@ def markdown_to_html(text: str, inline_styles: bool = False) -> str:
     return "\n".join(formatted)
 
 
+# ==========================================================
+# Context builder (UPDATED)
+# ==========================================================
+
+
 def _prepare_report_context(
     state: DecisionState,
     inline_styles: bool,
 ) -> dict:
+
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    # -----------------------------
+    # Historical Influence
+    # -----------------------------
+    historical_influence = float(state.get("historical_influence", 0.0))
+    historical_factor = float(state.get("historical_factor", 1.0))
+    similar_decisions = state.get("similar_decisions", []) or []
+
+    influence_description = _describe_influence(historical_influence)
 
     return {
         "timestamp": timestamp,
         "question": state["user_query"],
-        "plan": markdown_to_html(
-            state["plan"] or "",
-            inline_styles=inline_styles,
-        ),
-        "analysis": markdown_to_html(
-            state["analysis"] or "",
-            inline_styles=inline_styles,
-        ),
-        "decision": markdown_to_html(
-            state["decision"] or "",
-            inline_styles=inline_styles,
-        ),
-        "justification": markdown_to_html(
-            state["justification"] or "",
-            inline_styles=inline_styles,
-        ),
+        "plan": markdown_to_html(state["plan"] or "", inline_styles),
+        "analysis": markdown_to_html(state["analysis"] or "", inline_styles),
+        "decision": markdown_to_html(state["decision"] or "", inline_styles),
+        "justification": markdown_to_html(state["justification"] or "", inline_styles),
         "confidence": _format_confidence(state["confidence_final"]),
-        "messages_html": _format_messages_html(
-            state["messages"],
-            inline_styles=inline_styles,
-        ),
+        "messages_html": _format_messages_html(state["messages"], inline_styles),
+        # 🔥 NEW FIELDS
+        "historical_influence": f"{historical_influence:.2f}",
+        "historical_factor": f"{historical_factor:.2f}",
+        "historical_decisions_count": len(similar_decisions),
+        "historical_influence_description": influence_description,
     }
 
 
+# ==========================================================
+# Public API
+# ==========================================================
+
+
 def generate_session_report(state: DecisionState) -> str:
-    # Generate full HTML report for download.
     loader = get_template_loader()
     context = _prepare_report_context(state, inline_styles=False)
     return loader.render("report_full.html", context)
 
 
 def generate_preview_html(state: DecisionState) -> str:
-    # Generate HTML preview for Gradio (inline styles).
     loader = get_template_loader()
     context = _prepare_report_context(state, inline_styles=True)
     return loader.render("report_preview.html", context)
-

@@ -5,7 +5,6 @@ import gradio as gr
 import tempfile
 
 from datetime import datetime
-import re
 
 def build_report_filename(ext: str) -> str:
     date = datetime.now().strftime("%Y-%m-%d")
@@ -35,8 +34,6 @@ def create_output_report():
     )
 
     # File download component 
-    # Build filename dynamically based on question and timestamp
-    filename = build_report_filename("html")
     report_download_component = gr.File(
         value=[],  # None for single File download (no file initially)
         label="report_download_component",  # No internal label - using external section title with icon
