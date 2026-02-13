@@ -83,6 +83,7 @@ def run_graph_streaming(question: str, rag_files=None):
         # --------------------------------------------------
         for state in GRAPH.stream(initial_state, stream_mode="values"):
 
+            # apply centralized state normalization layer
             state = StateValidator.normalize(state)
             last_state = state
 
