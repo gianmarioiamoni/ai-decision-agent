@@ -1,5 +1,5 @@
 ---
-title: AI Decision Support Agent
+title: AI Decision Agent
 emoji: 🧠
 colorFrom: purple
 colorTo: indigo
@@ -11,699 +11,343 @@ pinned: false
 license: mit
 ---
 
-# AI Decision Support Agent
+# AI Decision Agent
 
-> **Enterprise-Grade Decision Intelligence System**  
-> Not a chatbot. Not a Q&A system. A decision-making engine.
+> **Enterprise-Grade AI Decision Support System**  
+> Not a chatbot. A structured decision engine with governance.
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-latest-green.svg)](https://langchain-ai.github.io/langgraph/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
----
-
-## 🎯 What This Is
-
-An **Enterprise Decision Support Agent** that doesn't just answer questions—it **makes decisions** with:
-
-- **Context-Authoritative Reasoning**: Organizational reality overrides general advice
-- **Parallel Cognitive Processing**: Independent planner and analyzer execute simultaneously
-- **Real-Time Streaming**: Token-by-token output generation for both analysis streams
-- **Explicit Decision-Making**: Can say **NO** when proposals are incompatible with reality
-- **Full Auditability**: Every decision is traceable with confidence scores and evidence
-
-### Not a Chatbot
-
-This system is designed for **enterprise decision-making**, where:
-- Correctness > Fluency
-- Alignment > Creativity
-- Explicit Refusal > Plausible Answers
-- Auditability > Conversational Flow
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-state_machine-green.svg)](https://langchain-ai.github.io/langgraph/)
+[![Deployed on HF Spaces](https://img.shields.io/badge/Deployed-HuggingFace-yellow.svg)](https://huggingface.co/spaces)
 
 ---
 
-## 🚀 Key Features
+## 🚀 Live Deployment
 
-### 1. Parallel Execution Architecture
+This application is deployed on **Hugging Face Spaces** using Gradio.
 
-**Revolutionary Approach**: Planner and Analyzer execute **independently and simultaneously**
+It runs in a **public cloud environment** with:
 
-```
-Traditional (Sequential):           Parallel (This System):
-├─ Planner: 8s                     ├─ Planner:  8s ┐
-├─ Analyzer: 8s ⬅️ Waits           │  Analyzer: 8s ┘ ⬅️ Simultaneous!
-└─ Total: 16s                      └─ Total: 8s (-50%)
-```
+- Controlled token budget
+- Persistent vector storage
+- Abuse protection mechanisms
+- Cost governance safeguards
 
-**Benefits**:
-- **50% latency reduction**: LLM calls execute in parallel
-- **No confirmation bias**: Analyzer evaluates independently from planner
-- **Enterprise scalability**: Easy to add more parallel agents (Risk, Compliance, Cost)
-
-**Technology**: LangChain `RunnableParallel` with streaming support
-
-### 2. Real-Time Streaming Output
-
-Both planner and analyzer **stream token-by-token** in parallel:
-
-```
-┌─────────────────────┬─────────────────────┐
-│ 📋 Plan (streaming) │ 🔍 Analysis (streaming) │
-├─────────────────────┼─────────────────────┤
-│ Step 1: Eva...      │ ### Pros            │
-│ [updates in real-time] │ - Long-term scala...│
-│                     │ [updates in real-time] │
-└─────────────────────┴─────────────────────┘
-    ↑ Both update simultaneously! ↑
-```
-
-**Implementation**: Threading-based parallel streaming with queue synchronization
-
-### 3. Multi-Format Report Export
-
-Export session reports in multiple formats:
-- **HTML**: Full formatting with inline styles
-- **PDF**: Print-ready document (via WeasyPrint)
-- **DOCX**: Microsoft Word format for editing
-
-### 4. Hybrid RAG System
-
-**Two-Level Context Integration**:
-
-1. **Authoritative Context** (User-Uploaded Documents)
-   - Treated as organizational truth
-   - Overrides general best practices
-   - Explicitly cited in decisions
-
-2. **Historical Context** (Past Decisions)
-   - Retrieved from ChromaDB vectorstore
-   - Supportive evidence, not authoritative
-   - Enables learning from past decisions
-
-### 5. Decision Intelligence Pipeline
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ 1. INTAKE → Normalize and validate question            │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│ 2. RAG → Load authoritative organizational context      │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│ 3. RETRIEVER → Fetch similar historical decisions       │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│ 4. PARALLEL EXECUTION (KEY INNOVATION!)                 │
-│                                                          │
-│    ┌─► PLANNER: Step-by-step evaluation plan           │
-│    │                                                     │
-│  ┌─┴──────────────────────────────┐                    │
-│  │  Both execute simultaneously!  │                    │
-│  └─┬──────────────────────────────┘                    │
-│    │                                                     │
-│    └─► ANALYZER: Independent evidence-based analysis    │
-│                                                          │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│ 5. DECISION → Merge results + generate final decision   │
-│    - Confidence score (0.0-1.0)                         │
-│    - Explicit Yes/No/Conditional                        │
-│    - Contextual factors                                 │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│ 6. SUMMARIZE → Generate auditable session report        │
-└─────────────────────────────────────────────────────────┘
-```
+This is not a notebook demo — it is a cloud-deployed AI system with runtime constraints handled explicitly.
 
 ---
 
-## 🏗️ Technical Architecture
+# 🎯 What This Project Demonstrates
 
-### Technology Stack
+This project showcases the design and implementation of a **structured AI decision-making system** built for enterprise-like environments.
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Graph Orchestration** | LangGraph | State machine for decision pipeline |
-| **LLM Integration** | LangChain + OpenAI GPT-4o-mini | Reasoning and generation |
-| **Parallel Execution** | RunnableParallel + Threading | Simultaneous cognitive processing |
-| **Vector Store** | ChromaDB | Historical decision retrieval |
-| **Embeddings** | OpenAI text-embedding-ada-002 | Semantic search |
-| **Persistence** | SQLite | Thread-level state checkpointing |
-| **UI Framework** | Gradio | Web interface |
-| **Report Generation** | HTML Templates + WeasyPrint/python-docx | Multi-format export |
+Instead of wrapping a single LLM prompt, it implements:
 
-### Core Dependencies
+- Multi-stage orchestration
+- Authoritative RAG integration
+- Historical decision modeling
+- Deterministic confidence scoring
+- Cost governance and token enforcement
+- Cloud-ready architecture
 
-```python
-# LLM & Orchestration
-langchain>=0.3.13
-langgraph>=0.3.1
-langchain-openai>=0.3.0
-langchain-core>=0.3.20
+The core idea:
 
-# Vector Store & Embeddings
-langchain-chroma>=0.2.0
-chromadb>=0.6.0
-
-# UI & Export
-gradio>=5.9.1
-weasyprint>=62.0  # PDF export
-python-docx>=1.0.0  # DOCX export
-
-# Environment
-python-dotenv>=1.0.0
-```
-
-### Project Structure
-
-```
-ai-decision-agent/
-├── app/
-│   ├── graph/                    # LangGraph decision pipeline
-│   │   ├── state.py             # DecisionState definition
-│   │   ├── graph.py             # Graph compilation
-│   │   └── nodes/               # Pipeline nodes
-│   │       ├── intake.py        # Question normalization
-│   │       ├── planner_streaming.py  # Plan generation (streaming)
-│   │       ├── rag_node.py      # Authoritative context loading
-│   │       ├── retriever.py     # Historical context retrieval
-│   │       ├── analyzer_independent_streaming.py  # Independent analysis
-│   │       ├── decision.py      # Final decision with confidence
-│   │       ├── router.py        # Confidence-based routing
-│   │       └── summarize.py     # Report generation
-│   │
-│   ├── prompts/                 # Prompt engineering (SRP)
-│   │   ├── builders/            # Prompt builders for each node
-│   │   │   ├── planner_prompt_builder.py
-│   │   │   ├── analyzer_independent_prompt_builder.py
-│   │   │   └── decision_prompt_builder.py
-│   │   ├── templates/           # Prompt templates
-│   │   └── policy/              # Decision support policies
-│   │
-│   ├── rag/                     # RAG file management
-│   │   ├── file_manager.py      # Document loading & persistence
-│   │   └── file_processor.py    # Document processing
-│   │
-│   ├── report/                  # Report generation
-│   │   ├── session_report.py    # HTML report generator
-│   │   ├── pdf_converter.py     # PDF export
-│   │   ├── docx_converter.py    # DOCX export
-│   │   └── templates/           # HTML templates
-│   │
-│   ├── ui/                      # Gradio interface
-│   │   ├── app_real.py          # Main UI application
-│   │   ├── components/          # UI components (modular)
-│   │   └── handlers/            # Event handlers (SRP)
-│   │       ├── graph_handler_parallel.py  # Parallel execution
-│   │       ├── formatters/      # Output formatting
-│   │       └── rag/             # RAG operation handlers
-│   │
-│   └── memory/                  # Long-term memory (ChromaDB)
-│
-├── data/
-│   └── uploaded_rag/            # User-uploaded context documents
-│
-├── chroma_memory/               # ChromaDB persistent storage
-├── tests/                       # Unit tests
-├── scripts/                     # Utility scripts
-└── requirements.txt             # Dependencies
-```
+> **AI should support decisions with structure, traceability, and governance — not just generate answers.**
 
 ---
 
-## 📦 Installation & Setup
+# 🏆 Key Differentiators
 
-### Prerequisites
+This project stands out because it is:
 
-- Python 3.11+
-- Conda (recommended) or pip
-- OpenAI API key
+- Not a chat wrapper
+- Not a single prompt chain
+- Not a hackathon demo
 
-### Step 1: Clone Repository
+It is:
 
-```bash
-git clone https://github.com/yourusername/ai-decision-agent.git
-cd ai-decision-agent
-```
-
-### Step 2: Create Environment
-
-**Using Conda (Recommended)**:
-```bash
-conda create -n ai_decision_agent python=3.11
-conda activate ai_decision_agent
-```
-
-**Using venv**:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-### Step 3: Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-**For PDF Export** (optional):
-```bash
-# macOS
-brew install cairo pango gdk-pixbuf libffi
-
-# Ubuntu/Debian
-sudo apt-get install libpango-1.0-0 libpangocairo-1.0-0
-
-# Then install Python package
-pip install weasyprint
-```
-
-### Step 4: Configure Environment
-
-Create `.env` file:
-```bash
-# Required
-OPENAI_API_KEY=sk-your-api-key-here
-
-# Optional (defaults shown)
-GRADIO_SERVER_PORT=7860
-CHROMA_PERSIST_DIR=chroma_memory
-```
-
-### Step 5: Run Application
-
-```bash
-./run_app.sh
-```
-
-Or manually:
-```bash
-source /opt/anaconda3/etc/profile.d/conda.sh
-conda activate ai_decision_agent
-python -m app.ui.app_real
-```
-
-**Access UI**: http://localhost:7860
+- A structured AI decision engine
+- Built with governance in mind
+- Designed with cost control
+- Deployed publicly
+- Architected for enterprise environments
+- Confidence-aware and history-aware
 
 ---
 
-## 🎮 Usage Guide
+# 📌 Example Use Cases
 
-### Basic Usage
-
-1. **Ask a Question**
-   ```
-   "Should we migrate to microservices architecture?"
-   ```
-
-2. **Upload Context Documents** (Optional but Recommended)
-   - Click "Optional Context Documents" accordion
-   - Upload relevant documents (PDF, TXT, DOCX, MD)
-   - These become **authoritative organizational reality**
-
-3. **Submit & Wait**
-   - System generates plan and analysis **in parallel**
-   - Both outputs stream in real-time
-   - Final decision with confidence score
-
-4. **Export Report**
-   - Choose format: HTML / PDF / DOCX
-   - Download comprehensive session report
-
-### Example Scenarios
-
-#### Scenario 1: Technology Adoption
-
-**Question**: "Should we adopt Kubernetes for our infrastructure?"
-
-**Context Document** (team_info.txt):
-```
-Team: 5 developers (2 backend, 3 frontend)
-Current stack: Django monolith on AWS EC2
-No Docker/K8s experience
-Timeline: 3 months for MVP
-Budget: Limited
-```
-
-**Expected Output**:
-- **Plan**: Step-by-step evaluation of K8s adoption
-- **Analysis**: 
-  - Pros: Long-term scalability, industry standard
-  - Cons: Steep learning curve, insufficient timeline, team lacks experience
-- **Decision**: **NO** - Defer adoption
-- **Confidence**: 0.85
-- **Reasoning**: Team constraints and timeline incompatible with K8s complexity
-
-#### Scenario 2: General Evaluation (No Context)
-
-**Question**: "What are the pros and cons of GraphQL?"
-
-**Output**:
-- **Plan**: Evaluate benefits and trade-offs
-- **Analysis**: Generic pros/cons based on general knowledge
-- **Decision**: Conditional - depends on use case
-- **Confidence**: 0.70
-- **Note**: "No specific organizational context provided"
+- Technology adoption decisions
+- Architecture trade-off analysis
+- Risk-aware planning
+- Policy-constrained decision support
+- Organizational governance scenarios
 
 ---
 
-## 🧠 Enterprise Decision Principles
+# 🏗 Technology Stack
 
-### 1. Context as Authority
+- **Python 3.11**
+- **LangGraph** – State-machine orchestration
+- **LangChain** – LLM abstraction
+- **OpenAI models**
+- **ChromaDB** – Vector storage
+- **Gradio** – UI layer
+- **WeasyPrint / python-docx** – Report export
+- **Pytest** – Test suite
 
-Organizational context **overrides** general best practices:
-
-```python
-if organizational_context:
-    decision = evaluate_based_on_context(context)
-else:
-    decision = general_recommendation()
-    confidence *= 0.7  # Lower confidence without context
-```
-
-### 2. Independent Cognitive Separation
-
-**Key Insight**: Analyzer evaluates independently from planner
-
-**Why?**
-- Prevents confirmation bias
-- Enables critical evaluation
-- Allows disagreement with plan
-
-**Traditional (Biased)**:
-```
-1. Planner: "Step 1: Adopt Kubernetes"
-2. Analyzer: [reads plan] "Following the plan, K8s is ideal..."
-   ⚠️ Rubber-stamping the plan!
-```
-
-**This System (Independent)**:
-```
-1. Planner:  "Step 1: Adopt Kubernetes" ┐
-2. Analyzer: [evaluates context] "Team lacks K8s skills..." ┘
-   ✅ Independent evaluation!
-```
-
-### 3. Explicit Refusal as First-Class Feature
-
-System can explicitly **reject** proposals:
-
-- Decision: **NO**
-- Reasoning: Evidence-based
-- Confidence: High when refusal is clear
-
-**Example**:
-```
-Decision: NO
-Reasoning: Proposed technology requires 6-month learning curve, 
-           but project timeline is 3 months. Team lacks expertise 
-           and budget is insufficient for external consultants.
-Confidence: 0.90
-```
-
-### 4. Confidence Scoring
-
-Every decision includes confidence (0.0-1.0):
-
-| Range | Meaning | Action |
-|-------|---------|--------|
-| 0.0-0.6 | Low confidence | Retry or escalate |
-| 0.6-0.8 | Moderate confidence | Conditional approval |
-| 0.8-1.0 | High confidence | Clear decision |
-
-Confidence factors:
-- Context quality
-- Historical precedents
-- Evidence strength
-- Proposal-context alignment
+The system is fully modular and testable, with unit and graph-level tests.
 
 ---
 
-## 🔬 Advanced Features
+# ☁️ Deployment: Hugging Face Spaces
 
-### Parallel Agent Architecture
+Deployed using:
 
-**Current**: Planner + Analyzer in parallel
+- `requirements-hf.txt`
+- `runtime.txt`
+- Gradio entrypoint (`gradio_app.py`)
+- Persistent vectorstore handling
+- Filesystem constraints awareness
 
-**Future Extensions** (scalable architecture):
-```python
-parallel_stage = RunnableParallel(
-    plan=PlannerRunnable,
-    analysis=AnalyzerRunnable,
-    risk=RiskAssessmentRunnable,      # ⬅️ Easy to add!
-    compliance=ComplianceRunnable,    # ⬅️ Easy to add!
-    cost=CostImpactRunnable,          # ⬅️ Easy to add!
-    security=SecurityAuditRunnable    # ⬅️ Easy to add!
-)
-```
+Public deployment required:
 
-All agents execute **simultaneously**, time = max(agent_times)
+- Budget enforcement
+- Abuse control
+- Error handling
+- Logging per node
+- Deterministic execution separation
 
-### Adaptive Retry Logic
-
-Low confidence triggers intelligent retry:
-
-```python
-if confidence < THRESHOLD:
-    # Retry with more context
-    retriever_node()  # Fetch more historical decisions
-    analyzer_node()   # Re-analyze with enriched context
-    decision_node()   # Re-decide
-```
-
-**Max attempts**: 3 (configurable)
-
-### Long-Term Memory
-
-ChromaDB stores all decisions:
-- Semantic similarity search
-- Historical pattern recognition
-- Cross-project learning
-
-**Future**: Decision analytics and trend identification
+This reflects DevOps and runtime awareness beyond local development.
 
 ---
 
-## 📊 Performance Metrics
+# 🧠 Core Architecture
 
-### Latency Comparison
+## 1️⃣ Multi-Stage Decision Workflow (LangGraph)
 
-| Operation | Sequential | Parallel | Improvement |
-|-----------|-----------|----------|-------------|
-| **Planner** | 8s | 8s | - |
-| **Analyzer** | 8s | 0s* | -100% |
-| **Other** | 6s | 6s | - |
-| **Total** | 22s | 14s | **-36%** |
+The system is built as a **deterministic state machine** using LangGraph.
 
-*Analyzer runs simultaneously with Planner
+High-level pipeline:
 
-### Real-World Benchmarks
+Intake
+↓
+RAG Retrieval (Authoritative Context)
+↓
+Historical Memory Retrieval
+↓
+Analyzer (independent reasoning)
+↓
+Planner (structured evaluation)
+↓
+Decision Node
+↓
+Confidence Modeling
+↓
+Session Report
 
-- **Time to first output**: 0.5s (vs 8s sequential)
-- **Streaming latency**: 50ms refresh rate
-- **Report generation**: <1s
-- **PDF export**: 2-3s (depends on content size)
 
----
+Key architectural characteristics:
 
-## 🧪 Testing
+- Explicit node orchestration
+- Clear ownership of state mutation
+- Deterministic execution (streaming separated from logic)
+- Retry logic based on confidence thresholds
+- Fallback handling
 
-### Run Tests
-
-```bash
-# All tests
-pytest
-
-# Specific test file
-pytest tests/test_pdf_export.py -v
-
-# With coverage
-pytest --cov=app tests/
-```
-
-### Test Coverage
-
-Key areas:
-- ✅ Graph node execution
-- ✅ Prompt builders
-- ✅ RAG file management
-- ✅ Report generation (HTML/PDF/DOCX)
-- ✅ Parallel execution
-- ✅ Streaming output
+This is not prompt chaining — it is **graph-driven orchestration**.
 
 ---
 
-## 🚀 Deployment Considerations
+## 2️⃣ Separation of Concerns (Enterprise Architecture)
 
-### Production Checklist
+The system is layered and modular:
 
-- [ ] OpenAI API key management (secrets manager)
-- [ ] Rate limiting for LLM calls
-- [ ] ChromaDB backup strategy
-- [ ] Persistent volume for uploaded documents
-- [ ] Monitoring & logging (Sentry, DataDog)
-- [ ] User authentication & authorization
-- [ ] HTTPS/TLS encryption
-- [ ] Docker containerization
-- [ ] Horizontal scaling (stateless handlers)
+- **UI Layer (Gradio)**
+- **Graph Orchestration Layer**
+- **Domain Layer (Decision, Confidence, History)**
+- **RAG Layer**
+- **LLM Provider Abstraction**
+- **Infrastructure (logging, token budget, persistence)**
 
-### Docker Deployment (Planned)
+Architectural principles applied:
 
-```dockerfile
-FROM python:3.11-slim
+- Each node owns specific state fields
+- PromptBuilders separated from business logic
+- State normalization and validation layer
+- Adapter layer between UI and Graph
+- Deterministic state-driven execution
+- Explicit mutation control
 
-# Install system dependencies for WeasyPrint
-RUN apt-get update && apt-get install -y \
-    libpango-1.0-0 libpangocairo-1.0-0
+Every node produces a semantically complete state when invoked.
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-CMD ["python", "-m", "app.ui.app_real"]
-```
+This reflects production-oriented system design.
 
 ---
 
-## 🎯 Use Cases
+## 3️⃣ Authoritative RAG Integration (ChromaDB)
 
-### Enterprise Scenarios
+The system integrates a **semantic retrieval pipeline**:
 
-1. **Technology Adoption Decisions**
-   - Framework selection
-   - Tool evaluation
-   - Architecture pattern choice
+- Upload of organizational documents
+- Embedding and indexing via ChromaDB
+- Retrieval of relevant context
+- Explicit separation between:
+  - **Authoritative organizational context**
+  - **Historical decisions**
+  - General knowledge
 
-2. **Risk Assessment**
-   - Technical debt evaluation
-   - Migration risk analysis
-   - Compliance impact assessment
+Organizational documents are treated as **constraints**, not suggestions.
 
-3. **Resource Allocation**
-   - Team capacity analysis
-   - Timeline feasibility
-   - Budget constraint evaluation
+This enables:
 
-4. **Policy Compliance**
-   - Architectural Decision Records (ADRs)
-   - Security policy alignment
-   - Governance workflow integration
+- Context-aware decisions
+- Reduced hallucinations
+- Alignment with real business constraints
 
-### Target Users
-
-- **CTOs & Engineering Leaders**: Strategic technical decisions
-- **Enterprise Architects**: System design trade-offs
-- **Technical Program Managers**: Project feasibility analysis
-- **Development Teams**: Technology selection guidance
+Vectorstore persistence is managed within the Hugging Face environment.
 
 ---
 
-## 📚 Documentation
+## 4️⃣ Historical Decision Intelligence
 
-- **README.md** (this file): Complete system overview
-- **CLAUDE.md**: Development history and AI assistant logs
-- **requirements.txt**: Python dependencies
-- **run_app.sh**: Application startup script
+The system maintains long-term semantic memory of past decisions.
 
----
+Capabilities:
 
-## 🛠️ Development
+- Similarity-based retrieval
+- Historical influence modeling
+- Influence factor calculation
+- Confidence modulation based on precedent
+- Persistence via vector storage
 
-### Code Quality Standards
+The decision engine does not just answer — it:
 
-- **Single Responsibility Principle** (SRP): Each module has one clear purpose
-- **Prompt Engineering**: Separated from business logic
-- **Modular Components**: Easy to test and replace
-- **Type Hints**: Full type coverage for maintainability
-- **Docstrings**: Every function/class documented
+- Evaluates similar past cases
+- Quantifies their influence
+- Adjusts confidence accordingly
 
-### Architecture Principles
-
-1. **Separation of Concerns**
-   - UI layer → Gradio components
-   - Handlers → Event processing
-   - Business Logic → Graph nodes
-   - Prompts → Dedicated builders
-
-2. **Deterministic Decision Structure**
-   - Reproducible outcomes
-   - Explicit reasoning paths
-   - Confidence scoring
-
-3. **Context Governance**
-   - Clear hierarchy: Authoritative > Historical > General
-   - Explicit context declarations
-   - Conflict resolution rules
-
-### Contributing
-
-Contributions welcome! Areas for improvement:
-
-- [ ] Additional LLM providers (Anthropic, Azure OpenAI)
-- [ ] Enhanced report visualizations
-- [ ] Decision comparison analytics
-- [ ] Multi-language support
-- [ ] API endpoint (FastAPI)
-- [ ] WebSocket for streaming
-- [ ] Decision versioning & rollback
+This moves the system toward **AI governance**, not just generation.
 
 ---
 
-## ⚠️ Known Limitations
+## 5️⃣ Deterministic Confidence Modeling
 
-1. **LLM Dependency**: Requires OpenAI API access
-2. **English Only**: Prompts optimized for English
-3. **Single User**: No multi-tenancy (yet)
-4. **Local Storage**: ChromaDB persistence is local
-5. **No User Auth**: Public deployment requires authentication layer
+The system does not trust the LLM for confidence metrics.
 
----
+Instead, it computes:
 
-## 📄 License
+- `confidence_base`
+- `historical_influence_factor`
+- `confidence_final`
+- Confidence label mapping
+- Low-confidence signaling
+- Confidence drift tracking
 
-MIT License - See LICENSE file for details
+Confidence is calculated outside the model in a deterministic layer.
 
----
-
-## 🙏 Acknowledgments
-
-Built with:
-- **LangChain** & **LangGraph**: LLM orchestration framework
-- **OpenAI**: GPT-4o-mini for reasoning
-- **ChromaDB**: Vector storage
-- **Gradio**: Web interface
-- **WeasyPrint** & **python-docx**: Report export
+This reflects production-grade ML system thinking:
+> Metrics should not depend on generative output.
 
 ---
 
-## 📞 Contact
+## 6️⃣ Cognitive Separation: Analyzer vs Planner
 
-For questions, feedback, or enterprise licensing:
+The reasoning architecture separates:
 
-- **GitHub**: [Your GitHub Profile]
-- **Email**: [Your Email]
-- **LinkedIn**: [Your LinkedIn]
+- **Analyzer** → Independent evaluation
+- **Planner** → Structured evaluation plan
+- **Decision Node** → Final structured output
 
----
+This reduces confirmation bias and improves reasoning robustness.
 
-## 🎓 Key Takeaways
-
-This project demonstrates:
-
-1. ✅ **LLMs can make decisions**, not just answer questions
-2. ✅ **Parallel cognitive processing** improves speed and quality
-3. ✅ **Context-authoritative reasoning** prevents hallucinations
-4. ✅ **Explicit refusal** is a feature, not a bug
-5. ✅ **Enterprise architecture** matters for production readiness
-
-**Not just a demo. An enterprise-grade decision intelligence system.** 🚀
+The Analyzer does not simply validate the Planner.
+They are independent reasoning components orchestrated via the graph.
 
 ---
 
-*Built with care for real-world enterprise decision-making.*
+## 7️⃣ Cost Governance & Token Budget Control
+
+A dedicated **Token Budget Manager** enforces:
+
+- Per-session limits
+- Global daily limits
+- Hard LLM caps
+- Abuse protection
+
+Additional features:
+
+- Token usage transparency in UI
+- Dynamic budget indicators
+- Alert thresholds (>80%)
+- Explicit refusal when budget exhausted
+
+This demonstrates awareness of:
+
+- Cloud cost control
+- Production constraints
+- Public deployment sustainability
+
+Most LLM demos ignore this entirely.
+
+---
+
+## 8️⃣ Audit-Ready Session Reporting
+
+Each session generates a structured HTML report including:
+
+- Decision
+- Reasoning
+- Context references
+- Historical influence
+- Confidence breakdown
+
+Export options:
+
+- HTML
+- PDF
+- DOCX
+
+Reports are template-driven and structured for traceability.
+
+This supports:
+
+- Decision documentation
+- Governance workflows
+- Shareable executive summaries
+
+---
+
+# 🧪 Engineering Quality Signals
+
+The project includes:
+
+- Typed state objects
+- Node-level logging decorator
+- Deterministic non-streaming graph execution
+- Streaming isolated to UX layer
+- Explicit state validation
+- Retry logic based on measurable signals
+- Clean UI contract definition
+- Structured domain modeling
+
+This is engineered as a system — not a notebook.
+
+---
+
+# 📄 License
+
+MIT
+
+---
+
+# 📬 Author
+
+Gianmario  
+AI & Software Engineering  
+
+---
+
+**AI Decision Agent**  
+A structured AI governance prototype for real-world decision environments.
+
