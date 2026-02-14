@@ -46,7 +46,7 @@ from .handlers.rag_handlers import (
 # GLOBAL VARIABLES
 # ========================================
 _RAG_BOOTSTRAPPED = False  # One-time bootstrap guard
-_SESSION_STATE = gr.State(str(uuid.uuid4()))
+
 
 # -----------------------------
 # Main UI Assembly
@@ -79,6 +79,8 @@ def launch_real_ui():
 
     with gr.Blocks() as demo:
         demo.api_mode = False
+
+        session_id_state = gr.State(str(uuid.uuid4()))
 
         gr.HTML("""
             <style>
@@ -182,7 +184,7 @@ def launch_real_ui():
 
         submit_button.click(
             fn=run_graph_streaming,
-            inputs=[question_input, rag_input, _SESSION_STATE],
+            inputs=[question_input, rag_input, session_id_state],
             outputs=[
                 plan_output,
                 analysis_output,
@@ -201,7 +203,7 @@ def launch_real_ui():
 
         question_input.submit(
             fn=run_graph_streaming,
-            inputs=[question_input, rag_input, _SESSION_STATE],
+            inputs=[question_input, rag_input, session_id_state],
             outputs=[
                 plan_output,
                 analysis_output,
