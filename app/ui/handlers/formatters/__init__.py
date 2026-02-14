@@ -5,7 +5,6 @@
 
 from .base_formatter import BaseFormatter
 from .message_formatter import MessageFormatter
-from .report_formatter import ReportFormatter
 from .historical_formatter import HistoricalFormatter
 from .output_assembler import OutputAssembler
 
