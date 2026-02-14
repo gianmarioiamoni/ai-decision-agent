@@ -152,13 +152,13 @@ class StateValidator:
         ts = state.get("timestamp")
 
         if ts is None:
-            state["timestamp"] = datetime.utcnow().isoformat()
+            state["timestamp"] = datetime.now(datetime.timezone.utc).isoformat()
             return state
 
         if not isinstance(ts, str):
             try:
                 state["timestamp"] = ts.isoformat()
             except Exception:
-                state["timestamp"] = datetime.utcnow().isoformat()
+                state["timestamp"] = datetime.now(datetime.timezone.utc).isoformat()
 
         return state

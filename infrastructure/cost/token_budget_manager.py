@@ -5,11 +5,11 @@ import os
 from datetime import datetime
 from threading import Lock
 
-
 from app.constants import (
     DAILY_LIMIT,
     SESSION_LIMIT,
 )
+
 
 class TokenBudgetExceeded(Exception):
     pass
@@ -29,7 +29,7 @@ class TokenBudgetManager:
     def _load(cls):
         if not os.path.exists(cls._file_path):
             return {
-                "date": datetime.utcnow().date().isoformat(),
+                "date": datetime.now(datetime.timezone.utc).date().isoformat(),
                 "daily_total": 0,
                 "sessions": {},
             }
@@ -47,7 +47,7 @@ class TokenBudgetManager:
         with cls._lock:
             data = cls._load()
 
-            today = datetime.utcnow().date().isoformat()
+            today = datetime.now(datetime.timezone.utc).date().isoformat()
 
             # reset if new day
             if data["date"] != today:
@@ -73,7 +73,7 @@ class TokenBudgetManager:
         with cls._lock:
             data = cls._load()
 
-            today = datetime.utcnow().date().isoformat()
+            today = datetime.now(datetime.timezone.utc).date().isoformat()
 
             if data["date"] != today:
                 return {
@@ -89,4 +89,3 @@ class TokenBudgetManager:
                 "session_used": data["sessions"].get(session_id, 0),
                 "session_limit": cls.session_limit,
             }
-
