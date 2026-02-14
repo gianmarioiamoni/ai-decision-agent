@@ -18,7 +18,7 @@ class BudgetedLLM:
             model="gpt-4o-mini",
             max_tokens=MAX_TOKENS,
         )
-    
+
     def _get_total_tokens(self, response):
         total_tokens = 0
 
@@ -40,6 +40,8 @@ class BudgetedLLM:
 
         print("RAW RESPONSE METADATA:", response.response_metadata)
         print("USAGE METADATA:", getattr(response, "usage_metadata", None))
+
+        print("REGISTERING FOR SESSION:", self._session_id)
 
         TokenBudgetManager.register_usage(
             session_id=self._session_id,

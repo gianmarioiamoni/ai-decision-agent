@@ -24,8 +24,6 @@ from infrastructure.cost.token_budget_manager import TokenBudgetManager
 GRAPH = build_graph()
 
 
-
-
 PHASES = {
     "analyzer": ("🔵 Analyzer running…", "33%", "#3b82f6"),
     "planner":  ("🟣 Planner running…",  "66%", "#8b5cf6"),
@@ -59,8 +57,10 @@ def _error_output(message: str) -> UIOutputs:
 # STREAMING ENTRYPOINT
 # ==============================================================================
 
-def run_graph_streaming(question: str, rag_files=None):
-    session_id = str(uuid.uuid4())
+def run_graph_streaming(question: str, rag_files=None, session_id: str = None):
+
+    if session_id is None:
+        session_id = str(uuid.uuid4())
 
     try:
         initial_state: DecisionState = create_initial_state(
@@ -93,6 +93,8 @@ def run_graph_streaming(question: str, rag_files=None):
 
             progress_html = render_progress_bar(w, c)
 
+            print("READING STATUS FOR SESSION:", session_id)
+
             yield UIOutputs(
                 plan=md_to_plain_text(state.get("plan") or ""),
                 analysis=md_to_plain_text(state.get("analysis") or ""),
@@ -118,7 +120,7 @@ def run_graph_streaming(question: str, rag_files=None):
         # FINAL ASSEMBLY
         # --------------------------------------------------
         last_state = StateValidator.normalize(last_state)
-        
+
         token_status = TokenBudgetManager.get_status(session_id)
         token_status_badge = render_token_status_badge(token_status)
 

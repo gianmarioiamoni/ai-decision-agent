@@ -16,6 +16,7 @@
 import os
 from re import I
 import gradio as gr
+import uuid
 
 # Import UI components
 from .components.header import create_header
@@ -45,7 +46,7 @@ from .handlers.rag_handlers import (
 # GLOBAL VARIABLES
 # ========================================
 _RAG_BOOTSTRAPPED = False  # One-time bootstrap guard
-
+_SESSION_STATE = gr.State(str(uuid.uuid4()))
 
 # -----------------------------
 # Main UI Assembly
@@ -181,7 +182,7 @@ def launch_real_ui():
 
         submit_button.click(
             fn=run_graph_streaming,
-            inputs=[question_input, rag_input],
+            inputs=[question_input, rag_input, _SESSION_STATE],
             outputs=[
                 plan_output,
                 analysis_output,
@@ -200,7 +201,7 @@ def launch_real_ui():
 
         question_input.submit(
             fn=run_graph_streaming,
-            inputs=[question_input, rag_input],
+            inputs=[question_input, rag_input, _SESSION_STATE],
             outputs=[
                 plan_output,
                 analysis_output,
