@@ -5,7 +5,7 @@
 #
 
 from typing import Any, Dict, List
-from datetime import datetime
+from datetime import datetime, timezone
 from langchain_core.messages import BaseMessage
 
 from app.graph.state import DecisionState
@@ -152,13 +152,13 @@ class StateValidator:
         ts = state.get("timestamp")
 
         if ts is None:
-            state["timestamp"] = datetime.now(datetime.timezone.utc).isoformat()
+            state["timestamp"] = datetime.now(timezone.utc).isoformat()
             return state
 
         if not isinstance(ts, str):
             try:
                 state["timestamp"] = ts.isoformat()
             except Exception:
-                state["timestamp"] = datetime.now(datetime.timezone.utc).isoformat()
+                state["timestamp"] = datetime.now(timezone.utc).isoformat()
 
         return state

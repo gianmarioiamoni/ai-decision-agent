@@ -2,7 +2,7 @@
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 
 from app.constants import (
@@ -29,7 +29,7 @@ class TokenBudgetManager:
     def _load(cls):
         if not os.path.exists(cls._file_path):
             return {
-                "date": datetime.now(datetime.timezone.utc).date().isoformat(),
+                "date": datetime.now(timezone.utc).date().isoformat(),
                 "daily_total": 0,
                 "sessions": {},
             }
@@ -47,7 +47,7 @@ class TokenBudgetManager:
         with cls._lock:
             data = cls._load()
 
-            today = datetime.now(datetime.timezone.utc).date().isoformat()
+            today = datetime.now(timezone.utc).date().isoformat()
 
             # reset if new day
             if data["date"] != today:
@@ -73,7 +73,7 @@ class TokenBudgetManager:
         with cls._lock:
             data = cls._load()
 
-            today = datetime.now(datetime.timezone.utc).date().isoformat()
+            today = datetime.now(timezone.utc).date().isoformat()
 
             if data["date"] != today:
                 return {
