@@ -22,22 +22,9 @@ license: mit
 
 ---
 
-## 🚀 Live Deployment
-
-This application is deployed on **Hugging Face Spaces** using Gradio.
-
-It runs in a **public cloud environment** with:
-
-- Controlled token budget
-- Persistent vector storage
-- Abuse protection mechanisms
-- Cost governance safeguards
-
-This is not a notebook demo — it is a cloud-deployed AI system with runtime constraints handled explicitly.
-
----
-
 # 🎯 What This Project Demonstrates
+
+<img width="1705" height="850" alt="01 - Home page" src="https://github.com/user-attachments/assets/59628c93-d510-4ce0-9e8f-b60f9a55d584" />
 
 This project showcases the design and implementation of a **structured AI decision-making system** built for enterprise-like environments.
 
@@ -332,6 +319,43 @@ The project includes:
 - Structured domain modeling
 
 This is engineered as a system — not a notebook.
+
+---
+# Screenshots
+
+Homepage
+<img width="1705" height="850" alt="01 - Home page" src="https://github.com/user-attachments/assets/acfba513-7b87-4abf-8186-7b10b07cdae0" />
+
+
+Context Files Manager
+<img width="1705" height="850" alt="02 - Context Files" src="https://github.com/user-attachments/assets/33e9cd19-53fd-4f80-a8b1-0661a2843280" />
+
+
+Planning & Analysis
+<img width="1705" height="850" alt="03 - Planning   Analysis" src="https://github.com/user-attachments/assets/b94f61a6-9166-4223-9ea9-582e875fee0b" />
+
+
+Decision
+<img width="1705" height="850" alt="04 - Decision" src="https://github.com/user-attachments/assets/dbfe0f52-ffcd-4235-8a84-47c140a0e62e" />
+
+
+Messages
+<img width="1705" height="850" alt="05 - Messages" src="https://github.com/user-attachments/assets/11398f77-2d9a-43c8-b1f8-2ceb210cc9c4" />
+
+
+Report
+<img width="1705" height="850" alt="06 - Report" src="https://github.com/user-attachments/assets/56dfc6e6-4517-4c03-85cf-feb5da4a454b" />
+
+
+
+RAG Context & Evidence
+<img width="1705" height="850" alt="07 - RAG Context   Evidende" src="https://github.com/user-attachments/assets/04d08503-eda9-4ef3-a3a8-c5580f024c5d" />
+
+
+
+Historical Decisions
+<img width="1705" height="850" alt="09 - Historical decisions" src="https://github.com/user-attachments/assets/bba00816-addb-48c9-b159-703455f4a9d2" />
+
 
 ---
 
